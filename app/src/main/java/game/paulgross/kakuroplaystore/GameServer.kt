@@ -311,14 +311,28 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         // \ \ \ 7 1
 
         var gameWidth = 5
-        var structure: Array<Boolean> = Array(25) {false}
+        var structure: Array<Boolean> = arrayOf(
+            false, false, false, false, false,
+            false,  true,  true, false, false,
+            false,  true,  true,  true, false,
+            false, false,  true,  true,  true,
+            false, false, false,  true,  true
+        )
+        // Note that the Hints can be derived from the solution and the structure
         var solution: Array<Int> = arrayOf(3, 1, 8, 2, 1, 6, 9, 8, 7, 1)
-        // Note that the Hints can be derived from the solution
 
-        var guesses: Array<Int> = Array(10) {0}
+        // TODO: How are hints stored and transmitted?
+        // Possibly: Mapping An array index plus a direction to a total.
+        // Such as 1-Down = 11, 2-Down = 9, 5-Across = 4, etc ...
+        // Scan whole array for empty squares
+        // - any to the left of a number, calc Across total.
+        // - any above a number, calc down total.
 
-        // Possibles are coded as 9 digit Long integers.
-        var possibles: Array<Long> = Array(10) {0}
+        // The user's current guesses.
+        var guesses: Array<Int> = Array(10) {0}  // Same size Array as the solution
+
+        // Possibles are user defined, and coded as 9-digit Longs.
+        var possibles: Array<Long> = Array(10) {0} // Same size Array as the solution
 
 
         fun encodeState(dummy: Int): String {
