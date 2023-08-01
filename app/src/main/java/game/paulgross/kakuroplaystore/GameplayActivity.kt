@@ -8,4 +8,9 @@ class GameplayActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gameplay)
     }
+
+    companion object {
+        private val TAG = GameplayActivity::class.java.simpleName
+        val DISPLAY_MESSAGE_SUFFIX = ".$TAG.display.UPDATE"
+    }
 }
