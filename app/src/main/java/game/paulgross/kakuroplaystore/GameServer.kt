@@ -327,6 +327,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         // Scan whole array for empty squares
         // - any to the left of a number, calc Across total.
         // - any above a number, calc down total.
+        // TODO: Design and code the calcs for hints
 
         // The user's current guesses.
         var guesses: Array<Int> = Array(10) {0}  // Same size Array as the solution
