@@ -56,7 +56,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
     }
 
-    private val loopDelayMilliseconds = 25L
+    private val loopDelayMilliseconds = 500L
     private val autoStatusDelayMilliseconds = 5000L
     private val autoStatusCount = autoStatusDelayMilliseconds.div(loopDelayMilliseconds)
     private var autoStatusCountdown = 0L
@@ -64,10 +64,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     override fun run() {
 
         restoreGameState()
-
-        // Testing
-//        Log.d(TAG,"calcHints ...")
-//        calcHints(structure, gameWidth, solution)
+        initGameState(structure, gameWidth, solution)
 
         while (gameIsRunning.get()) {
             val activityRequest = fromActivitiesToGameSeverQ.poll()  // Non-blocking read.
@@ -263,24 +260,25 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     /**
-     * Saves the current App state.
+     * Saves the current Game state.
      */
     private fun saveGameState() {
+        Log.d(TAG, "TODO: Save game state...")
         // TODO:
 
         val editor = preferences.edit()
 
         // Sample of saving a state
 //        editor.putString("CurrPlayer", currPlayer.toString())
-        editor.apply()
-        Log.d(TAG, "Saved game state.")
+//        editor.apply()
+//        Log.d(TAG, "Saved game state.")
     }
 
     /**
      * Restores the App state from the last time it was running.
      */
     private fun restoreGameState() {
-        Log.d(TAG, "Restoring previous game state...")
+        Log.d(TAG, "TODO: Restoring previous game state...")
         // TODO:
 
         // Sample of a saved state:
@@ -302,117 +300,124 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         pushStateToClients()
     }
 
+    // -- Game here
+
+    enum class Direction {ACROSS, DOWN}
+    data class Hint(val index: Int, val direction: Direction, var total: Int)
+
+    /**
+     * Create the initial grid with no guesses .
+     * Create all the ACROSS and DOWN hints based on the structure and solution.
+     */
+    private fun initGameState(structure: Array<Boolean>, width: Int, solution: Array<Int>) {
+
+        // Create the final grid by combining the structure with the solution
+        var solutionIndex = 0
+        structure.forEach {item ->
+            if (!item) {
+                grid?.add(0)
+            } else {
+                grid?.add(solution[solutionIndex])
+                solutionIndex++
+            }
+        }
+
+        // Traverse the final grid and create hints when there is any empty squares with a numbers to the right and/or below.
+        val maxIndex = grid.size - 1
+        grid.forEachIndexed { index, value ->
+            if (value  == 0) {
+                // Check for ACROSS hints (don't check last column)
+                // Last column is when: (index + 1) DIV width has no remainder ???
+                if (index + 1 < maxIndex!! && grid[index + 1] != 0) {
+                    // TODO - add up the group of numbers
+                    val sum = sumOfSquares(grid, index + 1, Direction.ACROSS)
+                    hints.add(Hint(index + 1, Direction.ACROSS, sum))
+                }
+
+                // Check for DOWN hints (don't check last row)
+                // Last row is when maxIndex - index < width ???
+                // Below is index + width
+                if (index + width < maxIndex && grid[index + width] != 0) {
+                    // TODO - add up the group of numbers
+                    val sum = sumOfSquares(grid, index + width, Direction.DOWN)
+                    hints.add(Hint(index + width, Direction.DOWN, sum))
+                }
+            }
+        }
+
+        Log.d(TAG, "All hints:")
+        hints.forEach() {hint ->
+            Log.d(TAG, "hint: $hint")
+        }
+
+        // Substitute -1 for the grid solution, which is every non-zero square
+        for (i in 0 until grid.size) {
+            if (grid[i] != 0) {
+                grid[i] = -1
+            }
+        }
+    }
+
+    private fun sumOfSquares(grid: List<Int>, startIndex: Int, direction: Direction): Int {
+        // TODO ...
+        return 0
+    }
+
+    // Testing - the initial grid
+    // \ \ \ \ \
+    // \ 3 1 \ \
+    // \ 8 2 1 \
+    // \ \ 6 9 8
+    // \ \ \ 7 1
+
+    private var gameWidth = 5
+    private var structure: Array<Boolean> = arrayOf(
+        false, false, false, false, false,
+        false,  true,  true, false, false,
+        false,  true,  true,  true, false,
+        false, false,  true,  true,  true,
+        false, false, false,  true,  true
+    )
+    // Note that the Hints can be derived from the solution and the structure
+    // Note the size of the solution must exactly match the number of true flags in the structure
+    // Need to check that this is always true.
+    private var solution: Array<Int> = arrayOf(3, 1, 8, 2, 1, 6, 9, 8, 7, 1)
+    private var grid: MutableList<Int> = mutableListOf()
+    private var hints: MutableList<Hint> = mutableListOf()
+
+    // TODO: How are hints stored and transmitted?
+    // Possibly: Mapping An array index plus a direction to a total.
+    // Such as 1-Down = 11, 2-Down = 9, 5-Across = 4, etc ...
+    // Scan whole array for empty squares
+    // - any to the left of a number, calc Across total.
+    // - any above a number, calc down total.
+    // TODO: Design and code the calcs for hints
+
+    // The user's current guesses.
+    var guesses: Array<Int> = Array(10) {0}  // Same size Array as the solution
+
+    // Possibles are user defined, and coded as 9-digit Longs.
+    var possibles: Array<Long> = Array(10) {0} // Same size Array as the solution
+
+
+    fun encodeState(dummy: String): String {
+        var state = "TODO"
+
+        return state
+    }
+
+    fun decodeState(stateString: String): StateVariables {
+        Log.d(TAG, "decodeState() for [$stateString]")
+
+        // TODO
+
+        return StateVariables("TODO")
+    }
+
     data class StateVariables(var dummy: String)
 
     companion object {
         private val TAG = GameServer::class.java.simpleName
-
-        enum class Direction {ACROSS, DOWN}
-        data class Hint(val index: Int, val direction: Direction, var total: Int)
-
-        /**
-         * Calculate all the ACROSS and DOWN hints based on the structure and solution.
-         */
-        fun calcHints(structure: Array<Boolean>, width: Int, solution: Array<Int>): Array<Hint> {
-            var hints = mutableListOf<Hint>()
-
-            // Create the full array by combining the structure with the solution
-            // 0 = empty, otherwise it's a solution number
-            val grid = mutableListOf<Int>()
-            var solutionIndex = 0
-            structure.forEach {item ->
-                if (!item) {
-                    grid.add(0)
-                } else {
-                    grid.add(solution[solutionIndex])
-                    solutionIndex++
-                }
-            }
-
-            // Traverse the whole grid and look for empty squares with numbers to the right and/or below
-            val maxIndex = grid.size - 1
-            grid.forEachIndexed { index, value ->
-                if (grid[index] == 0) {
-                    // Check for ACROSS hints (don't check last column)
-                    // Last column is when: (index + 1) DIV width has no remainder ???
-                    if (index + 1 < maxIndex && grid[index + 1] != 0) {
-                        // TODO - add up the group of numbers
-                        val sum = sumOfSquares(grid, index + 1, Direction.ACROSS)
-                        hints.add(Hint(index + 1, Direction.ACROSS, sum))
-                    }
-
-                    // Check for DOWN hints (don't check last row)
-                    // Last row is when maxIndex - index < width ???
-                    // Below is index + width
-                    if (index + width < maxIndex && grid[index + width] != 0) {
-                        // TODO - add up the group of numbers
-                        val sum = sumOfSquares(grid, index + width, Direction.DOWN)
-                        hints.add(Hint(index + width, Direction.DOWN, sum))
-                    }
-                }
-            }
-
-            Log.d(TAG, "All hints:")
-            hints.forEach() {hint ->
-                Log.d(TAG, "hint: $hint")
-            }
-
-            return hints.toTypedArray()
-        }
-
-        private fun sumOfSquares(grid: List<Int>, startIndex: Int, direction: Direction): Int {
-            // TODO ...
-            return 0
-        }
-
-        // TODO - can I put the game state here???
-        // \ \ \ \ \
-        // \ 3 1 \ \
-        // \ 8 2 1 \
-        // \ \ 6 9 8
-        // \ \ \ 7 1
-
-        var gameWidth = 5
-        var structure: Array<Boolean> = arrayOf(
-            false, false, false, false, false,
-            false,  true,  true, false, false,
-            false,  true,  true,  true, false,
-            false, false,  true,  true,  true,
-            false, false, false,  true,  true
-        )
-        // Note that the Hints can be derived from the solution and the structure
-        // Note the size of the solution must exactly match the number of true flags in the structure
-        // Need to check that this is always true.
-        var solution: Array<Int> = arrayOf(3, 1, 8, 2, 1, 6, 9, 8, 7, 1)
-        val hints = calcHints(structure, gameWidth, solution)
-        // TODO: How are hints stored and transmitted?
-        // Possibly: Mapping An array index plus a direction to a total.
-        // Such as 1-Down = 11, 2-Down = 9, 5-Across = 4, etc ...
-        // Scan whole array for empty squares
-        // - any to the left of a number, calc Across total.
-        // - any above a number, calc down total.
-        // TODO: Design and code the calcs for hints
-
-        // The user's current guesses.
-        var guesses: Array<Int> = Array(10) {0}  // Same size Array as the solution
-
-        // Possibles are user defined, and coded as 9-digit Longs.
-        var possibles: Array<Long> = Array(10) {0} // Same size Array as the solution
-
-
-        fun encodeState(dummy: String): String {
-            var state = "TODO"
-
-            return state
-        }
-
-        fun decodeState(stateString: String): StateVariables {
-            Log.d(TAG, "decodeState() for [$stateString]")
-
-            // TODO
-
-            return StateVariables("TODO")
-        }
 
         // The GameServer always runs in it's own thread,
         // and stopGame() must be called as the App closes to avoid a memory leak.
