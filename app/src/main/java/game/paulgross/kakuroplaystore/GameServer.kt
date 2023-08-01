@@ -65,6 +65,10 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         restoreGameState()
 
+        // Testing
+//        Log.d(TAG,"calcHints ...")
+//        calcHints(structure, gameWidth, solution)
+
         while (gameIsRunning.get()) {
             val activityRequest = fromActivitiesToGameSeverQ.poll()  // Non-blocking read.
             if (activityRequest != null) {
@@ -168,7 +172,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         if (message == "status:") {
             validRequest = true
-            responseQ.add("s:${encodeState(0)}")
+            responseQ.add("s:${encodeState("")}")
         }
         if (message == "shutdown" || message == "abandoned") {
             validRequest = true
@@ -240,7 +244,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private fun pushStateToClients() {
-        socketServer?.pushMessageToClients("s:${encodeState(0)}")
+        socketServer?.pushMessageToClients("s:${encodeState("")}")
     }
 
     private fun stopGame() {
@@ -286,7 +290,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private fun messageGameplayDisplayStatus() {
         val intent = Intent()
         intent.action = context.packageName + GameplayActivity.DISPLAY_MESSAGE_SUFFIX
-        intent.putExtra("State", encodeState(0))
+        intent.putExtra("State", encodeState(""))
 
         context.sendBroadcast(intent)
     }
@@ -298,12 +302,70 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         pushStateToClients()
     }
 
-    data class StateVariables(var dummy: Int)
+    data class StateVariables(var dummy: String)
 
     companion object {
         private val TAG = GameServer::class.java.simpleName
 
-        // TODO - can I put the state here???
+        enum class Direction {ACROSS, DOWN}
+        data class Hint(val index: Int, val direction: Direction, var total: Int)
+
+        /**
+         * Calculate all the ACROSS and DOWN hints based on the structure and solution.
+         */
+        fun calcHints(structure: Array<Boolean>, width: Int, solution: Array<Int>): Array<Hint> {
+            var hints = mutableListOf<Hint>()
+
+            // Create the full array by combining the structure with the solution
+            // 0 = empty, otherwise it's a solution number
+            val grid = mutableListOf<Int>()
+            var solutionIndex = 0
+            structure.forEach {item ->
+                if (!item) {
+                    grid.add(0)
+                } else {
+                    grid.add(solution[solutionIndex])
+                    solutionIndex++
+                }
+            }
+
+            // Traverse the whole grid and look for empty squares with numbers to the right and/or below
+            val maxIndex = grid.size - 1
+            grid.forEachIndexed { index, value ->
+                if (grid[index] == 0) {
+                    // Check for ACROSS hints (don't check last column)
+                    // Last column is when: (index + 1) DIV width has no remainder ???
+                    if (index + 1 < maxIndex && grid[index + 1] != 0) {
+                        // TODO - add up the group of numbers
+                        val sum = sumOfSquares(grid, index + 1, Direction.ACROSS)
+                        hints.add(Hint(index + 1, Direction.ACROSS, sum))
+                    }
+
+                    // Check for DOWN hints (don't check last row)
+                    // Last row is when maxIndex - index < width ???
+                    // Below is index + width
+                    if (index + width < maxIndex && grid[index + width] != 0) {
+                        // TODO - add up the group of numbers
+                        val sum = sumOfSquares(grid, index + width, Direction.DOWN)
+                        hints.add(Hint(index + width, Direction.DOWN, sum))
+                    }
+                }
+            }
+
+            Log.d(TAG, "All hints:")
+            hints.forEach() {hint ->
+                Log.d(TAG, "hint: $hint")
+            }
+
+            return hints.toTypedArray()
+        }
+
+        private fun sumOfSquares(grid: List<Int>, startIndex: Int, direction: Direction): Int {
+            // TODO ...
+            return 0
+        }
+
+        // TODO - can I put the game state here???
         // \ \ \ \ \
         // \ 3 1 \ \
         // \ 8 2 1 \
@@ -319,8 +381,10 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             false, false, false,  true,  true
         )
         // Note that the Hints can be derived from the solution and the structure
+        // Note the size of the solution must exactly match the number of true flags in the structure
+        // Need to check that this is always true.
         var solution: Array<Int> = arrayOf(3, 1, 8, 2, 1, 6, 9, 8, 7, 1)
-
+        val hints = calcHints(structure, gameWidth, solution)
         // TODO: How are hints stored and transmitted?
         // Possibly: Mapping An array index plus a direction to a total.
         // Such as 1-Down = 11, 2-Down = 9, 5-Across = 4, etc ...
@@ -335,18 +399,18 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         var possibles: Array<Long> = Array(10) {0} // Same size Array as the solution
 
 
-        fun encodeState(dummy: Int): String {
+        fun encodeState(dummy: String): String {
             var state = "TODO"
 
             return state
         }
 
         fun decodeState(stateString: String): StateVariables {
-            Log.d(TAG, "decodeState() for $stateString")
+            Log.d(TAG, "decodeState() for [$stateString]")
 
             // TODO
 
-            return StateVariables(0)
+            return StateVariables("TODO")
         }
 
         // The GameServer always runs in it's own thread,
