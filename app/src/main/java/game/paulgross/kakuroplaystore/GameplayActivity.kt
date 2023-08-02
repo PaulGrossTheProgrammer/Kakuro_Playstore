@@ -1,5 +1,9 @@
 package game.paulgross.kakuroplaystore
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -10,7 +14,10 @@ class GameplayActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gameplay)
 
+        enableMessagesFromGameServer()
         GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE))
+
+        GameServer.queueActivityMessage("Status")
     }
 
     public override fun onBackPressed() {
@@ -37,8 +44,36 @@ class GameplayActivity : AppCompatActivity() {
         GameServer.queueActivityMessage("StopGame")
     }
 
+    private fun enableMessagesFromGameServer() {
+        val intentFilter = IntentFilter()
+        intentFilter.addAction(packageName + MESSAGE_SUFFIX)
+        registerReceiver(gameMessageReceiver, intentFilter)
+        Log.d(TAG, "Enabled message receiver for [${packageName + MESSAGE_SUFFIX}]")
+    }
+
+    private var previousStateString = ""
+
+    /**
+    Receive messages from the GameServer.
+     */
+    private val gameMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+
+            val stateString = intent.getStringExtra("State")
+
+            if (stateString != null && previousStateString != stateString) {
+                Log.d(TAG, "Got a new state string [$stateString]")
+                previousStateString = stateString
+                val newState = GameServer.decodeState(stateString)
+                if (newState != null) {
+
+                }
+            }
+        }
+    }
+
     companion object {
         private val TAG = GameplayActivity::class.java.simpleName
-        val DISPLAY_MESSAGE_SUFFIX = ".$TAG.display.UPDATE"
+        val MESSAGE_SUFFIX = ".$TAG.display.UPDATE"
     }
 }

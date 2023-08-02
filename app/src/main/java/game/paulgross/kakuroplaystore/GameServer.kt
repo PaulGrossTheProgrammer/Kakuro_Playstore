@@ -167,9 +167,9 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         // TODO: Normal gameplay commands here...
 
-        if (message == "status:") {
+        if (message == "status") {
             validRequest = true
-            responseQ.add("s:${encodeState("")}")
+            responseQ.add("s:${encodeState()}")
         }
         if (message == "shutdown" || message == "abandoned") {
             validRequest = true
@@ -207,27 +207,27 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private fun handleActivityMessage(message: String) {
-        if (message == "reset:") {
+        if (message == "Reset") {
             resetGame()
             messageGameplayDisplayStatus()
         }
-        if (message == "status:") {
+        if (message == "Status") {
             messageGameplayDisplayStatus()
         }
 
         // TODO - handle the normal gameplay commands
 
-        if (message == "StartServer:") {
+        if (message == "StartServer") {
             if (gameMode != GameMode.SERVER) {
                 switchToLocalServerMode()
             }
         }
-        if (message == "StartLocal:") {
+        if (message == "StartLocal") {
             if (gameMode != GameMode.LOCAL) {
                 switchToPureLocalMode()
             }
         }
-        if (message.startsWith("RemoteServer:")) {
+        if (message.startsWith("RemoteServer")) {
             if (gameMode != GameMode.CLIENT) {
                 val ip = message.substringAfter(":", "")
                 if (ip != "") {
@@ -241,7 +241,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private fun pushStateToClients() {
-        socketServer?.pushMessageToClients("s:${encodeState("")}")
+        socketServer?.pushMessageToClients("s:${encodeState()}")
     }
 
     private fun stopGame() {
@@ -292,10 +292,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 //        currPlayer = SquareState.valueOf(preferences.getString("CurrPlayer", "X").toString())
 
         // Testing - the "solution" grid with a "width" of 4:
-        //  3 1 0 0
-        //  8 2 0 0
-        //  0 6 9 8
-        //  0 0 7 1
         puzzleWidth = 4
         puzzleSolution = mutableListOf(
               3,  1,  0,  0,
@@ -305,10 +301,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         )
 
         // The player's initial "grid" view:
-        // -1-1 0 0
-        // -1-1 0 0
-        //  0-1-1-1
-        //  0 0-1-1
         // As the player makes guesses, the -1's are replaced with numbers from 1 to 9.
         playerGrid = mutableListOf(
             -1, -1,  0,  0,
@@ -319,15 +311,21 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         // Plus the "hints" for the player:
         // 0-ACROSS = 4, 0-DOWN = 11, 4-ACROSS = 10, ... etc
+        generateHints()
 
-        // Plus the player's own "possibles" grid:
-        // 0=3/1, 0=3/1, ... etc
+        //        Log.d(TAG, "DEBUG All hints:")
+        playerHints.forEach() { hint ->
+            Log.d(TAG, "hint: $hint")
+        }
+
+        // Plus the player's own "possibles" list:
+        // 0=3&1, 0=3/1, ... etc
     }
 
     private fun messageGameplayDisplayStatus() {
         val intent = Intent()
-        intent.action = context.packageName + GameplayActivity.DISPLAY_MESSAGE_SUFFIX
-        intent.putExtra("State", encodeState(""))
+        intent.action = context.packageName + GameplayActivity.MESSAGE_SUFFIX
+        intent.putExtra("State", encodeState())
 
         context.sendBroadcast(intent)
     }
@@ -348,40 +346,48 @@ class GameServer(private val context: Context, private val preferences: SharedPr
      * Create the initial grid with no guesses .
      * Create all the ACROSS and DOWN hints based on the structure and solution.
      */
-    private fun generateHints(solution: Array<Int>, width: Int) {
+    private fun generateHints() {
 
         // Traverse the solution grid and create hints for any number squares with empty squares to the left and/or above.
-        solution.forEachIndexed { index, value ->
+        puzzleSolution.forEachIndexed { index, value ->
             if (value  != 0) {
                 // Check for ACROSS hints.
                 // First column numbers always need a hint.
-                val isFirstColumn = (index.mod(width) == 0)
-                if (isFirstColumn || solution[index - 1] != 0) {
+                val isFirstColumn = (index.mod(puzzleWidth) == 0)
+                if (isFirstColumn || puzzleSolution[index - 1] == 0) {
                     // TODO - sum the group of numbers across
-                    val sum = sumOfSquares(solution, index, Direction.ACROSS)
+                    val sum = sumOfSquares(puzzleSolution, puzzleWidth, index, Direction.ACROSS)
                     playerHints.add(Hint(index, Direction.ACROSS, sum))
                 }
 
                 // Check for DOWN hints (don't check last row)
                 // First colum row always need a hint.
-                val isFirstRow = (index < width)
-                if (isFirstRow || solution[index - width] != 0) {
+                val isFirstRow = (index < puzzleWidth)
+                if (isFirstRow || puzzleSolution[index - puzzleWidth] == 0) {
                     // TODO - sum the group of numbers down
-                    val sum = sumOfSquares(solution, index, Direction.DOWN)
+                    val sum = sumOfSquares(puzzleSolution, puzzleWidth, index, Direction.DOWN)
                     playerHints.add(Hint(index, Direction.DOWN, sum))
                 }
             }
         }
-
-        Log.d(TAG, "All hints:")
-        playerHints.forEach() { hint ->
-            Log.d(TAG, "hint: $hint")
-        }
     }
 
-    private fun sumOfSquares(grid: Array<Int>, startIndex: Int, direction: Direction): Int {
+    private fun sumOfSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): Int {
         // TODO ...
-        return 0
+        var sum = 0
+
+        var stepSize = 1
+        if (direction == Direction.DOWN) {
+            stepSize = width
+        }
+
+        var index = startIndex
+        while (index < grid.size && grid[index] != 0) {
+            sum += grid[index]
+            index += stepSize
+        }
+
+        return sum
     }
 
     private var puzzleWidth = 5
@@ -392,9 +398,21 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     // Possibles are user defined, and coded as 9-digit Longs.
     var playerPossibles: Array<Long> = Array(10) {0} // Same size Array as the solution
 
+    data class StateVariables(var dummy: String)
 
-    fun encodeState(dummy: String): String {
-        var state = "TODO"
+    private fun encodeState(): String {
+        var state = ""
+
+        state += "w=$puzzleWidth,"
+        state += "g="
+        playerGrid.forEachIndexed {index, squareValue ->
+            state += squareValue.toString()
+            if (index < playerGrid.size - 1) {
+                state += ":"
+            }
+        }
+
+        // TODO - encode hints? Only need to send this once...
 
         return state
     }
@@ -402,12 +420,17 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     fun decodeState(stateString: String): StateVariables {
         Log.d(TAG, "decodeState() for [$stateString]")
 
+        // Example
+        //w=4,g=-1:-1:0:0:-1:-1:0:0:0:-1:-1:-1:0:0:-1:-1
         // TODO
+        // split on commas
+        val parts = stateString.split(",")
+        for (part in parts) {
+//            if ()
+        }
 
-        return StateVariables("TODO")
+        return StateVariables("")
     }
-
-    data class StateVariables(var dummy: String)
 
     companion object {
         private val TAG = GameServer::class.java.simpleName
@@ -447,6 +470,10 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             if (singletonGameServer?.gameIsRunning!!.get()) {
                 singletonGameServer?.fromClientToGameServerQ?.add(ClientRequest(message, responseQ))
             }
+        }
+
+        fun decodeState(stateString: String): StateVariables? {
+            return singletonGameServer?.decodeState(stateString)
         }
     }
 }
