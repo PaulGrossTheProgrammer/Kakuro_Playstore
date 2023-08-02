@@ -7,6 +7,7 @@
     tools:context=".GameplayActivity">
 
     <TextView
+        android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -15,5 +16,25 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <view
+        android:id="@+id/viewPlayGrid"
+        class="game.paulgross.kakuroplaystore.GameplayActivity$PlayingGridView"
+        android:layout_width="340dp"
+        android:layout_height="340dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+    <TextView
+        android:id="@+id/textViewDebug"
+        android:layout_width="181dp"
+        android:layout_height="183dp"
+        android:layout_marginTop="16dp"
+        android:text="Debug Data"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/viewPlayGrid" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

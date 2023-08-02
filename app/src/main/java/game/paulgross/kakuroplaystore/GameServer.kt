@@ -92,6 +92,9 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 }
             }
 
+            // DEBUGGING
+            messageGameplayDisplayState()
+
             sleep(loopDelayMilliseconds)  // Pause for a short time...
         }
         Log.d(TAG, "The Game Server has shut down.")
@@ -162,7 +165,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             validRequest = true
             remotePlayers.add(responseQ)
 
-            messageGameplayDisplayStatus()
+            messageGameplayDisplayState()
         }
 
         // TODO: Normal gameplay commands here...
@@ -175,7 +178,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             validRequest = true
             responseQ.add(message)
             remotePlayers.remove(responseQ)
-            messageGameplayDisplayStatus()
+            messageGameplayDisplayState()
         }
 
         if (!validRequest) {
@@ -197,7 +200,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 // TODO:
 
                 saveGameState()
-                messageGameplayDisplayStatus()
+                messageGameplayDisplayState()
             }
         }
         if (message == "shutdown" || message == "abandoned") {
@@ -209,10 +212,10 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private fun handleActivityMessage(message: String) {
         if (message == "Reset") {
             resetGame()
-            messageGameplayDisplayStatus()
+            messageGameplayDisplayState()
         }
         if (message == "Status") {
-            messageGameplayDisplayStatus()
+            messageGameplayDisplayState()
         }
 
         // TODO - handle the normal gameplay commands
@@ -322,7 +325,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         // 0=3&1, 0=3/1, ... etc
     }
 
-    private fun messageGameplayDisplayStatus() {
+    private fun messageGameplayDisplayState() {
         val intent = Intent()
         intent.action = context.packageName + GameplayActivity.MESSAGE_SUFFIX
         intent.putExtra("State", encodeState())
@@ -398,7 +401,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     // Possibles are user defined, and coded as 9-digit Longs.
     var playerPossibles: Array<Long> = Array(10) {0} // Same size Array as the solution
 
-    data class StateVariables(var dummy: String)
+    data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int)
 
     private fun encodeState(): String {
         var state = ""
@@ -420,16 +423,35 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     fun decodeState(stateString: String): StateVariables {
         Log.d(TAG, "decodeState() for [$stateString]")
 
+        var width = 0
+        var grid:MutableList<Int> = mutableListOf()
+
         // Example
         //w=4,g=-1:-1:0:0:-1:-1:0:0:0:-1:-1:-1:0:0:-1:-1
         // TODO
-        // split on commas
+        // split on commas into key-value pairs
+        var map: MutableMap<String, String> = mutableMapOf()
         val parts = stateString.split(",")
         for (part in parts) {
-//            if ()
+            if (part.contains("=")) {
+                val keyValue = part.split("=")
+                map.put(keyValue[0], keyValue[1])
+            }
         }
 
-        return StateVariables("")
+        map.forEach { key, value ->
+            if (key == "w") {
+                width = value.toInt()
+            }
+            if (key == "g") {
+                val ints = value.split(":")
+                ints.forEach{theIntString ->
+                    grid.add(theIntString.toInt())
+                }
+            }
+        }
+
+        return StateVariables(grid, width)
     }
 
     companion object {

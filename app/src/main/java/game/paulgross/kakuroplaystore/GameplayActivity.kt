@@ -4,9 +4,15 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.AttributeSet
 import android.util.Log
+import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 
 class GameplayActivity : AppCompatActivity() {
@@ -22,6 +28,54 @@ class GameplayActivity : AppCompatActivity() {
 
     public override fun onBackPressed() {
         confirmExitApp()
+    }
+
+    private fun displayGrid(playerGrid: MutableList<Int>, puzzleWidth:Int) {
+        // DEBUG text grid first
+        val debugView = findViewById<TextView>(R.id.textViewDebug)
+        var debugText = "width = $puzzleWidth\n"
+
+        var squareCounter = 0
+        while (squareCounter < playerGrid.size) {
+
+            val isFirstColumn = (squareCounter.mod(puzzleWidth) == 0)
+            if (isFirstColumn) { debugText += "\n" }
+            debugText += playerGrid[squareCounter].toString()
+
+            squareCounter++
+        }
+        debugView.text = debugText
+
+        // Send new data to the Gameplay View
+        // Trigger a redraw...
+        val playGridView = findViewById<View>(R.id.viewPlayGrid)
+        Log.d(TAG, "Trying to trigger a redraw....")
+        playGridView.invalidate() // Trigger a redraw
+    }
+
+    /**
+     * The custom View to draw the playing grid
+     */
+    class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
+        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+            Log.d("PlayingGridView", "Width = $measuredWidth, height = $measuredHeight")
+        }
+
+        private val paint = Paint()
+
+        override fun onDraw(canvas: Canvas) {
+            super.onDraw(canvas)
+            Log.d("PlayingGridView", "onDraw() running")
+
+            // Paint the canvas background
+            paint.color = Color.BLUE
+            canvas.drawPaint(paint)
+
+            paint.color = Color.WHITE
+            canvas?.drawRect(100f, 100f, 200f, 200f, paint )
+
+        }
     }
 
     private fun confirmExitApp() {
@@ -66,7 +120,11 @@ class GameplayActivity : AppCompatActivity() {
                 previousStateString = stateString
                 val newState = GameServer.decodeState(stateString)
                 if (newState != null) {
+                    var puzzleWidth = newState.puzzleWidth
+                    var puzzleSolution = newState.playerGrid
 
+                    // TODO:
+                    displayGrid(puzzleSolution, puzzleWidth)
                 }
             }
         }
