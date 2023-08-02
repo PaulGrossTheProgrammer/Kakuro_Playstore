@@ -47,19 +47,38 @@ class GameplayActivity : AppCompatActivity() {
         debugView.text = debugText
 
         // Send new data to the Gameplay View
-        // Trigger a redraw...
         val playGridView = findViewById<View>(R.id.viewPlayGrid)
-        Log.d(TAG, "Trying to trigger a redraw....")
+        (playGridView as PlayingGridView).playerGrid = playerGrid
+        (playGridView as PlayingGridView).puzzleWidth = puzzleWidth
         playGridView.invalidate() // Trigger a redraw
     }
 
+    var theTest = 1
     /**
      * The custom View to draw the playing grid
      */
     class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
+
+        var currViewWidth = 1
+        var currViewHeight = 1
+        var squareWidth = 1f
+        var margin = 1f
+        var squareTextSize = 1f
+
+
+        var puzzleWidth = 1
+        var playerGrid: MutableList<Int> = mutableListOf()
+
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
             Log.d("PlayingGridView", "Width = $measuredWidth, height = $measuredHeight")
+            currViewWidth = measuredWidth
+            currViewHeight = measuredHeight
+
+            // TODO - move out to onMeasure
+            squareWidth = currViewWidth/(puzzleWidth + 1f)
+            margin = squareWidth * 0.15f
+            squareTextSize = squareWidth * 0.7f
         }
 
         private val paint = Paint()
@@ -72,8 +91,18 @@ class GameplayActivity : AppCompatActivity() {
             paint.color = Color.BLUE
             canvas.drawPaint(paint)
 
+            // Draw grid
             paint.color = Color.WHITE
-            canvas?.drawRect(100f, 100f, 200f, 200f, paint )
+
+            var currX = 0f
+            var currY = 0f
+
+            canvas?.drawRect(currX + margin, currY + margin,
+                currX + squareWidth - margin, currY + squareWidth - margin, paint )
+
+            paint.color = Color.BLUE
+            paint.setTextSize(squareTextSize)
+            canvas.drawText("9", 60f, 140f, paint)
 
         }
     }
@@ -121,10 +150,10 @@ class GameplayActivity : AppCompatActivity() {
                 val newState = GameServer.decodeState(stateString)
                 if (newState != null) {
                     var puzzleWidth = newState.puzzleWidth
-                    var puzzleSolution = newState.playerGrid
+                    var playerGrid = newState.playerGrid
 
                     // TODO:
-                    displayGrid(puzzleSolution, puzzleWidth)
+                    displayGrid(playerGrid, puzzleWidth)
                 }
             }
         }

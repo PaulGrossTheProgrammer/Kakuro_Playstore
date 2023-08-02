@@ -92,9 +92,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 }
             }
 
-            // DEBUGGING
-            messageGameplayDisplayState()
-
             sleep(loopDelayMilliseconds)  // Pause for a short time...
         }
         Log.d(TAG, "The Game Server has shut down.")
