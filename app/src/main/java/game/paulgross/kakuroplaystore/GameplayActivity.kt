@@ -75,8 +75,8 @@ class GameplayActivity : AppCompatActivity() {
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
 
-            // TODO - move out to onMeasure
             squareWidth = currViewWidth/(puzzleWidth + 1f)
+
             margin = squareWidth * 0.15f
             squareTextSize = squareWidth * 0.7f
         }
@@ -97,13 +97,50 @@ class GameplayActivity : AppCompatActivity() {
             var currX = 0f
             var currY = 0f
 
-            canvas?.drawRect(currX + margin, currY + margin,
-                currX + squareWidth - margin, currY + squareWidth - margin, paint )
+            Log.d("PlayingGridView", "squareWidth = $squareWidth")
+1
+            val rows = puzzleWidth + 1
+            val cols = playerGrid.size.div(puzzleWidth) + 1
+            var index = 0
+            for (col in (1..cols)) {
 
-            paint.color = Color.BLUE
+                for (row in (1..rows)) {
+                    Log.d("PlayingGridView", "currX = $currX")
+                    Log.d("PlayingGridView", "currY = $currY")
+
+                    val puzzleSquare = (col != 1 && row != 1)
+
+                    if (puzzleSquare) {
+                        val gridValue = playerGrid[index]
+                        if (gridValue == -1) {
+                            drawSquare(currX, currY, canvas, paint)
+                            drawSquareGuess("9", currX, currY, canvas, paint)
+                        }
+                    }
+
+                    currX += squareWidth
+
+                    // If this isn't the top row or left column, increment index
+                    if (puzzleSquare) {
+                        index++
+                    }
+                }
+                currX = 0f
+                currY += squareWidth
+            }
+
+        }
+
+        private fun drawSquare(x: Float, y: Float, canvas: Canvas, paint: Paint) {
+            paint.color = Color.WHITE
+            canvas?.drawRect(x + margin, y + margin,
+                x + squareWidth - margin, y + squareWidth - margin, paint )
+        }
+
+        private fun drawSquareGuess(content: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
+            paint.color = Color.RED
             paint.setTextSize(squareTextSize)
-            canvas.drawText("9", 60f, 140f, paint)
-
+            canvas.drawText(content, x + squareWidth * 0.31f, y + squareWidth * 0.75f, paint)
         }
     }
 
