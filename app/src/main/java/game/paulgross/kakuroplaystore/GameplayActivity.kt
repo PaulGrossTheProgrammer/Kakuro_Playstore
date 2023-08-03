@@ -95,7 +95,6 @@ class GameplayActivity : AppCompatActivity() {
                             theActivity.touchedGuess(touchedIndex)
                             return true
                         } else {
-                            // TODO - clear the current selected Index
                             theActivity.touchedGuessClear()
                         }
                     }
@@ -105,7 +104,6 @@ class GameplayActivity : AppCompatActivity() {
 
             private fun lookupGuessId(x: Float, y: Float): Int {
                 for (entry in view.playSquareTouchLookUpId.entries.iterator()) {
-                    print("${entry.key} : ${entry.value}")
                     if (x >= entry.key.xMin && x <= entry.key.xMax && y >= entry.key.yMin && y <= entry.key.yMax) {
                         return entry.value
                     }
@@ -113,7 +111,6 @@ class GameplayActivity : AppCompatActivity() {
                 return -1
             }
         }
-
 
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
@@ -203,9 +200,6 @@ class GameplayActivity : AppCompatActivity() {
     private fun touchedGuess(touchedIndex: Int) {
         selectedId = touchedIndex
         findViewById<PlayingGridView>(R.id.viewPlayGrid).invalidate() // Trigger a redraw
-
-        // TESTING ONLY = send a DUMMY guess to the GameServer
-        // In the future, call this from a set of digits with onClick()
     }
 
     private fun touchedGuessClear() {
@@ -218,7 +212,6 @@ class GameplayActivity : AppCompatActivity() {
         val tag = view.tag.toString()
         val digit = tag.substringAfter("Guess")
 
-        // TODO - send guess to GameServer
         if (selectedId != -1) {
             GameServer.queueActivityMessage("Guess=$selectedId,$digit")
         }
