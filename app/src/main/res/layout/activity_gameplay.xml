@@ -6,6 +6,92 @@
     android:layout_height="match_parent"
     tools:context=".GameplayActivity">
 
+    <Button
+        android:id="@+id/buttonGuess8"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="8dp"
+        android:onClick="onClickDigit"
+        android:tag="Guess8"
+        android:text="8"
+        android:textSize="34sp"
+        app:layout_constraintStart_toEndOf="@+id/buttonGuess7"
+        app:layout_constraintTop_toTopOf="@+id/buttonGuess7" />
+
+    <Button
+        android:id="@+id/buttonGuess7"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:onClick="onClickDigit"
+        android:tag="Guess7"
+        android:text="7"
+        android:textSize="34sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonGuess4" />
+
+    <Button
+        android:id="@+id/buttonGuess9"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="8dp"
+        android:onClick="onClickDigit"
+        android:tag="Guess9"
+        android:text="9"
+        android:textSize="34sp"
+        app:layout_constraintStart_toEndOf="@+id/buttonGuess8"
+        app:layout_constraintTop_toTopOf="@+id/buttonGuess7" />
+
+    <Button
+        android:id="@+id/buttonGuess5"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="8dp"
+        android:onClick="onClickDigit"
+        android:tag="Guess5"
+        android:text="5"
+        android:textSize="34sp"
+        app:layout_constraintStart_toEndOf="@+id/buttonGuess4"
+        app:layout_constraintTop_toTopOf="@+id/buttonGuess4" />
+
+    <Button
+        android:id="@+id/buttonGuess4"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:onClick="onClickDigit"
+        android:tag="Guess4"
+        android:text="4"
+        android:textSize="34sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonGuess1" />
+
+    <Button
+        android:id="@+id/buttonGuess6"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="8dp"
+        android:onClick="onClickDigit"
+        android:tag="Guess6"
+        android:text="6"
+        android:textSize="34sp"
+        app:layout_constraintStart_toEndOf="@+id/buttonGuess5"
+        app:layout_constraintTop_toTopOf="@+id/buttonGuess4" />
+
+    <Button
+        android:id="@+id/buttonGuess3"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="8dp"
+        android:onClick="onClickDigit"
+        android:tag="Guess3"
+        android:text="3"
+        android:textSize="34sp"
+        app:layout_constraintStart_toEndOf="@+id/buttonGuess2"
+        app:layout_constraintTop_toTopOf="@+id/buttonGuess1" />
+
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
@@ -29,12 +115,36 @@
 
     <TextView
         android:id="@+id/textViewDebug"
-        android:layout_width="181dp"
-        android:layout_height="183dp"
-        android:layout_marginTop="16dp"
+        android:layout_width="295dp"
+        android:layout_height="101dp"
         android:text="Debug Data"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/buttonGuess1"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:onClick="onClickDigit"
+        android:tag="Guess1"
+        android:text="1"
+        android:textSize="34sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/viewPlayGrid" />
+
+    <Button
+        android:id="@+id/buttonGuess2"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="8dp"
+        android:onClick="onClickDigit"
+        android:tag="Guess2"
+        android:text="2"
+        android:textSize="34sp"
+        app:layout_constraintStart_toEndOf="@+id/buttonGuess1"
+        app:layout_constraintTop_toTopOf="@+id/buttonGuess1" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

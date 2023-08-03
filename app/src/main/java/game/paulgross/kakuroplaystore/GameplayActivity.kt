@@ -96,6 +96,7 @@ class GameplayActivity : AppCompatActivity() {
                             return true
                         } else {
                             // TODO - clear the current selected Index
+                            theActivity.touchedGuessClear()
                         }
                     }
                 }
@@ -205,7 +206,22 @@ class GameplayActivity : AppCompatActivity() {
 
         // TESTING ONLY = send a DUMMY guess to the GameServer
         // In the future, call this from a set of digits with onClick()
-        GameServer.queueActivityMessage("Guess=$touchedIndex,3")
+    }
+
+    private fun touchedGuessClear() {
+        selectedId = -1
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).invalidate() // Trigger a redraw
+    }
+
+    fun onClickDigit(view: View) {
+        Log.d(TAG, "Clicked a guess: ${view.tag}")
+        val tag = view.tag.toString()
+        val digit = tag.substringAfter("Guess")
+
+        // TODO - send guess to GameServer
+        if (selectedId != -1) {
+            GameServer.queueActivityMessage("Guess=$selectedId,$digit")
+        }
     }
 
     private fun confirmExitApp() {
