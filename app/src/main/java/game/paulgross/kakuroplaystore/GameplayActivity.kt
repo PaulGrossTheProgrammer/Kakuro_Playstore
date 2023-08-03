@@ -1,5 +1,6 @@
 package game.paulgross.kakuroplaystore
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -7,18 +8,45 @@ import android.content.IntentFilter
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
+import android.view.View.OnTouchListener
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+
 
 class GameplayActivity : AppCompatActivity() {
+    @SuppressLint("ClickableViewAccessibility")  // Why do I need this??? Something to do with setOnTouchListener()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gameplay)
+
+        // Attach the touch handler to the custom Play View
+        // TODO - can I move this inside the PlayingGridView class???
+        val viewPlayGrid = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        viewPlayGrid.setOnTouchListener(View.OnTouchListener { _, event ->
+            val x = event.x
+            val y = event.y
+
+            when(event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    Log.d(TAG, "ACTION_DOWN \nx: $x\ny: $y")
+                    // Here I want to lookup the square touched.
+                    viewPlayGrid.getTouchedGuessId(x, y)
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    Log.d(TAG, "ACTION_MOVE \nx: $x\ny: $y")
+                }
+                MotionEvent.ACTION_UP -> {
+                    Log.d(TAG, "ACTION_UP \nx: $x\ny: $y")
+                }
+            }
+            return@OnTouchListener  true
+        })
 
         enableMessagesFromGameServer()
         GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE))
@@ -65,9 +93,20 @@ class GameplayActivity : AppCompatActivity() {
         var margin = 1f
         var squareTextSize = 1f
 
-
         var puzzleWidth = 1
         var playerGrid: MutableList<Int> = mutableListOf()
+
+        /**
+         * The lookup from touch areas to the index of the guess square.
+         */
+        data class TouchArea(val xMin: Float, val yMin: Float, val xMax: Float, val yMax: Float)
+        var playSquareTouchLookId: MutableMap<TouchArea, Int> = mutableMapOf()
+
+        fun getTouchedGuessId(x: Float, y: Float): Int {
+            Log.d("PlayingGridView", "TODO: Lookup Guess Id for $x, $y")
+
+            return -1
+        }
 
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
@@ -75,9 +114,10 @@ class GameplayActivity : AppCompatActivity() {
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
 
-            squareWidth = currViewWidth/(puzzleWidth + 1f)
+            squareWidth = currViewWidth/(puzzleWidth + 2f)
+            Log.d("PlayingGridView", "squareWidth = $squareWidth")
 
-            margin = squareWidth * 0.15f
+            margin = squareWidth * 0.05f
             squareTextSize = squareWidth * 0.7f
         }
 
@@ -94,11 +134,11 @@ class GameplayActivity : AppCompatActivity() {
             // Draw grid
             paint.color = Color.WHITE
 
-            var currX = 0f
-            var currY = 0f
+            val startX = squareWidth/2f
 
-            Log.d("PlayingGridView", "squareWidth = $squareWidth")
-1
+            var currX = startX
+            var currY = squareWidth/2f
+
             val rows = puzzleWidth + 1
             val cols = playerGrid.size.div(puzzleWidth) + 1
             var index = 0
@@ -113,7 +153,7 @@ class GameplayActivity : AppCompatActivity() {
                     if (puzzleSquare) {
                         val gridValue = playerGrid[index]
                         if (gridValue == -1) {
-                            drawSquare(currX, currY, canvas, paint)
+                            drawGuessSquare(index, currX, currY, canvas, paint)
                             drawSquareGuess("9", currX, currY, canvas, paint)
                         }
                     }
@@ -125,16 +165,18 @@ class GameplayActivity : AppCompatActivity() {
                         index++
                     }
                 }
-                currX = 0f
+                currX = startX
                 currY += squareWidth
             }
 
         }
 
-        private fun drawSquare(x: Float, y: Float, canvas: Canvas, paint: Paint) {
+        private fun drawGuessSquare(index : Int, x: Float, y: Float, canvas: Canvas, paint: Paint) {
             paint.color = Color.WHITE
             canvas?.drawRect(x + margin, y + margin,
                 x + squareWidth - margin, y + squareWidth - margin, paint )
+
+            playSquareTouchLookId.put(TouchArea(x, y, x + squareWidth, y + squareWidth), index)
         }
 
         private fun drawSquareGuess(content: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
