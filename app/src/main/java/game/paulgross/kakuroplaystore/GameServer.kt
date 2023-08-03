@@ -64,7 +64,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     override fun run() {
 
         restoreGameState()
-//        initGameState(structure, puzzleWidth, puzzleSolution)
 
         while (gameIsRunning.get()) {
             val activityRequest = fromActivitiesToGameSeverQ.poll()  // Non-blocking read.
@@ -214,6 +213,17 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         if (message == "Status") {
             messageGameplayDisplayState()
         }
+        if (message.startsWith("Guess=")) {
+            Log.d(TAG, "The user sent a guess: $message")
+            val split = message.split("=")
+            val guess = split[1].split(",")
+
+            val index = guess[0].toInt()
+            val value = guess[1].toInt()
+            playerGrid[index] = value
+
+            messageGameplayDisplayState()
+        }
 
         // TODO - handle the normal gameplay commands
 
@@ -283,7 +293,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         // Each puzzle is a  grid with blank squares as zeros,
         // and the solution as numbers from 1 to 9 in the non-zero squares.
-        // THe player sees the grid with zeros as blanks, the guesses as integers,
+        // The player sees the grid with zeros as blanks, the guesses as integers,
         // and any square they haven't guessed is -1.
         // The player also sees the hints, which are ACROSS and DOWN clues derived
         // from the solution.
@@ -318,7 +328,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             Log.d(TAG, "hint: $hint")
         }
 
-        // Plus the player's own "possibles" list:
+        // TODO: The player's own "possibles" list:
         // 0=3&1, 0=3/1, ... etc
     }
 
