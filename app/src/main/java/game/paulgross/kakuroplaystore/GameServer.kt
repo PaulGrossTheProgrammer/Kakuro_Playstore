@@ -18,6 +18,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     private val gameIsRunning = AtomicBoolean(true)  // TODO - this might not be needed.
 
+    // We use a BlockingQueue here to block thread progress if needed.
+    // https://developer.android.com/reference/java/util/concurrent/BlockingQueue
     private val fromClientHandlerToGameServerQ: BlockingQueue<ClientRequest> = LinkedBlockingQueue()
     private val fromClientToGameServerQ: BlockingQueue<ClientRequest> = LinkedBlockingQueue()
     private val fromActivitiesToGameSeverQ: BlockingQueue<String> = LinkedBlockingQueue()
@@ -56,16 +58,22 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
     }
 
-    private val loopDelayMilliseconds = 500L
-    private val autoStatusDelayMilliseconds = 5000L
-    private val autoStatusCount = autoStatusDelayMilliseconds.div(loopDelayMilliseconds)
-    private var autoStatusCountdown = 0L
+//    private val loopDelayMilliseconds = 500L
+//    private val autoStatusDelayMilliseconds = 5000L
+//    private val autoStatusCount = autoStatusDelayMilliseconds.div(loopDelayMilliseconds)
+//    private var autoStatusCountdown = 0L
+
+    private val messageAvailable: BlockingQueue<Boolean> = LinkedBlockingQueue()
 
     override fun run() {
 
         restoreGameState()
 
         while (gameIsRunning.get()) {
+            messageAvailable.take() //  We don't need the contents, since this is just an activation flag.
+            messageAvailable.clear() // Don't ever allow the queue to build up.
+            Log.d(TAG, "A message is available.")
+
             val activityRequest = fromActivitiesToGameSeverQ.poll()  // Non-blocking read.
             if (activityRequest != null) {
                 handleActivityMessage(activityRequest)
@@ -81,17 +89,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             if (clientMessage != null) {
                 handleClientMessage(clientMessage.requestString, clientMessage.responseQ)
             }
-
-            if (gameMode == GameMode.CLIENT) {
-                // Automatically request a new status after a delay
-                autoStatusCountdown--
-                if (autoStatusCountdown < 1) {
-                    autoStatusCountdown = autoStatusCount
-                    socketClient?.messageFromGameServer("status:")
-                }
-            }
-
-            sleep(loopDelayMilliseconds)  // Pause for a short time...
         }
         Log.d(TAG, "The Game Server has shut down.")
     }
@@ -111,7 +108,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             remotePlayers.clear()
         }
 
-        autoStatusCountdown = 0
+//        autoStatusCountdown = 0
         try {
             socketClient = SocketClient(address, SocketServer.PORT)
             socketClient!!.start()
@@ -185,7 +182,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private fun handleClientMessage(message: String, responseQ: Queue<String>) {
         if (message.startsWith("s:", true)) {
             val remoteState = message.substringAfter("s:")
-            autoStatusCountdown = autoStatusCount  // Reset the auto-request countdown.
+//            autoStatusCountdown = autoStatusCount  // Reset the auto-request countdown.
 
             if (previousStateUpdate != remoteState) {
                 Log.d(TAG, "REMOTE Game Server sent state change: [$remoteState]")
@@ -487,18 +484,21 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             if (singletonGameServer?.gameIsRunning!!.get()) {
                 singletonGameServer?.fromActivitiesToGameSeverQ?.add(message)
             }
+            singletonGameServer?.messageAvailable?.put(true)
         }
 
         fun queueClientHandlerMessage(message: String, responseQ: Queue<String>) {
             if (singletonGameServer?.gameIsRunning!!.get()) {
                 singletonGameServer?.fromClientHandlerToGameServerQ?.add(ClientRequest(message, responseQ))
             }
+            singletonGameServer?.messageAvailable?.put(true)
         }
 
         fun queueClientMessage(message: String, responseQ: Queue<String>) {
             if (singletonGameServer?.gameIsRunning!!.get()) {
                 singletonGameServer?.fromClientToGameServerQ?.add(ClientRequest(message, responseQ))
             }
+            singletonGameServer?.messageAvailable?.put(true)
         }
 
         fun decodeState(stateString: String): StateVariables? {

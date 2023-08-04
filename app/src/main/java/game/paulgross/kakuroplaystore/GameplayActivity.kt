@@ -40,25 +40,10 @@ class GameplayActivity : AppCompatActivity() {
     }
 
     private fun displayGrid(playerGrid: MutableList<Int>, puzzleWidth:Int) {
-        // DEBUG text grid first
-        val debugView = findViewById<TextView>(R.id.textViewDebug)
-        var debugText = "width = $puzzleWidth\n"
 
-        var squareCounter = 0
-        while (squareCounter < playerGrid.size) {
-
-            val isFirstColumn = (squareCounter.mod(puzzleWidth) == 0)
-            if (isFirstColumn) { debugText += "\n" }
-            debugText += playerGrid[squareCounter].toString()
-
-            squareCounter++
-        }
-        debugView.text = debugText
-
-        // Send new data to the Gameplay View
-        val playGridView = findViewById<View>(R.id.viewPlayGrid)
-        (playGridView as PlayingGridView).playerGrid = playerGrid
-        (playGridView as PlayingGridView).puzzleWidth = puzzleWidth
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        playGridView.playerGrid = playerGrid
+        playGridView.puzzleWidth = puzzleWidth
         playGridView.invalidate() // Trigger a redraw
     }
 
@@ -77,7 +62,7 @@ class GameplayActivity : AppCompatActivity() {
         var playerGrid: MutableList<Int> = mutableListOf()
 
         /**
-         * TouchArea lookup to the index of the guess square.
+         * Create a TouchArea lookup to find the index of the guess square that was touched.
          */
         data class TouchArea(val xMin: Float, val yMin: Float, val xMax: Float, val yMax: Float)
         var playSquareTouchLookUpId: MutableMap<TouchArea, Int> = mutableMapOf()
@@ -93,7 +78,7 @@ class GameplayActivity : AppCompatActivity() {
                         if (touchedIndex != -1) {
                             Log.d(TAG, "Touched index: $touchedIndex")
                             theActivity.touchedGuess(touchedIndex)
-                            return true
+//                            return true  // The search is over, so return.
                         } else {
                             theActivity.touchedGuessClear()
                         }
@@ -135,6 +120,13 @@ class GameplayActivity : AppCompatActivity() {
             paint.color = Color.BLUE
             canvas.drawPaint(paint)
 
+            // TODO: Only add new touch areas if they existing ones are missing or outdated.
+            // This will get complicated when the user can scroll around large puzzles...
+            var addTouchAreas = false
+            if (playSquareTouchLookUpId.isEmpty()) {
+                addTouchAreas = true
+            }
+
             // Draw grid
             paint.color = Color.WHITE
 
@@ -155,7 +147,9 @@ class GameplayActivity : AppCompatActivity() {
                         val gridValue = playerGrid[index]
                         if (gridValue != 0) {
                             val selected = (index == gameplayActivity?.selectedId)
-                            drawGuessSquare(index, selected, currX, currY, canvas, paint)
+
+                            // TODO - probably combine these two calls...
+                            drawGuessSquare(index, selected, addTouchAreas, currX, currY, canvas, paint)
                             if (gridValue > 0) {
                                 drawSquareGuess(gridValue.toString(), currX, currY, canvas, paint)
                             }
@@ -174,7 +168,7 @@ class GameplayActivity : AppCompatActivity() {
             }
         }
 
-        private fun drawGuessSquare(index : Int, selected: Boolean ,x: Float, y: Float, canvas: Canvas, paint: Paint) {
+        private fun drawGuessSquare(index : Int, selected: Boolean, addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
             paint.color = Color.GRAY
             if (selected) {
                 paint.color = Color.WHITE
@@ -182,7 +176,9 @@ class GameplayActivity : AppCompatActivity() {
             canvas?.drawRect(x + margin, y + margin,
                 x + squareWidth - margin, y + squareWidth - margin, paint )
 
-            playSquareTouchLookUpId.put(TouchArea(x, y, x + squareWidth, y + squareWidth), index)
+            if (addTouchAreas) {
+                playSquareTouchLookUpId.put(TouchArea(x, y, x + squareWidth, y + squareWidth), index)
+            }
         }
 
         private fun drawSquareGuess(content: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
@@ -263,7 +259,6 @@ class GameplayActivity : AppCompatActivity() {
                     var puzzleWidth = newState.puzzleWidth
                     var playerGrid = newState.playerGrid
 
-                    // TODO:
                     displayGrid(playerGrid, puzzleWidth)
                 }
             }
