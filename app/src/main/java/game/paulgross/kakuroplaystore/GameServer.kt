@@ -58,11 +58,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
     }
 
-//    private val loopDelayMilliseconds = 500L
-//    private val autoStatusDelayMilliseconds = 5000L
-//    private val autoStatusCount = autoStatusDelayMilliseconds.div(loopDelayMilliseconds)
-//    private var autoStatusCountdown = 0L
-
     private val messageAvailable: BlockingQueue<Boolean> = LinkedBlockingQueue()
 
     override fun run() {
@@ -70,9 +65,14 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         restoreGameState()
 
         while (gameIsRunning.get()) {
-            messageAvailable.take() //  We don't need the contents, since this is just an activation flag.
+            messageAvailable.take() //  We don't need the message contents, since this is just an activation flag.
+            // TODO - use a "false" message to routinely trigger the queue (once per second?)
+            //  to hopefully recover if this trigger system fails.
             messageAvailable.clear() // Don't ever allow the queue to build up.
             Log.d(TAG, "A message is available.")
+
+            // TODO - clear at least a few client requests in a single loop in case there are many queued up.
+            // TODO - monitor queue length for accidental build-up.
 
             val activityRequest = fromActivitiesToGameSeverQ.poll()  // Non-blocking read.
             if (activityRequest != null) {
@@ -81,7 +81,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
             val clientHandlerMessage = fromClientHandlerToGameServerQ.poll()  // Non-blocking read.
             if (clientHandlerMessage != null) {
-                // TODO - clear at least a few client requests if there are many queued up.
                 handleClientHandlerMessage(clientHandlerMessage.requestString, clientHandlerMessage.responseQ)
             }
 
@@ -108,7 +107,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             remotePlayers.clear()
         }
 
-//        autoStatusCountdown = 0
         try {
             socketClient = SocketClient(address, SocketServer.PORT)
             socketClient!!.start()
@@ -165,7 +163,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         if (message == "status") {
             validRequest = true
-            responseQ.add("s:${encodeState()}")
+            responseQ.add("state,${encodeState()}")
         }
         if (message == "shutdown" || message == "abandoned") {
             validRequest = true
@@ -180,9 +178,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private fun handleClientMessage(message: String, responseQ: Queue<String>) {
-        if (message.startsWith("s:", true)) {
-            val remoteState = message.substringAfter("s:")
-//            autoStatusCountdown = autoStatusCount  // Reset the auto-request countdown.
+        if (message.startsWith("state,", true)) {
+            val remoteState = message.substringAfter("state,")
 
             if (previousStateUpdate != remoteState) {
                 Log.d(TAG, "REMOTE Game Server sent state change: [$remoteState]")
@@ -248,7 +245,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private fun pushStateToClients() {
-        socketServer?.pushMessageToClients("s:${encodeState()}")
+        socketServer?.pushMessageToClients("state,${encodeState()}")
     }
 
     private fun stopGame() {
@@ -405,7 +402,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     // Possibles are user defined, and coded as 9-digit Longs.
     var playerPossibles: Array<Long> = Array(10) {0} // Same size Array as the solution
 
-    data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int)
+    data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int, var playerHints:MutableList<Hint>)
 
     private fun encodeState(): String {
         var state = ""
@@ -420,6 +417,17 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
 
         // TODO - encode hints? Only need to send this once...
+        // h=2ACROSS13:2DOWN23 ... etc
+        state += ",h="
+        playerHints.forEachIndexed {index, hint ->
+            hint.index
+            hint.direction
+            hint.total
+            state += "${hint.index}${hint.direction}${hint.total}"
+            if (index < playerHints.size - 1) {
+                state += ":"
+            }
+        }
 
         return state
     }
@@ -429,6 +437,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         var width = 0
         var grid:MutableList<Int> = mutableListOf()
+        var hints: MutableList<Hint> = mutableListOf()
 
         // Example
         //w=4,g=-1:-1:0:0:-1:-1:0:0:0:-1:-1:-1:0:0:-1:-1
@@ -449,13 +458,33 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             }
             if (key == "g") {
                 val ints = value.split(":")
-                ints.forEach{theIntString ->
+                ints.forEach {theIntString ->
                     grid.add(theIntString.toInt())
+                }
+            }
+            if (key == "h") {
+                Log.d(TAG, "TODO: Decode the hints...")
+                val hintList = value.split(":")
+                hintList.forEach {theHintString ->
+                    val downString = Direction.DOWN.toString()
+                    val acrossString = Direction.ACROSS.toString()
+                    var dir = Direction.DOWN
+                    var index = -1
+                    var total = 0
+                    if (theHintString.contains(downString)) {
+                        index = theHintString.substringBefore(downString, "-1").toInt()
+                        total = theHintString.substringAfter(downString).toInt()
+                    } else if (theHintString.contains(acrossString)) {
+                        dir = Direction.ACROSS
+                        index = theHintString.substringBefore(acrossString, "-1").toInt()
+                        total = theHintString.substringAfter(acrossString).toInt()
+                    }
+                    hints.add(Hint(index, dir, total))
                 }
             }
         }
 
-        return StateVariables(grid, width)
+        return StateVariables(grid, width, hints)
     }
 
     companion object {

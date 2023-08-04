@@ -39,11 +39,12 @@ class GameplayActivity : AppCompatActivity() {
         confirmExitApp()
     }
 
-    private fun displayGrid(playerGrid: MutableList<Int>, puzzleWidth:Int) {
+    private fun displayGrid(playerGrid: MutableList<Int>, puzzleWidth:Int, playerHints: MutableList<GameServer.Hint>) {
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.playerGrid = playerGrid
         playGridView.puzzleWidth = puzzleWidth
+        playGridView.playerHints = playerHints
         playGridView.invalidate() // Trigger a redraw
     }
 
@@ -60,6 +61,7 @@ class GameplayActivity : AppCompatActivity() {
 
         var puzzleWidth = 1
         var playerGrid: MutableList<Int> = mutableListOf()
+        var playerHints: MutableList<GameServer.Hint> = mutableListOf()
 
         /**
          * Create a TouchArea lookup to find the index of the guess square that was touched.
@@ -78,7 +80,6 @@ class GameplayActivity : AppCompatActivity() {
                         if (touchedIndex != -1) {
                             Log.d(TAG, "Touched index: $touchedIndex")
                             theActivity.touchedGuess(touchedIndex)
-//                            return true  // The search is over, so return.
                         } else {
                             theActivity.touchedGuessClear()
                         }
@@ -121,7 +122,8 @@ class GameplayActivity : AppCompatActivity() {
             canvas.drawPaint(paint)
 
             // TODO: Only add new touch areas if they existing ones are missing or outdated.
-            // This will get complicated when the user can scroll around large puzzles...
+            // This will get complicated when the user can scroll around large puzzles
+            // where only part of the whole puzzle is visible at any one time.
             var addTouchAreas = false
             if (playSquareTouchLookUpId.isEmpty()) {
                 addTouchAreas = true
@@ -138,6 +140,9 @@ class GameplayActivity : AppCompatActivity() {
             val rows = puzzleWidth + 1
             val cols = playerGrid.size.div(puzzleWidth) + 1
             var index = 0
+
+            var drawnHints: MutableList<GameServer.Hint> = mutableListOf()
+
             for (col in (1..cols)) {
 
                 for (row in (1..rows)) {
@@ -154,7 +159,23 @@ class GameplayActivity : AppCompatActivity() {
                                 drawSquareGuess(gridValue.toString(), currX, currY, canvas, paint)
                             }
                         }
+
+                        // TODO - See if this square has a hint
+                        playerHints.forEach { hint ->
+                            if (!drawnHints.contains(hint) && index == hint.index) {
+                                drawnHints.add(hint)
+                                Log.d(TAG, "Drawing hint: ${hint}")
+
+                                // TODO ... draw the hint
+                                if (hint.direction == GameServer.Direction.DOWN) {
+                                    drawDownHint(hint.total.toString(), currX, currY, canvas, paint)
+                                } else if (hint.direction == GameServer.Direction.ACROSS) {
+                                    drawAcrossHint(hint.total.toString(), currX, currY, canvas, paint)
+                                }
+                            }
+                        }
                     }
+
 
                     currX += squareWidth
 
@@ -173,12 +194,36 @@ class GameplayActivity : AppCompatActivity() {
             if (selected) {
                 paint.color = Color.WHITE
             }
-            canvas?.drawRect(x + margin, y + margin,
+            canvas.drawRect(x + margin, y + margin,
                 x + squareWidth - margin, y + squareWidth - margin, paint )
 
             if (addTouchAreas) {
                 playSquareTouchLookUpId.put(TouchArea(x, y, x + squareWidth, y + squareWidth), index)
             }
+        }
+
+        private fun drawDownHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
+            paint.color = Color.WHITE
+
+            canvas.drawLine(x + margin, y + margin - squareWidth, x + squareWidth - margin, y - margin, paint )
+            canvas.drawLine(x + margin, y + margin - squareWidth, x + margin, y - margin, paint )
+            canvas.drawLine(x + margin, y - margin, x + squareWidth - margin, y - margin, paint )
+
+            paint.setTextSize(squareTextSize * 0.45f)
+            canvas.drawText(hintString, x + squareWidth * 0.18f, y + squareWidth * 0.85f - squareWidth, paint)
+        }
+
+        private fun drawAcrossHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
+            paint.color = Color.WHITE
+
+            canvas.drawLine(x + margin - squareWidth, y + margin, x - margin, y - margin + squareWidth, paint )
+            canvas.drawLine(x + margin - squareWidth, y + margin, x - margin, y + margin, paint )
+            canvas.drawLine(x - margin, y + margin,x - margin, y - margin + squareWidth , paint )
+//            canvas.drawLine(x + margin, y + margin - squareWidth, x + margin, y - margin, paint )
+//            canvas.drawLine(x + margin, y - margin, x + squareWidth - margin, y - margin, paint )
+
+            paint.setTextSize(squareTextSize * 0.45f)
+            canvas.drawText(hintString, x + squareWidth * 0.56f  - squareWidth, y + squareWidth * 0.45f, paint)
         }
 
         private fun drawSquareGuess(content: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
@@ -258,8 +303,9 @@ class GameplayActivity : AppCompatActivity() {
                 if (newState != null) {
                     var puzzleWidth = newState.puzzleWidth
                     var playerGrid = newState.playerGrid
+                    var hints = newState.playerHints
 
-                    displayGrid(playerGrid, puzzleWidth)
+                    displayGrid(playerGrid, puzzleWidth, hints)
                 }
             }
         }
