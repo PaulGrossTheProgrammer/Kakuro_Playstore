@@ -61,6 +61,13 @@ class GameplayActivity : AppCompatActivity() {
         var squareTextSize = 1f
 
         var puzzleWidth = 1
+
+        // Adjust these for scrolling around large puzzles
+        var firstDisplayRow = 1
+        var firstDisplayCol = 1
+        var maxDisplayRows = 5 // FIXME - doesn't work if less than puzzle width...
+        var maxDisplayCols = 5
+
         var playerGrid: MutableList<Int> = mutableListOf()
         var playerHints: MutableList<GameServer.Hint> = mutableListOf()
 
@@ -110,7 +117,12 @@ class GameplayActivity : AppCompatActivity() {
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
 
-            squareWidth = currViewWidth/(puzzleWidth + 2f)
+            var displayRows = maxDisplayRows
+            if (puzzleWidth < displayRows) {
+                displayRows = puzzleWidth
+            }
+
+            squareWidth = currViewWidth/(displayRows + 2f)
             Log.d("PlayingGridView", "squareWidth = $squareWidth")
 
             margin = squareWidth * 0.05f
@@ -145,16 +157,24 @@ class GameplayActivity : AppCompatActivity() {
             var currX = startX
             var currY = squareWidth/2f
 
-            val rows = puzzleWidth + 1
-            val cols = playerGrid.size.div(puzzleWidth) + 1
+            var rows = puzzleWidth + 1
+            var cols = playerGrid.size.div(puzzleWidth) + 1
+
+            if (rows > maxDisplayRows) {
+                rows = maxDisplayRows
+            }
+            if (cols > maxDisplayCols) {
+                cols = maxDisplayCols
+            }
+
             var index = 0
 
             // TODO - probably don't need this ....
             var drawnHints: MutableList<GameServer.Hint> = mutableListOf() // TODO - decide if we still need this...?
 
-            for (col in (1..cols)) {
+            for (col in (firstDisplayCol..cols)) {
 
-                for (row in (1..rows)) {
+                for (row in (firstDisplayRow..rows)) {
                     // First row and colum are only used as space for showing hints.
                     val puzzleSquare = (col != 1 && row != 1)
 
