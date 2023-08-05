@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Color.rgb
 import android.graphics.Paint
 import android.os.Bundle
 import android.util.AttributeSet
@@ -123,8 +124,10 @@ class GameplayActivity : AppCompatActivity() {
             Log.d("PlayingGridView", "onDraw() running")
 
             // Paint the canvas background
-            paint.color = Color.BLUE
+//            paint.color = Color.CYAN
+            paint.color = Color.rgb(137,196,199)
             canvas.drawPaint(paint)
+//            rgb(int,int,int)
 
             // TODO: Only add new touch areas if the existing ones are missing or outdated.
             // This will get complicated when the user can scroll around large puzzles
@@ -161,6 +164,8 @@ class GameplayActivity : AppCompatActivity() {
                         if (gridValue != 0) {
                             val selected = (index == gameplayActivity?.selectedId)
                             drawGuessSquare(index, gridValue.toString(), selected, addTouchAreas, currX, currY, canvas, paint)
+                        } else {
+                            drawBlankSquare(currX, currY, canvas, paint)
                         }
 
                         playerHints.forEach { hint ->
@@ -174,7 +179,12 @@ class GameplayActivity : AppCompatActivity() {
                             }
                         }
                         index++
+                    } else {
+                        drawBlankSquare(currX, currY, canvas, paint)
                     }
+
+
+
                     currX += squareWidth
                 }
                 currX = startX
@@ -183,7 +193,7 @@ class GameplayActivity : AppCompatActivity() {
         }
 
         private fun drawGuessSquare(index : Int, content: String, selected: Boolean, addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
-            paint.color = Color.GRAY
+            paint.color = Color.LTGRAY
             if (selected) {
                 paint.color = Color.WHITE
             }
@@ -202,24 +212,36 @@ class GameplayActivity : AppCompatActivity() {
             }
         }
 
+        //drawBlankSquare
+        private fun drawBlankSquare(x: Float, y: Float, canvas: Canvas, paint: Paint) {
+            paint.color = Color.GRAY
+
+            canvas.drawRect(x + margin, y + margin,
+                x + squareWidth - margin, y + squareWidth - margin, paint )
+        }
+
         private fun drawDownHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
-            paint.color = Color.WHITE
+            paint.color = Color.DKGRAY
+            paint.setStrokeWidth(3f)  // TODO: Make proportional....
 
             canvas.drawLine(x + margin, y + margin - squareWidth, x + squareWidth - margin, y - margin, paint )
-            canvas.drawLine(x + margin, y + margin - squareWidth, x + margin, y - margin, paint )
-            canvas.drawLine(x + margin, y - margin, x + squareWidth - margin, y - margin, paint )
+//            canvas.drawLine(x + margin, y + margin - squareWidth, x + margin, y - margin, paint )
+//            canvas.drawLine(x + margin, y - margin, x + squareWidth - margin, y - margin, paint )
 
+            paint.color = Color.BLACK
             paint.setTextSize(squareTextSize * 0.45f)
             canvas.drawText(hintString, x + squareWidth * 0.18f, y + squareWidth * 0.85f - squareWidth, paint)
         }
 
         private fun drawAcrossHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
-            paint.color = Color.WHITE
+            paint.color = Color.DKGRAY
+            paint.setStrokeWidth(3f)
 
             canvas.drawLine(x + margin - squareWidth, y + margin, x - margin, y - margin + squareWidth, paint )
-            canvas.drawLine(x + margin - squareWidth, y + margin, x - margin, y + margin, paint )
-            canvas.drawLine(x - margin, y + margin,x - margin, y - margin + squareWidth , paint )
+//           canvas.drawLine(x + margin - squareWidth, y + margin, x - margin, y + margin, paint )
+//            canvas.drawLine(x - margin, y + margin,x - margin, y - margin + squareWidth , paint )
 
+            paint.color = Color.BLACK
             paint.setTextSize(squareTextSize * 0.45f)
             canvas.drawText(hintString, x + squareWidth * 0.56f  - squareWidth, y + squareWidth * 0.45f, paint)
         }
