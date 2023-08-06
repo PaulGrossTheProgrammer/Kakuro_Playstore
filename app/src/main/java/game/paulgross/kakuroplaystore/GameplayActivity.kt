@@ -65,8 +65,8 @@ class GameplayActivity : AppCompatActivity() {
         // Adjust these for scrolling around large puzzles
         var firstDisplayRow = 1
         var firstDisplayCol = 1
-        var maxDisplayRows = 5 // FIXME - doesn't work if less than puzzle width...
-        var maxDisplayCols = 5
+        var maxDisplayRows = 6  // FIXME - 6 doesn't work with a 5x5 puzzle
+        var maxDisplayCols = 6
 
         var playerGrid: MutableList<Int> = mutableListOf()
         var playerHints: MutableList<GameServer.Hint> = mutableListOf()
@@ -118,11 +118,11 @@ class GameplayActivity : AppCompatActivity() {
             currViewHeight = measuredHeight
 
             var displayRows = maxDisplayRows
-            if (puzzleWidth < displayRows) {
-                displayRows = puzzleWidth
+            if (puzzleWidth + 2 < displayRows) {
+                displayRows = puzzleWidth + 2
             }
 
-            squareWidth = currViewWidth/(displayRows + 2f)
+            squareWidth = currViewWidth/(displayRows + 1f)
             Log.d("PlayingGridView", "squareWidth = $squareWidth")
 
             margin = squareWidth * 0.05f
@@ -169,9 +169,6 @@ class GameplayActivity : AppCompatActivity() {
 
             var index = 0
 
-            // TODO - probably don't need this ....
-            var drawnHints: MutableList<GameServer.Hint> = mutableListOf() // TODO - decide if we still need this...?
-
             for (col in (firstDisplayCol..cols)) {
 
                 for (row in (firstDisplayRow..rows)) {
@@ -179,6 +176,7 @@ class GameplayActivity : AppCompatActivity() {
                     val puzzleSquare = (col != 1 && row != 1)
 
                     if (puzzleSquare) {
+                        Log.d(TAG, "Puzzle index = $index")
                         val gridValue = playerGrid[index]
                         // Non-playable grid value is 0, -1 means no guess yet, > 0 means a player guess
                         if (gridValue != 0) {
@@ -189,8 +187,7 @@ class GameplayActivity : AppCompatActivity() {
                         }
 
                         playerHints.forEach { hint ->
-                            if (!drawnHints.contains(hint) && index == hint.index) {
-                                drawnHints.add(hint)
+                            if (index == hint.index) {
                                 if (hint.direction == GameServer.Direction.DOWN) {
                                     drawDownHint(hint.total.toString(), currX, currY, canvas, paint)
                                 } else if (hint.direction == GameServer.Direction.ACROSS) {
@@ -203,10 +200,10 @@ class GameplayActivity : AppCompatActivity() {
                         drawBlankSquare(currX, currY, canvas, paint)
                     }
 
-
-
                     currX += squareWidth
                 }
+                // index needs to be offset when we aren's viewing by starting at the 1, 1 position.
+                index = (col - 1) * puzzleWidth + firstDisplayCol - 1
                 currX = startX
                 currY += squareWidth
             }
