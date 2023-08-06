@@ -6,91 +6,126 @@
     android:layout_height="match_parent"
     tools:context=".GameplayActivity">
 
-    <Button
-        android:id="@+id/buttonGuess8"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+    <TextView
+        android:id="@+id/textViewButton9"
+        android:layout_width="84dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/design_default_color_secondary"
+        android:onClick="onClickDigit"
+        android:tag="Guess0"
+        android:text="Clear"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton8"
+        app:layout_constraintStart_toStartOf="@+id/textViewButton7"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton6" />
+
+    <TextView
+        android:id="@+id/textViewButton6"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:layout_marginStart="8dp"
+        android:background="@color/design_default_color_secondary"
         android:onClick="onClickDigit"
         android:tag="Guess8"
         android:text="8"
-        android:textSize="34sp"
-        app:layout_constraintStart_toEndOf="@+id/buttonGuess7"
-        app:layout_constraintTop_toTopOf="@+id/buttonGuess7" />
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton7"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton7" />
 
-    <Button
-        android:id="@+id/buttonGuess7"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:onClick="onClickDigit"
-        android:tag="Guess7"
-        android:text="7"
-        android:textSize="34sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/buttonGuess4" />
-
-    <Button
-        android:id="@+id/buttonGuess9"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+    <TextView
+        android:id="@+id/textViewButton8"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:layout_marginStart="8dp"
+        android:background="@color/design_default_color_secondary"
         android:onClick="onClickDigit"
         android:tag="Guess9"
         android:text="9"
-        android:textSize="34sp"
-        app:layout_constraintStart_toEndOf="@+id/buttonGuess8"
-        app:layout_constraintTop_toTopOf="@+id/buttonGuess7" />
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton6"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton6" />
 
-    <Button
-        android:id="@+id/buttonGuess5"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+    <TextView
+        android:id="@+id/textViewButton7"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/design_default_color_secondary"
+        android:onClick="onClickDigit"
+        android:tag="Guess7"
+        android:text="7"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="@+id/textViewButton3"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton3" />
+
+    <TextView
+        android:id="@+id/textViewButton4"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:layout_marginStart="8dp"
+        android:background="@color/design_default_color_secondary"
         android:onClick="onClickDigit"
         android:tag="Guess5"
         android:text="5"
-        android:textSize="34sp"
-        app:layout_constraintStart_toEndOf="@+id/buttonGuess4"
-        app:layout_constraintTop_toTopOf="@+id/buttonGuess4" />
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton3"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton3" />
 
-    <Button
-        android:id="@+id/buttonGuess4"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:onClick="onClickDigit"
-        android:tag="Guess4"
-        android:text="4"
-        android:textSize="34sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/buttonGuess1" />
-
-    <Button
-        android:id="@+id/buttonGuess6"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+    <TextView
+        android:id="@+id/textViewButton5"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:layout_marginStart="8dp"
+        android:background="@color/design_default_color_secondary"
         android:onClick="onClickDigit"
         android:tag="Guess6"
         android:text="6"
-        android:textSize="34sp"
-        app:layout_constraintStart_toEndOf="@+id/buttonGuess5"
-        app:layout_constraintTop_toTopOf="@+id/buttonGuess4" />
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton4"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton4" />
 
-    <Button
-        android:id="@+id/buttonGuess3"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+    <TextView
+        android:id="@+id/textViewButton2"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:layout_marginStart="8dp"
+        android:background="@color/design_default_color_secondary"
         android:onClick="onClickDigit"
         android:tag="Guess3"
         android:text="3"
-        android:textSize="34sp"
-        app:layout_constraintStart_toEndOf="@+id/buttonGuess2"
-        app:layout_constraintTop_toTopOf="@+id/buttonGuess1" />
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton" />
+
+    <TextView
+        android:id="@+id/textViewButton3"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/design_default_color_secondary"
+        android:onClick="onClickDigit"
+        android:tag="Guess4"
+        android:text="4"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="@+id/textViewButton1"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton1" />
 
     <TextView
         android:id="@+id/textView"
@@ -113,44 +148,34 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView" />
 
-    <Button
-        android:id="@+id/buttonGuess1"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:onClick="onClickDigit"
-        android:tag="Guess1"
-        android:text="1"
-        android:textSize="34sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/viewPlayGrid" />
-
-    <Button
-        android:id="@+id/buttonGuess2"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:layout_marginStart="8dp"
-        android:onClick="onClickDigit"
-        android:tag="Guess2"
-        android:text="2"
-        android:textSize="34sp"
-        app:layout_constraintStart_toEndOf="@+id/buttonGuess1"
-        app:layout_constraintTop_toTopOf="@+id/buttonGuess1" />
-
     <TextView
         android:id="@+id/textViewButton1"
         android:layout_width="42dp"
         android:layout_height="42dp"
-        android:layout_marginTop="40dp"
-        android:layout_marginEnd="100dp"
+        android:layout_marginTop="8dp"
         android:background="@color/design_default_color_secondary"
         android:onClick="onClickDigit"
         android:tag="Guess1"
         android:text="1"
         android:textAlignment="center"
+        android:textColor="@color/black"
         android:textSize="24sp"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/viewPlayGrid"
         app:layout_constraintTop_toBottomOf="@+id/viewPlayGrid" />
+
+    <TextView
+        android:id="@+id/textViewButton"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="8dp"
+        android:background="@color/design_default_color_secondary"
+        android:onClick="onClickDigit"
+        android:tag="Guess2"
+        android:text="2"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton1"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton1" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

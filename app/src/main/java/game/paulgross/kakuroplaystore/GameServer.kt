@@ -213,7 +213,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             val guess = split[1].split(",")
 
             val index = guess[0].toInt()
-            val value = guess[1].toInt()
+            var value = guess[1].toInt()
+            if (value == 0) { value = -1 }
             playerGrid[index] = value
 
             messageGameplayDisplayState()

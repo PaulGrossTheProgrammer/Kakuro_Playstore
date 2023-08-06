@@ -71,6 +71,9 @@ class GameplayActivity : AppCompatActivity() {
         var playerGrid: MutableList<Int> = mutableListOf()
         var playerHints: MutableList<GameServer.Hint> = mutableListOf()
 
+        val colourNonPlaySquareInside = Color.rgb(58,28,156)
+        val colourSquareBorder = Color.rgb(33,17,84)
+
         private var gameplayActivity: GameplayActivity? = null
         fun setActivity(gameplayActivity: GameplayActivity) {
             this.gameplayActivity = gameplayActivity
@@ -122,10 +125,10 @@ class GameplayActivity : AppCompatActivity() {
                 displayRows = maxDisplayRows
             }
 
-            squareWidth = currViewWidth/(displayRows + 1f)
+            squareWidth = (currViewWidth/displayRows).toFloat()
             Log.d("PlayingGridView", "squareWidth = $squareWidth")
 
-            margin = squareWidth * 0.05f
+//            margin = squareWidth * 0.05f
             squareTextSize = squareWidth * 0.7f
         }
 
@@ -137,8 +140,9 @@ class GameplayActivity : AppCompatActivity() {
 
             // Paint the canvas background
 //            paint.color = Color.CYAN
-            paint.color = Color.rgb(137,196,199)
-            canvas.drawPaint(paint)
+//            paint.color =
+
+//            canvas.drawPaint(paint)
 //            rgb(int,int,int)
 
             // TODO: Only add new touch areas if the existing ones are missing or outdated.
@@ -152,10 +156,10 @@ class GameplayActivity : AppCompatActivity() {
             // Draw grid
             paint.color = Color.WHITE
 
-            val startX = squareWidth/2f
+            val startX = 0f
 
             var currX = startX
-            var currY = squareWidth/2f
+            var currY = 0f
 
             var rows = puzzleWidth + 1
             var cols = playerGrid.size.div(puzzleWidth) + 1
@@ -231,34 +235,34 @@ class GameplayActivity : AppCompatActivity() {
 
         //drawBlankSquare
         private fun drawBlankSquare(x: Float, y: Float, canvas: Canvas, paint: Paint) {
-            paint.color = Color.GRAY
+            paint.color = colourNonPlaySquareInside
 
             canvas.drawRect(x + margin, y + margin,
                 x + squareWidth - margin, y + squareWidth - margin, paint )
         }
 
         private fun drawDownHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
-            paint.color = Color.DKGRAY
+            paint.color = Color.WHITE
             paint.setStrokeWidth(3f)  // TODO: Make proportional....
 
             canvas.drawLine(x + margin, y + margin - squareWidth, x + squareWidth - margin, y - margin, paint )
 //            canvas.drawLine(x + margin, y + margin - squareWidth, x + margin, y - margin, paint )
 //            canvas.drawLine(x + margin, y - margin, x + squareWidth - margin, y - margin, paint )
 
-            paint.color = Color.BLACK
+//            paint.color = Color.BLACK
             paint.setTextSize(squareTextSize * 0.45f)
             canvas.drawText(hintString, x + squareWidth * 0.18f, y + squareWidth * 0.85f - squareWidth, paint)
         }
 
         private fun drawAcrossHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
-            paint.color = Color.DKGRAY
+            paint.color = Color.WHITE
             paint.setStrokeWidth(3f)
 
             canvas.drawLine(x + margin - squareWidth, y + margin, x - margin, y - margin + squareWidth, paint )
 //           canvas.drawLine(x + margin - squareWidth, y + margin, x - margin, y + margin, paint )
 //            canvas.drawLine(x - margin, y + margin,x - margin, y - margin + squareWidth , paint )
 
-            paint.color = Color.BLACK
+//            paint.color = Color.BLACK
             paint.setTextSize(squareTextSize * 0.45f)
             canvas.drawText(hintString, x + squareWidth * 0.56f  - squareWidth, y + squareWidth * 0.45f, paint)
         }
