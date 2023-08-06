@@ -65,7 +65,7 @@ class GameplayActivity : AppCompatActivity() {
         // Adjust these for scrolling around large puzzles
         var firstDisplayRow = 1
         var firstDisplayCol = 1
-        var maxDisplayRows = 6  // FIXME - 6 doesn't work with a 5x5 puzzle
+        var maxDisplayRows = 6
         var maxDisplayCols = 6
 
         var playerGrid: MutableList<Int> = mutableListOf()
@@ -117,9 +117,9 @@ class GameplayActivity : AppCompatActivity() {
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
 
-            var displayRows = maxDisplayRows
-            if (puzzleWidth + 2 < displayRows) {
-                displayRows = puzzleWidth + 2
+            var displayRows = puzzleWidth + 1
+            if (displayRows > maxDisplayRows) {
+                displayRows = maxDisplayRows
             }
 
             squareWidth = currViewWidth/(displayRows + 1f)
