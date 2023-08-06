@@ -33,7 +33,7 @@ class GameplayActivity : AppCompatActivity() {
         enableMessagesFromGameServer()
         GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE))
 
-        GameServer.queueActivityMessage("Status")
+        GameServer.queueActivityMessage("Status")  // Request a new State message
     }
 
     public override fun onBackPressed() {
@@ -50,29 +50,29 @@ class GameplayActivity : AppCompatActivity() {
     }
 
     /**
-     * The custom View to draw the playing grid
+     * The custom View to draw the playing grid.
      */
     class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
 
-        var currViewWidth = 1
-        var currViewHeight = 1
-        var squareWidth = 1f
-        var margin = 1f
-        var squareTextSize = 1f
+        private var currViewWidth = 1
+        private var currViewHeight = 1
+        private var squareWidth = 1f
+        private var margin = 1f
+        private var squareTextSize = 1f
 
         var puzzleWidth = 1
 
         // Adjust these for scrolling around large puzzles
-        var firstDisplayRow = 1
-        var firstDisplayCol = 1
-        var maxDisplayRows = 6
-        var maxDisplayCols = 6
+        private var firstDisplayRow = 1
+        private var firstDisplayCol = 1
+        private var maxDisplayRows = 6
+        private var maxDisplayCols = 6
 
         var playerGrid: MutableList<Int> = mutableListOf()
         var playerHints: MutableList<GameServer.Hint> = mutableListOf()
 
-        val colourNonPlaySquareInside = Color.rgb(58,28,156)
-        val colourSquareBorder = Color.rgb(33,17,84)
+        private val colourNonPlaySquareInside = Color.rgb(84, 41, 227)
+        private val colourSquareBorder = Color.rgb(62, 27, 179)
 
         private var gameplayActivity: GameplayActivity? = null
         fun setActivity(gameplayActivity: GameplayActivity) {
@@ -116,6 +116,8 @@ class GameplayActivity : AppCompatActivity() {
 
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+
+            // FIXME: This doesn't work for screen rotations !?!?!?
             Log.d("PlayingGridView", "Width = $measuredWidth, height = $measuredHeight")
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
@@ -128,7 +130,6 @@ class GameplayActivity : AppCompatActivity() {
             squareWidth = (currViewWidth/displayRows).toFloat()
             Log.d("PlayingGridView", "squareWidth = $squareWidth")
 
-//            margin = squareWidth * 0.05f
             squareTextSize = squareWidth * 0.7f
         }
 
@@ -137,13 +138,6 @@ class GameplayActivity : AppCompatActivity() {
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
             Log.d("PlayingGridView", "onDraw() running")
-
-            // Paint the canvas background
-//            paint.color = Color.CYAN
-//            paint.color =
-
-//            canvas.drawPaint(paint)
-//            rgb(int,int,int)
 
             // TODO: Only add new touch areas if the existing ones are missing or outdated.
             // This will get complicated when the user can scroll around large puzzles
@@ -174,13 +168,12 @@ class GameplayActivity : AppCompatActivity() {
             var index = 0
 
             for (col in (firstDisplayCol..cols)) {
-
                 for (row in (firstDisplayRow..rows)) {
+
                     // First row and colum are only used as space for showing hints.
                     val puzzleSquare = (col != 1 && row != 1)
 
                     if (puzzleSquare) {
-                        Log.d(TAG, "Puzzle index = $index")
                         val gridValue = playerGrid[index]
                         // Non-playable grid value is 0, -1 means no guess yet, > 0 means a player guess
                         if (gridValue != 0) {
@@ -204,9 +197,11 @@ class GameplayActivity : AppCompatActivity() {
                         drawBlankSquare(currX, currY, canvas, paint)
                     }
 
+                    drawSquareBorder(currX, currY, canvas, paint)
+
                     currX += squareWidth
                 }
-                // index needs to be offset when we aren's viewing by starting at the 1, 1 position.
+                // next index needs to be offset if we are NOT viewing from the 1, 1 position.
                 index = (col - 1) * puzzleWidth + firstDisplayCol - 1
                 currX = startX
                 currY += squareWidth
@@ -224,13 +219,22 @@ class GameplayActivity : AppCompatActivity() {
             if (content != "-1") {
                 // Display the player's guess.
                 paint.color = Color.RED
-                paint.setTextSize(squareTextSize)
+                paint.textSize = squareTextSize
                 canvas.drawText(content, x + squareWidth * 0.31f, y + squareWidth * 0.75f, paint)
             }
 
             if (addTouchAreas) {
                 playSquareTouchLookUpId.put(TouchArea(x, y, x + squareWidth, y + squareWidth), index)
             }
+        }
+
+        private fun drawSquareBorder(x: Float, y: Float, canvas: Canvas, paint: Paint) {
+            paint.color = colourSquareBorder
+            paint.strokeWidth = squareWidth * 0.16f
+            canvas.drawLine(x, y, x + squareWidth, y, paint )
+            canvas.drawLine(x, y, x, y + squareWidth, paint )
+            canvas.drawLine(x, y + squareWidth, x + squareWidth, y + squareWidth, paint )
+            canvas.drawLine(x + squareWidth, y, x + squareWidth, y + squareWidth, paint )
         }
 
         //drawBlankSquare
@@ -243,27 +247,21 @@ class GameplayActivity : AppCompatActivity() {
 
         private fun drawDownHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
             paint.color = Color.WHITE
-            paint.setStrokeWidth(3f)  // TODO: Make proportional....
+            paint.strokeWidth = squareWidth * 0.02f
 
             canvas.drawLine(x + margin, y + margin - squareWidth, x + squareWidth - margin, y - margin, paint )
-//            canvas.drawLine(x + margin, y + margin - squareWidth, x + margin, y - margin, paint )
-//            canvas.drawLine(x + margin, y - margin, x + squareWidth - margin, y - margin, paint )
 
-//            paint.color = Color.BLACK
-            paint.setTextSize(squareTextSize * 0.45f)
+            paint.textSize = squareTextSize * 0.45f
             canvas.drawText(hintString, x + squareWidth * 0.18f, y + squareWidth * 0.85f - squareWidth, paint)
         }
 
         private fun drawAcrossHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
             paint.color = Color.WHITE
-            paint.setStrokeWidth(3f)
+            paint.strokeWidth = squareWidth * 0.02f
 
             canvas.drawLine(x + margin - squareWidth, y + margin, x - margin, y - margin + squareWidth, paint )
-//           canvas.drawLine(x + margin - squareWidth, y + margin, x - margin, y + margin, paint )
-//            canvas.drawLine(x - margin, y + margin,x - margin, y - margin + squareWidth , paint )
 
-//            paint.color = Color.BLACK
-            paint.setTextSize(squareTextSize * 0.45f)
+            paint.textSize = squareTextSize * 0.45f
             canvas.drawText(hintString, x + squareWidth * 0.56f  - squareWidth, y + squareWidth * 0.45f, paint)
         }
     }
@@ -331,9 +329,9 @@ class GameplayActivity : AppCompatActivity() {
                 previousStateString = stateString
                 val newState = GameServer.decodeState(stateString)
                 if (newState != null) {
-                    var puzzleWidth = newState.puzzleWidth
-                    var playerGrid = newState.playerGrid
-                    var hints = newState.playerHints
+                    val puzzleWidth = newState.puzzleWidth
+                    val playerGrid = newState.playerGrid
+                    val hints = newState.playerHints
 
                     displayGrid(playerGrid, puzzleWidth, hints)
                 }
