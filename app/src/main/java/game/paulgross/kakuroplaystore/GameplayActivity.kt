@@ -1,20 +1,24 @@
 package game.paulgross.kakuroplaystore
 
+//import android.R
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Bitmap
+import android.graphics.Bitmap.createBitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Color.rgb
 import android.graphics.Paint
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
@@ -59,6 +63,7 @@ class GameplayActivity : AppCompatActivity() {
         private var squareWidth = 1f
         private var margin = 1f
         private var squareTextSize = 1f
+        private var borderThickness =1f
 
         var puzzleWidth = 1
 
@@ -71,8 +76,8 @@ class GameplayActivity : AppCompatActivity() {
         var playerGrid: MutableList<Int> = mutableListOf()
         var playerHints: MutableList<GameServer.Hint> = mutableListOf()
 
-        private val colourNonPlaySquareInside = Color.rgb(84, 41, 227)
-        private val colourSquareBorder = Color.rgb(62, 27, 179)
+        private val colourNonPlaySquareInside = Color.rgb(40, 71, 156)
+        private val colourSquareBorder = Color.rgb(29, 51, 112)
 
         private var gameplayActivity: GameplayActivity? = null
         fun setActivity(gameplayActivity: GameplayActivity) {
@@ -129,11 +134,18 @@ class GameplayActivity : AppCompatActivity() {
 
             squareWidth = (currViewWidth/displayRows).toFloat()
             Log.d("PlayingGridView", "squareWidth = $squareWidth")
+            borderThickness = squareWidth * 0.06f
 
             squareTextSize = squareWidth * 0.7f
+
+            margin = squareWidth * 0.08f
         }
 
         private val paint = Paint()
+
+        // TODO - learn how to draw bitmaps to the canvas
+//        val paperTexture: Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.papertexture_01)
+//        var dpaperTexture: Drawable = BitmapDrawable(getResources(), paperTexture)
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
@@ -206,6 +218,9 @@ class GameplayActivity : AppCompatActivity() {
                 currX = startX
                 currY += squareWidth
             }
+
+            // TODO - learn how to draw bitmaps to the canvas
+//            dpaperTexture.draw(canvas)
         }
 
         private fun drawGuessSquare(index : Int, content: String, selected: Boolean, addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
@@ -213,8 +228,7 @@ class GameplayActivity : AppCompatActivity() {
             if (selected) {
                 paint.color = Color.WHITE
             }
-            canvas.drawRect(x + margin, y + margin,
-                x + squareWidth - margin, y + squareWidth - margin, paint )
+            canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )
 
             if (content != "-1") {
                 // Display the player's guess.
@@ -230,7 +244,7 @@ class GameplayActivity : AppCompatActivity() {
 
         private fun drawSquareBorder(x: Float, y: Float, canvas: Canvas, paint: Paint) {
             paint.color = colourSquareBorder
-            paint.strokeWidth = squareWidth * 0.16f
+            paint.strokeWidth = borderThickness
             canvas.drawLine(x, y, x + squareWidth, y, paint )
             canvas.drawLine(x, y, x, y + squareWidth, paint )
             canvas.drawLine(x, y + squareWidth, x + squareWidth, y + squareWidth, paint )
@@ -241,22 +255,21 @@ class GameplayActivity : AppCompatActivity() {
         private fun drawBlankSquare(x: Float, y: Float, canvas: Canvas, paint: Paint) {
             paint.color = colourNonPlaySquareInside
 
-            canvas.drawRect(x + margin, y + margin,
-                x + squareWidth - margin, y + squareWidth - margin, paint )
+            canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )
         }
 
         private fun drawDownHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
-            paint.color = Color.WHITE
+            paint.color = Color.LTGRAY
             paint.strokeWidth = squareWidth * 0.02f
 
-            canvas.drawLine(x + margin, y + margin - squareWidth, x + squareWidth - margin, y - margin, paint )
+            canvas.drawLine(x + margin, y - squareWidth + margin, x + squareWidth - margin, y - margin, paint )
 
             paint.textSize = squareTextSize * 0.45f
             canvas.drawText(hintString, x + squareWidth * 0.18f, y + squareWidth * 0.85f - squareWidth, paint)
         }
 
         private fun drawAcrossHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
-            paint.color = Color.WHITE
+            paint.color = Color.LTGRAY
             paint.strokeWidth = squareWidth * 0.02f
 
             canvas.drawLine(x + margin - squareWidth, y + margin, x - margin, y - margin + squareWidth, paint )

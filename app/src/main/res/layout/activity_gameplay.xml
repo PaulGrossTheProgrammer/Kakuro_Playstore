@@ -127,26 +127,15 @@
         app:layout_constraintStart_toStartOf="@+id/textViewButton1"
         app:layout_constraintTop_toBottomOf="@+id/textViewButton1" />
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Kakuro"
-        android:textSize="20sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <view
         android:id="@+id/viewPlayGrid"
         class="game.paulgross.kakuroplaystore.GameplayActivity$PlayingGridView"
-        android:layout_width="340dp"
-        android:layout_height="340dp"
-        android:layout_marginTop="16dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/textViewButton1"
