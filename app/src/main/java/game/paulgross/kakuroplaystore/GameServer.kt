@@ -270,91 +270,70 @@ class GameServer(private val context: Context, private val preferences: SharedPr
      */
     private fun saveGameState() {
         Log.d(TAG, "Saving game state ...")
-        // TODO:
 
         val editor = preferences.edit()
+
+        editor.putString("CurrGame", currGame)
 
         // Save the player's guesses
         val guessesToSave = encodeGuesses()
         Log.d(TAG, "Saving guesses: [$guessesToSave]")
         editor.putString("Guesses", guessesToSave)
+
+        // TODO - store possibles.
+
         editor.apply()
         Log.d(TAG, "Saved game state.")
     }
 
     /**
-     * Restores the App state from the last time it was running.
+     * Restores the Game state from the last time it was saved.
      */
     private fun restoreGameState() {
-        Log.d(TAG, "TODO: Restoring previous game state...")
-        // TODO:
-        // Width as a Hex digit, followed by each square of the solution,
-        // with 0 for non-puzzle squares, and a digit for the solution squares.
-        // Example: 053100820006980071
-        // FUTURE: Obfuscate the solution when sharing the unique game number.
+        Log.d(TAG, "Restoring previous game state...")
 
+        var restoredGame = preferences.getString("CurrGame", null)
+        if (restoredGame == null) {
+            currGame = "043100820006980071"
+        } else {
+            currGame = restoredGame
+        }
+        convertGameString(currGame!!)
 
-
-        // Each puzzle is a  grid with blank squares as zeros,
-        // and the solution as numbers from 1 to 9 in the non-zero squares.
-        // The player sees the grid with zeros as blanks, the guesses as integers,
-        // and any square they haven't guessed is -1.
-        // The player also sees the hints, which are ACROSS and DOWN clues derived
-        // from the solution.
-
-        // Sample of a saved state:
-//        currPlayer = SquareState.valueOf(preferences.getString("CurrPlayer", "X").toString())
-
-        // Testing - the "solution" grid with a "width" of 4:
-        puzzleWidth = 4
-        puzzleSolution = mutableListOf(
-              3,  1, -1, -1,
-              8,  2, -1, -1,
-             -1,  6,  9,  8,
-             -1, -1,  7,  1
-        )
-
-        // The player's initial "grid" view:
-        // As the player makes guesses, the -1's are replaced with numbers from 1 to 9.
-        // If we have no saved guesses, use these
-
-        // TODO:
+        playerGrid.clear()
         val guessesString = preferences.getString("Guesses", "")
         if (guessesString == "") {
-            playerGrid = mutableListOf(
-                0, 0, -1, -1,
-                0, 0, -1, -1,
-                -1, 0, 0, 0,
-                -1, -1, 0, 0
-            )
+            puzzleSolution.forEach { square ->
+                if (square == -1) {
+                    playerGrid.add(-1)
+                } else {
+                    playerGrid.add(0)
+                }
+            }
         } else {
-            playerGrid.clear()
             val guessList = guessesString?.split(":")
             guessList?.forEach {guessString ->
                 playerGrid.add(guessString.toInt())
             }
         }
 
-        // Plus the "hints" for the player:
-        // 0-ACROSS = 4, 0-DOWN = 11, 4-ACROSS = 10, ... etc
         generateHints()
-
-        //        Log.d(TAG, "DEBUG All hints:")
-        playerHints.forEach() { hint ->
-            Log.d(TAG, "hint: $hint")
-        }
 
         // TODO: The player's own "possibles" list:
         // 0=3&1, 0=3/1, ... etc
     }
 
     private fun convertGameString(gameString: String) {
-        // TODO:
-        var testString = "053100820006980071"
-        // 05 is the puzzle width.
-        puzzleWidth = testString.substring(1, 2).toInt()
+        puzzleWidth = gameString.substring(0, 2).toInt()
 
-        // Convert all following digits to ints as the solution.
+        puzzleSolution.clear()
+        for (char in gameString.substring(2)) {
+            if (char == '0') {
+                puzzleSolution.add(-1)
+            } else {
+                puzzleSolution.add(char.digitToInt())
+            }
+        }
     }
 
     private fun messageGameplayDisplayState() {
@@ -422,6 +401,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         return sum
     }
 
+    private var currGame = ""
     private var puzzleWidth = 5
     private var puzzleSolution: MutableList<Int> = mutableListOf()
     private var playerGrid: MutableList<Int> = mutableListOf()
