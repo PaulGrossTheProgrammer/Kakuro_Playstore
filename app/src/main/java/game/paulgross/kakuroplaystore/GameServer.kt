@@ -216,6 +216,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             var value = guess[1].toInt()
             if (value == 0) { value = -1 }
             playerGrid[index] = value
+            saveGameState()
 
             messageGameplayDisplayState()
         }
@@ -268,15 +269,17 @@ class GameServer(private val context: Context, private val preferences: SharedPr
      * Saves the current Game state.
      */
     private fun saveGameState() {
-        Log.d(TAG, "TODO: Save game state...")
+        Log.d(TAG, "Saving game state ...")
         // TODO:
 
         val editor = preferences.edit()
 
-        // Sample of saving a state
-//        editor.putString("CurrPlayer", currPlayer.toString())
-//        editor.apply()
-//        Log.d(TAG, "Saved game state.")
+        // Save the player's guesses
+        val guessesToSave = encodeGuesses()
+        Log.d(TAG, "Saving guesses: [$guessesToSave]")
+        editor.putString("Guesses", guessesToSave)
+        editor.apply()
+        Log.d(TAG, "Saved game state.")
     }
 
     /**
@@ -285,6 +288,11 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private fun restoreGameState() {
         Log.d(TAG, "TODO: Restoring previous game state...")
         // TODO:
+        // Decode the game structure and solution from the coded game string
+        // The structure as the puzzle width, then the bit-coded squares with 0 as non-playable,
+        // and 1 as a puzzle square, followed by the sequence of values in all the solution squares.
+        // [width-byte][solution-as-byte-sequence]
+        // Thus the widest puzzle is 255 squares across.
 
         // Each puzzle is a  grid with blank squares as zeros,
         // and the solution as numbers from 1 to 9 in the non-zero squares.
@@ -299,20 +307,32 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         // Testing - the "solution" grid with a "width" of 4:
         puzzleWidth = 4
         puzzleSolution = mutableListOf(
-              3,  1,  0,  0,
-              8,  2,  0,  0,
-              0,  6,  9,  8,
-              0,  0,  7,  1
+              3,  1, -1, -1,
+              8,  2, -1, -1,
+             -1,  6,  9,  8,
+             -1, -1,  7,  1
         )
 
         // The player's initial "grid" view:
         // As the player makes guesses, the -1's are replaced with numbers from 1 to 9.
-        playerGrid = mutableListOf(
-            -1, -1,  0,  0,
-            -1, -1,  0,  0,
-             0, -1, -1, -1,
-             0,  0, -1, -1
-        )
+        // If we have no saved guesses, use these
+
+        // TODO:
+        val guessesString = preferences.getString("Guesses", "")
+        if (guessesString == "") {
+            playerGrid = mutableListOf(
+                0, 0, -1, -1,
+                0, 0, -1, -1,
+                -1, 0, 0, 0,
+                -1, -1, 0, 0
+            )
+        } else {
+            playerGrid.clear()
+            val guessList = guessesString?.split(":")
+            guessList?.forEach {guessString ->
+                playerGrid.add(guessString.toInt())
+            }
+        }
 
         // Plus the "hints" for the player:
         // 0-ACROSS = 4, 0-DOWN = 11, 4-ACROSS = 10, ... etc
@@ -355,12 +375,11 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         // Traverse the solution grid and create hints for any number squares with empty squares to the left and/or above.
         puzzleSolution.forEachIndexed { index, value ->
-            if (value  != 0) {
+            if (value  != -1) {
                 // Check for ACROSS hints.
                 // First column numbers always need a hint.
                 val isFirstColumn = (index.mod(puzzleWidth) == 0)
-                if (isFirstColumn || puzzleSolution[index - 1] == 0) {
-                    // TODO - sum the group of numbers across
+                if (isFirstColumn || puzzleSolution[index - 1] == -1) {
                     val sum = sumOfSquares(puzzleSolution, puzzleWidth, index, Direction.ACROSS)
                     playerHints.add(Hint(index, Direction.ACROSS, sum))
                 }
@@ -368,8 +387,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 // Check for DOWN hints (don't check last row)
                 // First colum row always need a hint.
                 val isFirstRow = (index < puzzleWidth)
-                if (isFirstRow || puzzleSolution[index - puzzleWidth] == 0) {
-                    // TODO - sum the group of numbers down
+                if (isFirstRow || puzzleSolution[index - puzzleWidth] == -1) {
                     val sum = sumOfSquares(puzzleSolution, puzzleWidth, index, Direction.DOWN)
                     playerHints.add(Hint(index, Direction.DOWN, sum))
                 }
@@ -378,7 +396,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private fun sumOfSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): Int {
-        // TODO ...
         var sum = 0
 
         var stepSize = 1
@@ -387,7 +404,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
 
         var index = startIndex
-        while (index < grid.size && grid[index] != 0) {
+        while (index < grid.size && grid[index] != -1) {
             sum += grid[index]
             index += stepSize
         }
@@ -409,13 +426,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         var state = ""
 
         state += "w=$puzzleWidth,"
-        state += "g="
-        playerGrid.forEachIndexed {index, squareValue ->
-            state += squareValue.toString()
-            if (index < playerGrid.size - 1) {
-                state += ":"
-            }
-        }
+        state += "g=" + encodeGuesses()
 
         // TODO - encode hints? Only need to send this once...
         // h=2ACROSS13:2DOWN23 ... etc
@@ -433,6 +444,17 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         return state
     }
 
+    private fun encodeGuesses(): String {
+        var guessString = ""
+        playerGrid.forEachIndexed {index, squareValue ->
+            guessString += squareValue.toString()
+            if (index < playerGrid.size - 1) {
+                guessString += ":"
+            }
+        }
+        return guessString
+    }
+
     fun decodeState(stateString: String): StateVariables {
         Log.d(TAG, "decodeState() for [$stateString]")
 
@@ -442,7 +464,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         // Example
         //w=4,g=-1:-1:0:0:-1:-1:0:0:0:-1:-1:-1:0:0:-1:-1
-        // TODO
         // split on commas into key-value pairs
         var map: MutableMap<String, String> = mutableMapOf()
         val parts = stateString.split(",")

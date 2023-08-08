@@ -69,9 +69,9 @@ class GameplayActivity : AppCompatActivity() {
 
         // Adjust these for scrolling around large puzzles
         private var firstDisplayRow = 1
-        private var firstDisplayCol = 1
-        private var maxDisplayRows = 6
-        private var maxDisplayCols = 6
+        private var firstDisplayCol = 1 // FIXME - Doesn't work past 1.
+        private var maxDisplayRows = 5  // FIXME - Doesn't work past puzzle size.
+        private var maxDisplayCols = 5
 
         var playerGrid: MutableList<Int> = mutableListOf()
         var playerHints: MutableList<GameServer.Hint> = mutableListOf()
@@ -182,16 +182,15 @@ class GameplayActivity : AppCompatActivity() {
 
             var index = 0
 
-            for (col in (firstDisplayCol..cols)) {
-                for (row in (firstDisplayRow..rows)) {
-
+            for (col in (firstDisplayCol..firstDisplayCol + maxDisplayCols - 1)) {
+                for (row in (firstDisplayRow..firstDisplayRow + maxDisplayRows - 1)) {
                     // First row and colum are only used as space for showing hints.
                     val puzzleSquare = (col != 1 && row != 1)
 
                     if (puzzleSquare) {
                         val gridValue = playerGrid[index]
-                        // Non-playable grid value is 0, -1 means no guess yet, > 0 means a player guess
-                        if (gridValue != 0) {
+                        // Non-playable grid value is -1, 0 means no guess yet, > 0 means a player guess
+                        if (gridValue != -1) {
                             val selected = (index == gameplayActivity?.selectedId)
                             drawGuessSquare(index, gridValue.toString(), selected, addTouchAreas, currX, currY, canvas, paint)
                         } else {
@@ -217,6 +216,7 @@ class GameplayActivity : AppCompatActivity() {
                     currX += squareWidth
                 }
                 // next index needs to be offset if we are NOT viewing from the 1, 1 position.
+                // FIXME - doesn't work...
                 index = (col - 1) * puzzleWidth + firstDisplayCol - 1
                 currX = startX
                 currY += squareWidth
@@ -225,14 +225,13 @@ class GameplayActivity : AppCompatActivity() {
 
 
         private fun drawGuessSquare(index : Int, content: String, selected: Boolean, addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
-//            paint.color = Color.LTGRAY
-            paint.color = colourGuessSquare
+            paint.color = Color.LTGRAY
             if (selected) {
-                paint.color = colourGuessSquareSelected
+                paint.color = Color.WHITE
             }
             canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )
 
-            if (content != "-1") {
+            if (content != "0") {
                 // Display the player's guess.
                 paint.color = Color.RED
                 paint.textSize = squareTextSize
