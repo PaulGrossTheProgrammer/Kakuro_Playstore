@@ -288,11 +288,12 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private fun restoreGameState() {
         Log.d(TAG, "TODO: Restoring previous game state...")
         // TODO:
-        // Decode the game structure and solution from the coded game string
-        // The structure as the puzzle width, then the bit-coded squares with 0 as non-playable,
-        // and 1 as a puzzle square, followed by the sequence of values in all the solution squares.
-        // [width-byte][solution-as-byte-sequence]
-        // Thus the widest puzzle is 255 squares across.
+        // Width as a Hex digit, followed by each square of the solution,
+        // with 0 for non-puzzle squares, and a digit for the solution squares.
+        // Example: 053100820006980071
+        // FUTURE: Obfuscate the solution when sharing the unique game number.
+
+
 
         // Each puzzle is a  grid with blank squares as zeros,
         // and the solution as numbers from 1 to 9 in the non-zero squares.
@@ -345,6 +346,15 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         // TODO: The player's own "possibles" list:
         // 0=3&1, 0=3/1, ... etc
+    }
+
+    private fun convertGameString(gameString: String) {
+        // TODO:
+        var testString = "053100820006980071"
+        // 05 is the puzzle width.
+        puzzleWidth = testString.substring(1, 2).toInt()
+
+        // Convert all following digits to ints as the solution.
     }
 
     private fun messageGameplayDisplayState() {
