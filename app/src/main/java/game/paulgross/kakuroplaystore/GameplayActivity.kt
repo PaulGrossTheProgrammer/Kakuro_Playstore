@@ -76,8 +76,12 @@ class GameplayActivity : AppCompatActivity() {
         var playerGrid: MutableList<Int> = mutableListOf()
         var playerHints: MutableList<GameServer.Hint> = mutableListOf()
 
-        private val colourNonPlaySquareInside = Color.rgb(40, 71, 156)
-        private val colourSquareBorder = Color.rgb(29, 51, 112)
+        private val paperTexture: Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.papertexture_02)
+
+        private val colourNonPlaySquareInside = Color.argb(180, 40, 71, 156)
+        private val colourSquareBorder = Color.argb(180, 29, 51, 112)
+        private val colourGuessSquare = Color.argb(180, 188, 190, 194)
+        private val colourGuessSquareSelected = Color.argb(180, 255, 255, 255)
 
         private var gameplayActivity: GameplayActivity? = null
         fun setActivity(gameplayActivity: GameplayActivity) {
@@ -143,13 +147,12 @@ class GameplayActivity : AppCompatActivity() {
 
         private val paint = Paint()
 
-        // TODO - learn how to draw bitmaps to the canvas
-//        val paperTexture: Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.papertexture_01)
-//        var dpaperTexture: Drawable = BitmapDrawable(getResources(), paperTexture)
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
             Log.d("PlayingGridView", "onDraw() running")
+
+            canvas.drawBitmap(paperTexture, 0f, 0f, paint) // TODO scale this to the final size
 
             // TODO: Only add new touch areas if the existing ones are missing or outdated.
             // This will get complicated when the user can scroll around large puzzles
@@ -218,15 +221,14 @@ class GameplayActivity : AppCompatActivity() {
                 currX = startX
                 currY += squareWidth
             }
-
-            // TODO - learn how to draw bitmaps to the canvas
-//            dpaperTexture.draw(canvas)
         }
 
+
         private fun drawGuessSquare(index : Int, content: String, selected: Boolean, addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
-            paint.color = Color.LTGRAY
+//            paint.color = Color.LTGRAY
+            paint.color = colourGuessSquare
             if (selected) {
-                paint.color = Color.WHITE
+                paint.color = colourGuessSquareSelected
             }
             canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )
 
