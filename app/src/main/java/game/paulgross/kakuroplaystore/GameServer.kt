@@ -16,7 +16,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private var socketServer: SocketServer? = null
     private var socketClient: SocketClient? = null
 
-    private val gameIsRunning = AtomicBoolean(true)  // TODO - this might not be needed.
+    private val gameIsRunning = AtomicBoolean(true)  // TODO - this might not need to be Atomic.
 
     // We use a BlockingQueue here to block thread progress if needed.
     // https://developer.android.com/reference/java/util/concurrent/BlockingQueue
@@ -25,7 +25,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private val fromActivitiesToGameSeverQ: BlockingQueue<String> = LinkedBlockingQueue()
 
     enum class GameMode {
-        /** Game only responds to local Activity requests. */
+        /** Game only responds to messages within the App. */
         LOCAL,
 
         /** Allow remote users to play by joining this GameServer over the network. */
@@ -65,13 +65,10 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         restoreGameState()
 
         while (gameIsRunning.get()) {
-            messageAvailable.take() //  We don't need the message contents, since this is just an activation flag.
-            // TODO - use a "false" message to routinely trigger the queue (once per second?)
-            //  to hopefully recover if this trigger system fails.
+            messageAvailable.take() //  Blocking read. We don't need the message contents, since this is just an activation flag.
             messageAvailable.clear() // Don't ever allow the queue to build up.
-            Log.d(TAG, "A message is available.")
 
-            // TODO - clear at least a few client requests in a single loop in case there are many queued up.
+            // TODO - clear at least a few messages in a single loop in case there are many queued up.
             // TODO - monitor queue length for accidental build-up.
 
             val activityRequest = fromActivitiesToGameSeverQ.poll()  // Non-blocking read.
@@ -213,8 +210,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             val guess = split[1].split(",")
 
             val index = guess[0].toInt()
-            var value = guess[1].toInt()
-            if (value == 0) { value = -1 }
+            val value = guess[1].toInt()
             playerGrid[index] = value
             saveGameState()
 
@@ -269,15 +265,11 @@ class GameServer(private val context: Context, private val preferences: SharedPr
      * Saves the current Game state.
      */
     private fun saveGameState() {
-        Log.d(TAG, "Saving game state ...")
-
         val editor = preferences.edit()
 
-        editor.putString("CurrGame", currGame)
+        editor.putString("CurrPuzzle", currPuzzle)
 
-        // Save the player's guesses
         val guessesToSave = encodeGuesses()
-        Log.d(TAG, "Saving guesses: [$guessesToSave]")
         editor.putString("Guesses", guessesToSave)
 
         // TODO - store possibles.
@@ -292,13 +284,13 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private fun restoreGameState() {
         Log.d(TAG, "Restoring previous game state...")
 
-        var restoredGame = preferences.getString("CurrGame", null)
-        if (restoredGame == null) {
-            currGame = "043100820006980071"
+        var restoredGame = preferences.getString("CurrPuzzle", null)
+        currPuzzle = if (restoredGame == null) {
+            DEFAULTPUZZLE
         } else {
-            currGame = restoredGame
+            restoredGame
         }
-        convertGameString(currGame!!)
+        extractPuzzleFromString(currPuzzle!!)
 
         playerGrid.clear()
         val guessesString = preferences.getString("Guesses", "")
@@ -317,17 +309,19 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             }
         }
 
+        playerHints.clear()
         generateHints()
 
-        // TODO: The player's own "possibles" list:
+        // TODO: Restore the player's own "possibles" list:
+        playerPossibles.clear()
         // 0=3&1, 0=3/1, ... etc
     }
 
-    private fun convertGameString(gameString: String) {
-        puzzleWidth = gameString.substring(0, 2).toInt()
+    private fun extractPuzzleFromString(puzzleString: String) {
+        puzzleWidth = puzzleString.substring(0, 2).toInt()
 
         puzzleSolution.clear()
-        for (char in gameString.substring(2)) {
+        for (char in puzzleString.substring(2)) {
             if (char == '0') {
                 puzzleSolution.add(-1)
             } else {
@@ -401,14 +395,14 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         return sum
     }
 
-    private var currGame = ""
+    private var currPuzzle = ""
     private var puzzleWidth = 5
     private var puzzleSolution: MutableList<Int> = mutableListOf()
     private var playerGrid: MutableList<Int> = mutableListOf()
     private var playerHints: MutableList<Hint> = mutableListOf()
 
     // Possibles are user defined, and coded as 9-digit Longs.
-    var playerPossibles: Array<Long> = Array(10) {0} // Same size Array as the solution
+    var playerPossibles: MutableList<Long> = mutableListOf()
 
     data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int, var playerHints:MutableList<Hint>)
 
@@ -501,6 +495,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     companion object {
         private val TAG = GameServer::class.java.simpleName
+
+        private val DEFAULTPUZZLE = "043100820006980071"
 
         // The GameServer always runs in it's own thread,
         // and stopGame() must be called as the App closes to avoid a memory leak.

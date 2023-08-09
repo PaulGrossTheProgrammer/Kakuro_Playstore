@@ -70,13 +70,13 @@ class GameplayActivity : AppCompatActivity() {
         // Adjust these for scrolling around large puzzles
         private var firstDisplayRow = 1
         private var firstDisplayCol = 1 // FIXME - Doesn't work past 1.
-        private var maxDisplayRows = 5  // FIXME - Doesn't work past puzzle size.
+        private var maxDisplayRows = 5  // FIXME - Doesn't work when smaller than puzzle width.
         private var maxDisplayCols = 5
 
         var playerGrid: MutableList<Int> = mutableListOf()
         var playerHints: MutableList<GameServer.Hint> = mutableListOf()
 
-        private val paperTexture: Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.papertexture_02)
+        private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
         private val colourNonPlaySquareInside = Color.argb(180, 40, 71, 156)
         private val colourSquareBorder = Color.argb(180, 29, 51, 112)
@@ -216,13 +216,12 @@ class GameplayActivity : AppCompatActivity() {
                     currX += squareWidth
                 }
                 // next index needs to be offset if we are NOT viewing from the 1, 1 position.
-                // FIXME - doesn't work...
+                // FIXME - doesn't work for puzzles larger than max rows
                 index = (col - 1) * puzzleWidth + firstDisplayCol - 1
                 currX = startX
                 currY += squareWidth
             }
         }
-
 
         private fun drawGuessSquare(index : Int, content: String, selected: Boolean, addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
             paint.color = Color.LTGRAY
