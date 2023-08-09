@@ -7,12 +7,92 @@
     tools:context=".GameplayActivity">
 
     <TextView
+        android:id="@+id/textViewButton17"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginEnd="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="2dp"
+        android:tag="Possible1"
+        android:text="1"
+        android:textAlignment="textStart"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@+id/textViewButton14"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton11" />
+
+    <TextView
+        android:id="@+id/textViewButton19"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="20dp"
+        android:tag="Possible7"
+        android:text="7"
+        android:textAlignment="textStart"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton18"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton18" />
+
+    <TextView
+        android:id="@+id/textViewButton18"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="10dp"
+        android:tag="Possible4"
+        android:text="4"
+        android:textAlignment="textStart"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton17"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton17" />
+
+    <TextView
+        android:id="@+id/textViewButton16"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="20dp"
+        android:tag="Possible8"
+        android:text="8"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton15"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton15" />
+
+    <TextView
+        android:id="@+id/textViewButton15"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="10dp"
+        android:tag="Possible5"
+        android:text="5"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton14"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton14" />
+
+    <TextView
         android:id="@+id/textViewButton13"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="8dp"
         android:background="@android:color/holo_blue_bright"
-        android:onClick="onClickDigit"
+        android:onClick="onClickPossibleDigit"
         android:paddingTop="20dp"
         android:tag="Possible9"
         android:text="9"
@@ -28,7 +108,7 @@
         android:layout_height="42dp"
         android:layout_marginTop="8dp"
         android:background="@android:color/holo_blue_bright"
-        android:onClick="onClickDigit"
+        android:onClick="onClickPossibleDigit"
         android:paddingTop="10dp"
         android:tag="Possible6"
         android:text="6"
@@ -45,7 +125,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:background="@android:color/holo_blue_bright"
-        android:onClick="onClickDigit"
+        android:onClick="onClickPossibleDigit"
         android:paddingTop="2dp"
         android:tag="Possible3"
         android:text="3"
@@ -54,6 +134,22 @@
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/viewPlayGrid" />
+
+    <TextView
+        android:id="@+id/textViewButton14"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginEnd="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="2dp"
+        android:tag="Possible2"
+        android:text="2"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@+id/textViewButton11"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton11" />
 
     <TextView
         android:id="@+id/textViewButton9"

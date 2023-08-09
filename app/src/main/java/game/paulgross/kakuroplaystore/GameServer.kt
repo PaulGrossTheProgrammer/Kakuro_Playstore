@@ -240,6 +240,17 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             saveGameState()
             messageGameplayDisplayState()
         }
+        if (message.startsWith("Possible=")) {
+            Log.d(TAG, "The user sent a possible: $message")
+            val split = message.split("=")
+            val guess = split[1].split(",")
+
+            val index = guess[0].toInt()
+            val value = guess[1].toInt()
+            markUnMarkPossible(index, value)
+            saveGameState()
+            messageGameplayDisplayState()
+        }
         if (message == "Reset") {
             resetPuzzle()
             messageGameplayDisplayState()
@@ -253,6 +264,31 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             }
         }
         saveGameState()
+    }
+
+    private fun markUnMarkPossible(index: Int, value: Int) {
+        // determine the current possibles for the index
+        var possible = playerPossibles[index]
+        if (possible == null) {
+            possible = "000000000"
+        }
+        Log.d(TAG, "Original possible: $possible")
+
+        // Get the position from the value
+        val digit = possible[value - 1]
+        var replacement = "0"
+        if (digit == '0') {
+            replacement = value.toString()
+        }
+
+        possible = possible.substring(0, value - 1) + replacement + possible.substring(value)
+        Log.d(TAG, "Final possible   : $possible")
+        if (possible == "000000000") {
+            Log.d(TAG, "Removing index ...")
+            playerPossibles.remove(index)
+        } else {
+            playerPossibles[index] = possible
+        }
     }
 
     private fun pushStateToClients() {
@@ -286,6 +322,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         editor.putString("Guesses", guessesToSave)
 
         // TODO - store possibles.
+//        val possiblesToSave = encodePossibles()
+//        editor.putString("Possibles", possiblesToSave)
 
         editor.apply()
         Log.d(TAG, "Saved game state.")
@@ -327,7 +365,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         // TODO: Restore the player's own "possibles" list:
         playerPossibles.clear()
-        // 0=3&1, 0=3/1, ... etc
+        // 0=103000000, 0=103000000, ... etc
     }
 
     private fun extractPuzzleFromString(puzzleString: String) {
@@ -415,7 +453,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private var playerHints: MutableList<Hint> = mutableListOf()
 
     // Possibles are user defined, and coded as 9-digit Longs.
-    var playerPossibles: MutableList<Long> = mutableListOf()
+    var playerPossibles: MutableMap<Int, String> = mutableMapOf()
 
     data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int, var playerHints:MutableList<Hint>)
 
@@ -438,6 +476,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             }
         }
 
+        // TODO - encode possibles
+
         return state
     }
 
@@ -449,6 +489,12 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 guessString += ":"
             }
         }
+        return guessString
+    }
+
+    private fun encodePossibles(): String {
+        var guessString = ""
+        // TODO
         return guessString
     }
 
@@ -482,7 +528,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 }
             }
             if (key == "h") {
-                Log.d(TAG, "TODO: Decode the hints...")
+                Log.d(TAG, "Decode the hints...")
                 val hintList = value.split(":")
                 hintList.forEach {theHintString ->
                     val downString = Direction.DOWN.toString()
@@ -502,6 +548,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 }
             }
         }
+
+        // TODO - decode the possibles
 
         return StateVariables(grid, width, hints)
     }

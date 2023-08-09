@@ -299,6 +299,15 @@ class GameplayActivity : AppCompatActivity() {
         }
     }
 
+    fun onClickPossibleDigit(view: View) {
+        val tag = view.tag.toString()
+        val digit = tag.substringAfter("Possible")
+        Log.d(TAG, "Possible digit: $digit")
+        if (selectedId != -1) {
+            GameServer.queueActivityMessage("Possible=$selectedId,$digit")
+        }
+    }
+
     fun onClickReset(view: View) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Reset")
