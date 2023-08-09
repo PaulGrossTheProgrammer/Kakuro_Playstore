@@ -7,8 +7,57 @@
     tools:context=".GameplayActivity">
 
     <TextView
+        android:id="@+id/textViewButton13"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:paddingTop="20dp"
+        android:tag="Possible9"
+        android:text="9"
+        android:textAlignment="textEnd"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton11"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton12" />
+
+    <TextView
+        android:id="@+id/textViewButton12"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:paddingTop="10dp"
+        android:tag="Possible6"
+        android:text="6"
+        android:textAlignment="textEnd"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton11"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton11" />
+
+    <TextView
+        android:id="@+id/textViewButton11"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:paddingTop="2dp"
+        android:tag="Possible3"
+        android:text="3"
+        android:textAlignment="textEnd"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/viewPlayGrid" />
+
+    <TextView
         android:id="@+id/textViewButton9"
-        android:layout_width="84dp"
+        android:layout_width="76dp"
         android:layout_height="42dp"
         android:layout_marginTop="8dp"
         android:background="@android:color/holo_blue_bright"
@@ -21,6 +70,22 @@
         app:layout_constraintEnd_toEndOf="@+id/textViewButton8"
         app:layout_constraintStart_toStartOf="@+id/textViewButton7"
         app:layout_constraintTop_toBottomOf="@+id/textViewButton6" />
+
+    <TextView
+        android:id="@+id/textViewButton10"
+        android:layout_width="76dp"
+        android:layout_height="42dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickReset"
+        android:tag="Guess0"
+        android:text="Reset"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton9" />
 
     <TextView
         android:id="@+id/textViewButton6"

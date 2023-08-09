@@ -204,20 +204,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         if (message == "Status") {
             messageGameplayDisplayState()
         }
-        if (message.startsWith("Guess=")) {
-            Log.d(TAG, "The user sent a guess: $message")
-            val split = message.split("=")
-            val guess = split[1].split(",")
-
-            val index = guess[0].toInt()
-            val value = guess[1].toInt()
-            playerGrid[index] = value
-            saveGameState()
-
-            messageGameplayDisplayState()
-        }
-
-        // TODO - handle the normal gameplay commands
 
         if (message == "StartServer") {
             if (gameMode != GameMode.SERVER) {
@@ -240,6 +226,33 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         if (message == "StopGame") {
             stopGame()
         }
+
+        // TODO - handle the normal gameplay commands
+
+        if (message.startsWith("Guess=")) {
+            Log.d(TAG, "The user sent a guess: $message")
+            val split = message.split("=")
+            val guess = split[1].split(",")
+
+            val index = guess[0].toInt()
+            val value = guess[1].toInt()
+            playerGrid[index] = value
+            saveGameState()
+            messageGameplayDisplayState()
+        }
+        if (message == "Reset") {
+            resetPuzzle()
+            messageGameplayDisplayState()
+        }
+    }
+
+    private fun resetPuzzle() {
+        for (i in 0 until playerGrid.size) {
+            if (playerGrid[i] != -1) {
+                playerGrid[i] = 0
+            }
+        }
+        saveGameState()
     }
 
     private fun pushStateToClients() {

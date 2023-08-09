@@ -299,6 +299,17 @@ class GameplayActivity : AppCompatActivity() {
         }
     }
 
+    fun onClickReset(view: View) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Reset")
+        builder.setMessage("Are you sure you want to reset?")
+        builder.setPositiveButton("Reset") { _, _ ->
+            GameServer.queueActivityMessage("Reset")
+        }
+        builder.setNegativeButton("Back") { _, _ -> }
+        builder.show()
+    }
+
     private fun confirmExitApp() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Exit")
