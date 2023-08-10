@@ -453,9 +453,10 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private var playerHints: MutableList<Hint> = mutableListOf()
 
     // Possibles are user defined, and coded as 9-digit Longs.
-    var playerPossibles: MutableMap<Int, String> = mutableMapOf()
+    private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
 
-    data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int, var playerHints:MutableList<Hint>)
+    data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int,
+                              var playerHints:MutableList<Hint>, var possibles: MutableMap<Int, String>)
 
     private fun encodeState(): String {
         var state = ""
@@ -463,7 +464,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         state += "w=$puzzleWidth,"
         state += "g=" + encodeGuesses()
 
-        // TODO - encode hints? Only need to send this once...
+        // TODO - Only need to send this once...
         // h=2ACROSS13:2DOWN23 ... etc
         state += ",h="
         playerHints.forEachIndexed {index, hint ->
@@ -477,6 +478,11 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
 
         // TODO - encode possibles
+        // p=2:0123000000,8:0000006780
+        if (playerPossibles.isNotEmpty()) {
+            state += ",p="
+            state += encodePossibles()
+        }
 
         return state
     }
@@ -493,17 +499,25 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private fun encodePossibles(): String {
-        var guessString = ""
+        var possiblesString = ""
+        // comma separated entries, colon separated index and possibles.
+        // 0:1234567,5:100450000
         // TODO
-        return guessString
+        var firstEntry = true
+        playerPossibles.forEach { index, possibles ->
+            if (firstEntry) { firstEntry = false } else { possiblesString += "," }
+            possiblesString += "$index:$possibles"
+        }
+        return possiblesString
     }
 
     fun decodeState(stateString: String): StateVariables {
         Log.d(TAG, "decodeState() for [$stateString]")
 
         var width = 0
-        var grid:MutableList<Int> = mutableListOf()
-        var hints: MutableList<Hint> = mutableListOf()
+        val grid: MutableList<Int> = mutableListOf()
+        val hints: MutableList<Hint> = mutableListOf()
+        val possibles: MutableMap<Int, String> = mutableMapOf()
 
         // Example
         //w=4,g=-1:-1:0:0:-1:-1:0:0:0:-1:-1:-1:0:0:-1:-1
@@ -521,14 +535,13 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             if (key == "w") {
                 width = value.toInt()
             }
-            if (key == "g") {
+            if (key == "g") {  // User's guesses
                 val ints = value.split(":")
                 ints.forEach {theIntString ->
                     grid.add(theIntString.toInt())
                 }
             }
-            if (key == "h") {
-                Log.d(TAG, "Decode the hints...")
+            if (key == "h") {  // Hints
                 val hintList = value.split(":")
                 hintList.forEach {theHintString ->
                     val downString = Direction.DOWN.toString()
@@ -547,11 +560,23 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                     hints.add(Hint(index, dir, total))
                 }
             }
+            if (key == "p") {  // User's possibles
+                Log.d(TAG, "Decode the possibles...")
+                val possiblesList = value.split(",")
+                possiblesList.forEach { currPossible ->
+                    val keyValue = currPossible.split(":")
+                    val index = keyValue[0].toInt()
+                    val value = keyValue[1]
+                    Log.d(TAG, "$index = [$value]")
+
+                    possibles[index] = value
+                }
+            }
         }
 
         // TODO - decode the possibles
 
-        return StateVariables(grid, width, hints)
+        return StateVariables(grid, width, hints, possibles)
     }
 
     companion object {

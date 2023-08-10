@@ -7,13 +7,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
-import android.graphics.Bitmap.createBitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
@@ -44,12 +41,14 @@ class GameplayActivity : AppCompatActivity() {
         confirmExitApp()
     }
 
-    private fun displayGrid(playerGrid: MutableList<Int>, puzzleWidth:Int, playerHints: MutableList<GameServer.Hint>) {
+    private fun displayGrid(playerGrid: MutableList<Int>, puzzleWidth:Int,
+                            playerHints: MutableList<GameServer.Hint>, possibles: MutableMap<Int, String>) {
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.playerGrid = playerGrid
         playGridView.puzzleWidth = puzzleWidth
         playGridView.playerHints = playerHints
+        playGridView.playerPossibles = possibles
         playGridView.invalidate() // Trigger a redraw
     }
 
@@ -63,6 +62,7 @@ class GameplayActivity : AppCompatActivity() {
         private var squareWidth = 1f
         private var margin = 1f
         private var squareTextSize = 1f
+        private var possiblesTextSize = 1f
         private var borderThickness =1f
 
         var puzzleWidth = 1
@@ -75,6 +75,7 @@ class GameplayActivity : AppCompatActivity() {
 
         var playerGrid: MutableList<Int> = mutableListOf()
         var playerHints: MutableList<GameServer.Hint> = mutableListOf()
+        var playerPossibles: MutableMap<Int, String> = mutableMapOf()
 
         private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
@@ -141,6 +142,7 @@ class GameplayActivity : AppCompatActivity() {
             borderThickness = squareWidth * 0.06f
 
             squareTextSize = squareWidth * 0.7f
+            possiblesTextSize = squareWidth * 0.25f
 
             margin = squareWidth * 0.08f
         }
@@ -182,6 +184,8 @@ class GameplayActivity : AppCompatActivity() {
 
             var index = 0
 
+            Log.d(TAG, "playerPossibles: $playerPossibles")
+
             for (col in (firstDisplayCol..firstDisplayCol + maxDisplayCols - 1)) {
                 for (row in (firstDisplayRow..firstDisplayRow + maxDisplayRows - 1)) {
                     // First row and colum are only used as space for showing hints.
@@ -192,7 +196,13 @@ class GameplayActivity : AppCompatActivity() {
                         // Non-playable grid value is -1, 0 means no guess yet, > 0 means a player guess
                         if (gridValue != -1) {
                             val selected = (index == gameplayActivity?.selectedId)
-                            drawGuessSquare(index, gridValue.toString(), selected, addTouchAreas, currX, currY, canvas, paint)
+
+                            var possiblesString = playerPossibles[index]
+                            if (gridValue != 0) {
+                                possiblesString = null
+                            }
+
+                            drawGuessSquare(index, gridValue.toString(), possiblesString, selected, addTouchAreas, currX, currY, canvas, paint)
                         } else {
                             drawBlankSquare(currX, currY, canvas, paint)
                         }
@@ -223,7 +233,8 @@ class GameplayActivity : AppCompatActivity() {
             }
         }
 
-        private fun drawGuessSquare(index : Int, content: String, selected: Boolean, addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
+        private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean,
+                                    addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
             paint.color = Color.LTGRAY
             if (selected) {
                 paint.color = Color.WHITE
@@ -235,6 +246,31 @@ class GameplayActivity : AppCompatActivity() {
                 paint.color = Color.RED
                 paint.textSize = squareTextSize
                 canvas.drawText(content, x + squareWidth * 0.31f, y + squareWidth * 0.75f, paint)
+            }
+
+            // TODO
+            if (possiblesString != null) {
+                Log.d(TAG, "Draw the possibles: $possiblesString")
+                paint.textSize = possiblesTextSize
+                paint.color = Color.BLACK
+
+                val xStart = y + squareWidth * 0.10f
+                val yStart = y + squareWidth * 0.30f
+                var xPos = xStart
+                var yPos = yStart
+                var currIndex = 0
+                for (row in 1 .. 3) {
+                    for (col in 1..3) {
+                        val indexPossible = possiblesString[currIndex].toString()
+                        if (indexPossible != "0") {
+                            canvas.drawText(indexPossible, xPos, yPos, paint)
+                        }
+                        xPos += squareWidth * 0.30f
+                        currIndex ++
+                    }
+                    yPos += squareWidth * 0.30f
+                    xPos = xStart
+                }
             }
 
             if (addTouchAreas) {
@@ -365,8 +401,9 @@ class GameplayActivity : AppCompatActivity() {
                     val puzzleWidth = newState.puzzleWidth
                     val playerGrid = newState.playerGrid
                     val hints = newState.playerHints
+                    val possibles = newState.possibles
 
-                    displayGrid(playerGrid, puzzleWidth, hints)
+                    displayGrid(playerGrid, puzzleWidth, hints, possibles)
                 }
             }
         }
