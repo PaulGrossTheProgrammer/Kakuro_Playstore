@@ -184,8 +184,6 @@ class GameplayActivity : AppCompatActivity() {
 
             var index = 0
 
-            Log.d(TAG, "playerPossibles: $playerPossibles")
-
             for (col in (firstDisplayCol..firstDisplayCol + maxDisplayCols - 1)) {
                 for (row in (firstDisplayRow..firstDisplayRow + maxDisplayRows - 1)) {
                     // First row and colum are only used as space for showing hints.
@@ -243,18 +241,16 @@ class GameplayActivity : AppCompatActivity() {
 
             if (content != "0") {
                 // Display the player's guess.
-                paint.color = Color.RED
+                paint.color = Color.BLUE
                 paint.textSize = squareTextSize
                 canvas.drawText(content, x + squareWidth * 0.31f, y + squareWidth * 0.75f, paint)
             }
 
-            // TODO
             if (possiblesString != null) {
-                Log.d(TAG, "Draw the possibles: $possiblesString")
                 paint.textSize = possiblesTextSize
                 paint.color = Color.BLACK
 
-                val xStart = y + squareWidth * 0.10f
+                val xStart = x + squareWidth * 0.10f
                 val yStart = y + squareWidth * 0.30f
                 var xPos = xStart
                 var yPos = yStart
@@ -349,6 +345,7 @@ class GameplayActivity : AppCompatActivity() {
         builder.setTitle("Reset")
         builder.setMessage("Are you sure you want to reset?")
         builder.setPositiveButton("Reset") { _, _ ->
+            selectedId = -1
             GameServer.queueActivityMessage("Reset")
         }
         builder.setNegativeButton("Back") { _, _ -> }

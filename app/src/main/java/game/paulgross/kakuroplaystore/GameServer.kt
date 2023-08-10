@@ -237,6 +237,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             val index = guess[0].toInt()
             val value = guess[1].toInt()
             playerGrid[index] = value
+            playerPossibles.remove(index)
             saveGameState()
             messageGameplayDisplayState()
         }
@@ -263,6 +264,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 playerGrid[i] = 0
             }
         }
+        playerPossibles.clear()
         saveGameState()
     }
 
@@ -272,7 +274,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         if (possible == null) {
             possible = "000000000"
         }
-        Log.d(TAG, "Original possible: $possible")
 
         // Get the position from the value
         val digit = possible[value - 1]
@@ -282,7 +283,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
 
         possible = possible.substring(0, value - 1) + replacement + possible.substring(value)
-        Log.d(TAG, "Final possible   : $possible")
         if (possible == "000000000") {
             Log.d(TAG, "Removing index ...")
             playerPossibles.remove(index)
@@ -500,12 +500,12 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     private fun encodePossibles(): String {
         var possiblesString = ""
-        // comma separated entries, colon separated index and possibles.
-        // 0:1234567,5:100450000
+        // ampersand separated entries, colon separated index and possibles.
+        // 0:1234567&5:100450000
         // TODO
         var firstEntry = true
         playerPossibles.forEach { index, possibles ->
-            if (firstEntry) { firstEntry = false } else { possiblesString += "," }
+            if (firstEntry) { firstEntry = false } else { possiblesString += "&" }
             possiblesString += "$index:$possibles"
         }
         return possiblesString
@@ -561,20 +561,16 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 }
             }
             if (key == "p") {  // User's possibles
-                Log.d(TAG, "Decode the possibles...")
-                val possiblesList = value.split(",")
+                val possiblesList = value.split("&")
                 possiblesList.forEach { currPossible ->
                     val keyValue = currPossible.split(":")
-                    val index = keyValue[0].toInt()
-                    val value = keyValue[1]
-                    Log.d(TAG, "$index = [$value]")
+                    val indexInt = keyValue[0].toInt()
+                    val valueString = keyValue[1]
 
-                    possibles[index] = value
+                    possibles[indexInt] = valueString
                 }
             }
         }
-
-        // TODO - decode the possibles
 
         return StateVariables(grid, width, hints, possibles)
     }
