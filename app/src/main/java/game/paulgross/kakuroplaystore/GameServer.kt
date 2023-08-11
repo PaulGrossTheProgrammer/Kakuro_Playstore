@@ -24,6 +24,17 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private val fromClientToGameServerQ: BlockingQueue<ClientRequest> = LinkedBlockingQueue()
     private val fromActivitiesToGameSeverQ: BlockingQueue<String> = LinkedBlockingQueue()
 
+
+    // TODO: Convert multiple inbound queues to single inbound queue.
+    enum class InboundMessageSource {
+        APP, CLIENT, CLIENTHANDLER
+    }
+
+    data class InboundMessage(val message: String, val source: InboundMessageSource,
+                              val responseQueue: BlockingQueue<InboundMessage>?)
+
+    private val inboundMessageQueue: BlockingQueue<InboundMessage> = LinkedBlockingQueue()
+
     enum class GameMode {
         /** Game only responds to messages within the App. */
         LOCAL,
