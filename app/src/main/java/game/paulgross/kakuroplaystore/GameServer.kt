@@ -276,6 +276,9 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         // TODO - handle the normal gameplay commands
 
+        // FIXME - the changes here need to be pushed to clients in SERVER mode...
+//        pushStateToClients()
+
         if (message.startsWith("Guess=")) {
             Log.d(TAG, "The user sent a guess: $message")
             val split = message.split("=")
@@ -430,6 +433,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     private fun messageGameplayDisplayState() {
         val intent = Intent()
+        //  TODO - get the message suffic from the message queue
         intent.action = context.packageName + GameplayActivity.MESSAGE_SUFFIX
         intent.putExtra("State", encodeState())
 
@@ -511,7 +515,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         state += "w=$puzzleWidth,"
         state += "g=" + encodeGuesses()
 
-        // TODO - Only need to send this once...
         // h=2ACROSS13:2DOWN23 ... etc
         state += ",h="
         playerHints.forEachIndexed {index, hint ->
@@ -524,7 +527,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             }
         }
 
-        // TODO - encode possibles
         // p=2:0123000000,8:0000006780
         if (playerPossibles.isNotEmpty()) {
             state += ",p="
