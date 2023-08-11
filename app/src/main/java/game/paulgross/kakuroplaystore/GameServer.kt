@@ -58,32 +58,68 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
     }
 
+    private var loopDelayMilliseconds = -1L  // -1 means disable looping,
+    // instead use the messageAvailable queue to control looping
     private val messageAvailable: BlockingQueue<Boolean> = LinkedBlockingQueue()
+    private val maxMessagesToProcessPerLoop = 5
 
     override fun run() {
 
         restoreGameState()
 
         while (gameIsRunning.get()) {
-            messageAvailable.take() //  Blocking read. We don't need the message contents, since this is just an activation flag.
-            messageAvailable.clear() // Don't ever allow the queue to build up.
+            if (loopDelayMilliseconds < 0) {
+                // We are NOT using a loop delay, so WAIT here for messages ...
+                messageAvailable.take() //  Blocking read. We don't need the message contents, since this is just an activation flag.
+            }
+            // TODO - modify the queuing methods to not use the messageAvailable if we are using a loop delay.
+            messageAvailable.clear() // Don't allow the queue to build up.
 
             // TODO - clear at least a few messages in a single loop in case there are many queued up.
             // TODO - monitor queue length for accidental build-up.
+            // Make sure that if there are still messages in the queue that:
+            // 1. Put a message on the messageAvailable queue to ensure another loop
+            // OR
+            // 2. This loop is periodically executed.
 
-            val activityRequest = fromActivitiesToGameSeverQ.poll()  // Non-blocking read.
-            if (activityRequest != null) {
-                handleActivityMessage(activityRequest)
+            var processedMessages = 0
+            do {
+                val activityRequest = fromActivitiesToGameSeverQ.poll()  // Non-blocking read.
+                if (activityRequest != null) {
+                    handleActivityMessage(activityRequest)
+                    processedMessages++
+                }
+            }  while (processedMessages < maxMessagesToProcessPerLoop && fromActivitiesToGameSeverQ.isNotEmpty())
+            if (loopDelayMilliseconds < 0 && fromActivitiesToGameSeverQ.isNotEmpty()) {
+                messageAvailable.put(true)  // Force the loop to run again because we are NOT using a loop delay
             }
 
-            val clientHandlerMessage = fromClientHandlerToGameServerQ.poll()  // Non-blocking read.
-            if (clientHandlerMessage != null) {
-                handleClientHandlerMessage(clientHandlerMessage.requestString, clientHandlerMessage.responseQ)
+            processedMessages = 0
+            do {
+                val clientHandlerMessage = fromClientHandlerToGameServerQ.poll()  // Non-blocking read.
+                if (clientHandlerMessage != null) {
+                    handleClientHandlerMessage(clientHandlerMessage.requestString, clientHandlerMessage.responseQ)
+                    processedMessages++
+                }
+            } while (processedMessages < maxMessagesToProcessPerLoop && fromClientHandlerToGameServerQ.isNotEmpty())
+            if (loopDelayMilliseconds < 0 && fromClientHandlerToGameServerQ.isNotEmpty()) {
+                messageAvailable.put(true)  // Force the loop to run again because we are NOT using a loop delay
             }
 
-            val clientMessage = fromClientToGameServerQ.poll()  // Non-blocking read.
-            if (clientMessage != null) {
-                handleClientMessage(clientMessage.requestString, clientMessage.responseQ)
+            processedMessages = 0
+            do {
+                val clientMessage = fromClientToGameServerQ.poll()  // Non-blocking read.
+                if (clientMessage != null) {
+                    handleClientMessage(clientMessage.requestString, clientMessage.responseQ)
+                    processedMessages++
+                }
+            } while(processedMessages < maxMessagesToProcessPerLoop && fromClientToGameServerQ.isNotEmpty())
+            if (loopDelayMilliseconds < 0 && fromClientToGameServerQ.isNotEmpty()) {
+                messageAvailable.put(true)  // Force the loop to run again because we are NOT using a loop delay
+            }
+
+            if (loopDelayMilliseconds > 0) {
+                sleep(loopDelayMilliseconds)
             }
         }
         Log.d(TAG, "The Game Server has shut down.")
