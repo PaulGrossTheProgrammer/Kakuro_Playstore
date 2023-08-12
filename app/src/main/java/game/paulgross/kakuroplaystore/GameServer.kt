@@ -47,11 +47,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
     private var gameMode: GameMode = GameMode.LOCAL
 
-    /**
-     * The playing grid.
-     */
-    // TODO:
-
     private var remotePlayers: MutableList<Queue<String>> = mutableListOf()  // Only used in SERVER mode.
 
     data class ClientRequest(val requestString: String, val responseQ: Queue<String>)
@@ -244,11 +239,13 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private fun handleActivityMessage(message: String) {
+        var stateChanged = false
         if (message == "Reset") {
             resetGame()
-            messageGameplayDisplayState()
+            stateChanged = true
         }
         if (message == "Status") {
+            // TODO - is this the best way to handle an individual status update request?
             messageGameplayDisplayState()
         }
 
@@ -274,51 +271,74 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             stopGame()
         }
 
-        // TODO - handle the normal gameplay commands
-
-        // FIXME - the changes here need to be pushed to clients in SERVER mode...
-//        pushStateToClients()
+        // Normal gameplay commands
 
         if (message.startsWith("Guess=")) {
-            Log.d(TAG, "The user sent a guess: $message")
-            val split = message.split("=")
-            val guess = split[1].split(",")
-
-            val index = guess[0].toInt()
-            val value = guess[1].toInt()
-            playerGrid[index] = value
-            playerPossibles.remove(index)
-            saveGameState()
-            messageGameplayDisplayState()
+            val changed = submitGuess(message)
+            if (changed) {
+                stateChanged = true
+            }
         }
+
         if (message.startsWith("Possible=")) {
-            Log.d(TAG, "The user sent a possible: $message")
-            val split = message.split("=")
-            val guess = split[1].split(",")
-
-            val index = guess[0].toInt()
-            val value = guess[1].toInt()
-            markUnMarkPossible(index, value)
-            saveGameState()
-            messageGameplayDisplayState()
+            val changed = markUnMarkPossible(message)
+            if (changed) {
+                stateChanged = true
+            }
         }
+
         if (message == "Reset") {
-            resetPuzzle()
-            messageGameplayDisplayState()
+            val changed = resetPuzzle()
+            if (changed) {
+                stateChanged = true
+            }
+        }
+
+        if (stateChanged) {
+            saveGameState()
+            pushStateToClients()
         }
     }
 
-    private fun resetPuzzle() {
+    private fun submitGuess(message: String): Boolean {
+        Log.d(TAG, "The user sent a guess: $message")
+        val split = message.split("=")
+        val guess = split[1].split(",")
+
+        // TODO - handle invalid Ints...
+        val index = guess[0].toInt()
+        val value = guess[1].toInt()
+        playerGrid[index] = value
+        playerPossibles.remove(index)
+
+        return true
+    }
+
+    private fun resetPuzzle(): Boolean {
         for (i in 0 until playerGrid.size) {
             if (playerGrid[i] != -1) {
                 playerGrid[i] = 0
             }
         }
         playerPossibles.clear()
-        saveGameState()
+        return true
     }
 
-    private fun markUnMarkPossible(index: Int, value: Int) {
+    private fun markUnMarkPossible(message: String): Boolean {
+        Log.d(TAG, "The user sent a possible: $message")
+        val split = message.split("=")
+        val guess = split[1].split(",")
+
+        // TODO - handle invalid Ints...
+        val index = guess[0].toInt()
+        val value = guess[1].toInt()
+
+        // Don't allow possibles if there is currently a guess
+        if (playerGrid[index] > 0) {
+            Log.d(TAG, "Can't set possibles where there is a guess")
+            return false
+        }
+
         // determine the current possibles for the index
         var possible = playerPossibles[index]
         if (possible == null) {
@@ -339,10 +359,15 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         } else {
             playerPossibles[index] = possible
         }
+
+        return true
     }
 
     private fun pushStateToClients() {
-        socketServer?.pushMessageToClients("state,${encodeState()}")
+        if (gameMode == GameMode.SERVER) {
+            socketServer?.pushMessageToClients("state,${encodeState()}")
+        }
+        messageGameplayDisplayState()
     }
 
     private fun stopGame() {
@@ -372,8 +397,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         editor.putString("Guesses", guessesToSave)
 
         // TODO - store possibles.
-//        val possiblesToSave = encodePossibles()
-//        editor.putString("Possibles", possiblesToSave)
+        val possiblesToSave = encodePossibles()
+        editor.putString("Possibles", possiblesToSave)
 
         editor.apply()
         Log.d(TAG, "Saved game state.")
@@ -391,7 +416,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         } else {
             restoredGame
         }
-        extractPuzzleFromString(currPuzzle!!)
+        startPuzzleFromString(currPuzzle!!)
 
         playerGrid.clear()
         val guessesString = preferences.getString("Guesses", "")
@@ -413,12 +438,15 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         playerHints.clear()
         generateHints()
 
-        // TODO: Restore the player's own "possibles" list:
-        playerPossibles.clear()
+        // Restore the player's own "possibles" list.
+        val possiblesString = preferences.getString("Possibles", "")
+        Log.d(TAG, "Possibles = $possiblesString")
+        playerPossibles = decodePossibles(possiblesString!!)
         // 0=103000000, 0=103000000, ... etc
+
     }
 
-    private fun extractPuzzleFromString(puzzleString: String) {
+    private fun startPuzzleFromString(puzzleString: String) {
         puzzleWidth = puzzleString.substring(0, 2).toInt()
 
         puzzleSolution.clear()
@@ -433,7 +461,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     private fun messageGameplayDisplayState() {
         val intent = Intent()
-        //  TODO - get the message suffic from the message queue
+        //  TODO - get the MESSAGE_SUFFIX from the message queue
         intent.action = context.packageName + GameplayActivity.MESSAGE_SUFFIX
         intent.putExtra("State", encodeState())
 
@@ -503,7 +531,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private var playerGrid: MutableList<Int> = mutableListOf()
     private var playerHints: MutableList<Hint> = mutableListOf()
 
-    // Possibles are user defined, and coded as 9-digit Longs.
+    // Possibles are user defined, and coded as 9-digit Strings.
     private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
 
     data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int,
@@ -516,6 +544,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         state += "g=" + encodeGuesses()
 
         // h=2ACROSS13:2DOWN23 ... etc
+        // TODO - call a method to encode
         state += ",h="
         playerHints.forEachIndexed {index, hint ->
             hint.index
@@ -560,13 +589,32 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         return possiblesString
     }
 
+    // TODO - create methods for decode guesses, hints and possibles.
+
+    private fun decodePossibles(possiblesString: String): MutableMap<Int, String> {
+        val newPossibles: MutableMap<Int, String> = mutableMapOf()
+        if (possiblesString == "") {
+            return newPossibles
+        }
+        val possiblesList = possiblesString.split("&")
+        possiblesList.forEach { currPossible ->
+            val keyValue = currPossible.split(":")
+            val indexInt = keyValue[0].toInt()
+            val valueString = keyValue[1]
+
+            newPossibles[indexInt] = valueString
+        }
+
+        return newPossibles
+    }
+
     fun decodeState(stateString: String): StateVariables {
         Log.d(TAG, "decodeState() for [$stateString]")
 
         var width = 0
         val grid: MutableList<Int> = mutableListOf()
         val hints: MutableList<Hint> = mutableListOf()
-        val possibles: MutableMap<Int, String> = mutableMapOf()
+        var possibles: MutableMap<Int, String> = mutableMapOf()
 
         // Example
         //w=4,g=-1:-1:0:0:-1:-1:0:0:0:-1:-1:-1:0:0:-1:-1
@@ -585,12 +633,14 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 width = value.toInt()
             }
             if (key == "g") {  // User's guesses
+                // TODO - call the decode guesses method...
                 val ints = value.split(":")
                 ints.forEach {theIntString ->
                     grid.add(theIntString.toInt())
                 }
             }
             if (key == "h") {  // Hints
+                // TODO - call a method to decode
                 val hintList = value.split(":")
                 hintList.forEach {theHintString ->
                     val downString = Direction.DOWN.toString()
@@ -610,14 +660,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 }
             }
             if (key == "p") {  // User's possibles
-                val possiblesList = value.split("&")
-                possiblesList.forEach { currPossible ->
-                    val keyValue = currPossible.split(":")
-                    val indexInt = keyValue[0].toInt()
-                    val valueString = keyValue[1]
-
-                    possibles[indexInt] = valueString
-                }
+                possibles = decodePossibles(value)
             }
         }
 
