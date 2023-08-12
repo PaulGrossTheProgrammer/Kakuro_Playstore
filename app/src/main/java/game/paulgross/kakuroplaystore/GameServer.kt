@@ -27,7 +27,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     data class InboundMessage(val message: String, val source: InboundMessageSource,
-                              val responseQueue: BlockingQueue<String>?)
+                              val responseQueue: BlockingQueue<String>?, val action: String?)
 
     enum class GameMode {
         /** Game only responds to messages within the App. */
@@ -76,8 +76,9 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             }
 
             if (im != null) {
+                // TODO- maybe just pass the whole message...
                 if (im.source == InboundMessageSource.APP) {
-                    handleActivityMessage(im.message)
+                    handleActivityMessage(im.message, im.action!!)
                 }
                 if (im.source == InboundMessageSource.CLIENT) {
                     handleClientMessage(im.message, im.responseQueue!!)
@@ -158,7 +159,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             validRequest = true
             remotePlayers.add(responseQ)
 
-            messageGameplayDisplayState()
+//            messageGameplayDisplayState()
         }
 
         // TODO: Normal gameplay commands here...
@@ -171,7 +172,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             validRequest = true
             responseQ.add(message)
             remotePlayers.remove(responseQ)
-            messageGameplayDisplayState()
+//            messageGameplayDisplayState()
         }
 
         if (!validRequest) {
@@ -192,7 +193,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 // TODO:
 
                 saveGameState()
-                messageGameplayDisplayState()
+//                messageGameplayDisplayState() // FIXME ...
             }
         }
         if (message == "shutdown" || message == "abandoned") {
@@ -201,15 +202,15 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
     }
 
-    private fun handleActivityMessage(message: String) {
+    private fun handleActivityMessage(message: String, action: String) {
         var stateChanged = false
         if (message == "Reset") {
-            resetGame()
+            resetGame(action)
             stateChanged = true
         }
         if (message == "Status") {
             // TODO - is this the best way to handle an individual status update request?
-            messageGameplayDisplayState()
+            messageGameplayDisplayState(action)
         }
 
         if (message == "StartServer") {
@@ -259,7 +260,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         if (stateChanged) {
             saveGameState()
-            pushStateToClients()
+            pushStateToClients(action)
         }
     }
 
@@ -326,11 +327,11 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         return true
     }
 
-    private fun pushStateToClients() {
+    private fun pushStateToClients(action: String) {
         if (gameMode == GameMode.SERVER) {
             socketServer?.pushMessageToClients("state,${encodeState()}")
         }
-        messageGameplayDisplayState()
+        messageGameplayDisplayState(action)
     }
 
     private fun stopGame() {
@@ -422,20 +423,20 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
     }
 
-    private fun messageGameplayDisplayState() {
+    private fun messageGameplayDisplayState(action: String) {
         val intent = Intent()
         //  TODO - get the MESSAGE_SUFFIX from the message queue
-        intent.action = context.packageName + GameplayActivity.MESSAGE_SUFFIX
+        intent.action = action
         intent.putExtra("State", encodeState())
 
         context.sendBroadcast(intent)
     }
 
-    private fun resetGame() {
+    private fun resetGame(action: String) {
         // TODO:
 
         saveGameState()
-        pushStateToClients()
+        pushStateToClients(action)
     }
 
     // -- Game here
@@ -654,19 +655,18 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             return singletonGameServer?.getGameMode()
         }
 
-        fun queueActivityMessage(message: String) {
-            // TODO - add Intent Action String to inbound message.
-            val im = InboundMessage(message, InboundMessageSource.APP, null)
+        fun queueActivityMessage(message: String, action: String) {
+            val im = InboundMessage(message, InboundMessageSource.APP, null, action)
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
         fun queueClientHandlerMessage(message: String, responseQ: BlockingQueue<String>) {
-            val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseQ)
+            val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseQ, null)
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
         fun queueClientMessage(message: String, responseQ: BlockingQueue<String>) {
-            val im = InboundMessage(message, InboundMessageSource.CLIENT, responseQ)
+            val im = InboundMessage(message, InboundMessageSource.CLIENT, responseQ, null)
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
 

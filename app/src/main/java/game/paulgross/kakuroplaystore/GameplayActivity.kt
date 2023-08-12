@@ -34,7 +34,7 @@ class GameplayActivity : AppCompatActivity() {
         enableMessagesFromGameServer()
         GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE))
 
-        GameServer.queueActivityMessage("Status")  // Request a new State message
+        GameServer.queueActivityMessage("Status", responseMessageAction!!)  // Request a new State message
     }
 
     public override fun onBackPressed() {
@@ -327,7 +327,7 @@ class GameplayActivity : AppCompatActivity() {
         val digit = tag.substringAfter("Guess")
 
         if (selectedId != -1) {
-            GameServer.queueActivityMessage("Guess=$selectedId,$digit")
+            GameServer.queueActivityMessage("Guess=$selectedId,$digit", responseMessageAction!!)
         }
     }
 
@@ -336,7 +336,7 @@ class GameplayActivity : AppCompatActivity() {
         val digit = tag.substringAfter("Possible")
         Log.d(TAG, "Possible digit: $digit")
         if (selectedId != -1) {
-            GameServer.queueActivityMessage("Possible=$selectedId,$digit")
+            GameServer.queueActivityMessage("Possible=$selectedId,$digit", responseMessageAction!!)
         }
     }
 
@@ -346,7 +346,7 @@ class GameplayActivity : AppCompatActivity() {
         builder.setMessage("Are you sure you want to reset?")
         builder.setPositiveButton("Reset") { _, _ ->
             selectedId = -1
-            GameServer.queueActivityMessage("Reset")
+            GameServer.queueActivityMessage("Reset", responseMessageAction!!)
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
@@ -369,12 +369,15 @@ class GameplayActivity : AppCompatActivity() {
     }
     private fun stopGameServer() {
         Log.d(TAG, "Stopping the game server ...")
-        GameServer.queueActivityMessage("StopGame")
+        GameServer.queueActivityMessage("StopGame", responseMessageAction!!)
     }
 
+    private var responseMessageAction: String? = null
+
     private fun enableMessagesFromGameServer() {
+        responseMessageAction = packageName + MESSAGE_SUFFIX
         val intentFilter = IntentFilter()
-        intentFilter.addAction(packageName + MESSAGE_SUFFIX)
+        intentFilter.addAction(responseMessageAction)
         registerReceiver(gameMessageReceiver, intentFilter)
         Log.d(TAG, "Enabled message receiver for [${packageName + MESSAGE_SUFFIX}]")
     }
