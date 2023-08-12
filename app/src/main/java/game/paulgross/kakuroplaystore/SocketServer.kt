@@ -7,7 +7,7 @@ import java.net.Socket
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class SocketServer(private val gameRequestQ: BlockingQueue<GameServer.ClientRequest>): Thread() {
+class SocketServer(): Thread() {
 
     private lateinit var serverSocket: ServerSocket
     private val working = AtomicBoolean(true)

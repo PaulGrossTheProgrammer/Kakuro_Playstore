@@ -20,20 +20,14 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     // We use a BlockingQueue here to block thread progress if needed.
     // https://developer.android.com/reference/java/util/concurrent/BlockingQueue
-    private val fromClientHandlerToGameServerQ: BlockingQueue<ClientRequest> = LinkedBlockingQueue()
-    private val fromClientToGameServerQ: BlockingQueue<ClientRequest> = LinkedBlockingQueue()
-    private val fromActivitiesToGameSeverQ: BlockingQueue<String> = LinkedBlockingQueue()
+    private val inboundMessageQueue: BlockingQueue<InboundMessage> = LinkedBlockingQueue()
 
-
-    // TODO: Convert multiple inbound queues to single inbound queue.
     enum class InboundMessageSource {
         APP, CLIENT, CLIENTHANDLER
     }
 
     data class InboundMessage(val message: String, val source: InboundMessageSource,
-                              val responseQueue: BlockingQueue<InboundMessage>?)
-
-    private val inboundMessageQueue: BlockingQueue<InboundMessage> = LinkedBlockingQueue()
+                              val responseQueue: BlockingQueue<String>?)
 
     enum class GameMode {
         /** Game only responds to messages within the App. */
@@ -65,63 +59,32 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private var loopDelayMilliseconds = -1L  // -1 means disable looping,
-    // instead use the messageAvailable queue to control looping
-    private val messageAvailable: BlockingQueue<Boolean> = LinkedBlockingQueue()
-    private val maxMessagesToProcessPerLoop = 5
 
     override fun run() {
 
         restoreGameState()
 
         while (gameIsRunning.get()) {
+            var im: InboundMessage? = null
+
             if (loopDelayMilliseconds < 0) {
                 // We are NOT using a loop delay, so WAIT here for messages ...
-                messageAvailable.take() //  Blocking read. We don't need the message contents, since this is just an activation flag.
-            }
-            // TODO - modify the queuing methods to not use the messageAvailable if we are using a loop delay.
-            messageAvailable.clear() // Don't allow the queue to build up.
-
-            // TODO - clear at least a few messages in a single loop in case there are many queued up.
-            // TODO - monitor queue length for accidental build-up.
-            // Make sure that if there are still messages in the queue that:
-            // 1. Put a message on the messageAvailable queue to ensure another loop
-            // OR
-            // 2. This loop is periodically executed.
-
-            var processedMessages = 0
-            do {
-                val activityRequest = fromActivitiesToGameSeverQ.poll()  // Non-blocking read.
-                if (activityRequest != null) {
-                    handleActivityMessage(activityRequest)
-                    processedMessages++
-                }
-            }  while (processedMessages < maxMessagesToProcessPerLoop && fromActivitiesToGameSeverQ.isNotEmpty())
-            if (loopDelayMilliseconds < 0 && fromActivitiesToGameSeverQ.isNotEmpty()) {
-                messageAvailable.put(true)  // Force the loop to run again because we are NOT using a loop delay
+                im = inboundMessageQueue.take()
+            } else {
+                // We are using a loop delay, so DON"T WAIT here for messages, just test to see if one is available ...
+                im = inboundMessageQueue.poll()
             }
 
-            processedMessages = 0
-            do {
-                val clientHandlerMessage = fromClientHandlerToGameServerQ.poll()  // Non-blocking read.
-                if (clientHandlerMessage != null) {
-                    handleClientHandlerMessage(clientHandlerMessage.requestString, clientHandlerMessage.responseQ)
-                    processedMessages++
+            if (im != null) {
+                if (im.source == InboundMessageSource.APP) {
+                    handleActivityMessage(im.message)
                 }
-            } while (processedMessages < maxMessagesToProcessPerLoop && fromClientHandlerToGameServerQ.isNotEmpty())
-            if (loopDelayMilliseconds < 0 && fromClientHandlerToGameServerQ.isNotEmpty()) {
-                messageAvailable.put(true)  // Force the loop to run again because we are NOT using a loop delay
-            }
-
-            processedMessages = 0
-            do {
-                val clientMessage = fromClientToGameServerQ.poll()  // Non-blocking read.
-                if (clientMessage != null) {
-                    handleClientMessage(clientMessage.requestString, clientMessage.responseQ)
-                    processedMessages++
+                if (im.source == InboundMessageSource.CLIENT) {
+                    handleClientMessage(im.message, im.responseQueue!!)
                 }
-            } while(processedMessages < maxMessagesToProcessPerLoop && fromClientToGameServerQ.isNotEmpty())
-            if (loopDelayMilliseconds < 0 && fromClientToGameServerQ.isNotEmpty()) {
-                messageAvailable.put(true)  // Force the loop to run again because we are NOT using a loop delay
+                if (im.source == InboundMessageSource.CLIENTHANDLER) {
+                    handleClientHandlerMessage(im.message, im.responseQueue!!)
+                }
             }
 
             if (loopDelayMilliseconds > 0) {
@@ -163,7 +126,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
 
         remotePlayers.clear()
-        socketServer = SocketServer(fromClientHandlerToGameServerQ)
+        socketServer = SocketServer()
         socketServer!!.start()
         determineIpAddresses()
 
@@ -188,7 +151,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     private var previousStateUpdate = ""
 
-    private fun handleClientHandlerMessage(message: String, responseQ: Queue<String>) {
+    private fun handleClientHandlerMessage(message: String, responseQ: BlockingQueue<String>) {
 
         var validRequest = false
         if (message == "Initialise") {
@@ -216,7 +179,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
     }
 
-    private fun handleClientMessage(message: String, responseQ: Queue<String>) {
+    private fun handleClientMessage(message: String, responseQ: BlockingQueue<String>) {
         if (message.startsWith("state,", true)) {
             val remoteState = message.substringAfter("state,")
 
@@ -692,24 +655,19 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
 
         fun queueActivityMessage(message: String) {
-            if (singletonGameServer?.gameIsRunning!!.get()) {
-                singletonGameServer?.fromActivitiesToGameSeverQ?.add(message)
-            }
-            singletonGameServer?.messageAvailable?.put(true)
+            // TODO - add Intent Action String to inbound message.
+            val im = InboundMessage(message, InboundMessageSource.APP, null)
+            singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
-        fun queueClientHandlerMessage(message: String, responseQ: Queue<String>) {
-            if (singletonGameServer?.gameIsRunning!!.get()) {
-                singletonGameServer?.fromClientHandlerToGameServerQ?.add(ClientRequest(message, responseQ))
-            }
-            singletonGameServer?.messageAvailable?.put(true)
+        fun queueClientHandlerMessage(message: String, responseQ: BlockingQueue<String>) {
+            val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseQ)
+            singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
-        fun queueClientMessage(message: String, responseQ: Queue<String>) {
-            if (singletonGameServer?.gameIsRunning!!.get()) {
-                singletonGameServer?.fromClientToGameServerQ?.add(ClientRequest(message, responseQ))
-            }
-            singletonGameServer?.messageAvailable?.put(true)
+        fun queueClientMessage(message: String, responseQ: BlockingQueue<String>) {
+            val im = InboundMessage(message, InboundMessageSource.CLIENT, responseQ)
+            singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
         fun decodeState(stateString: String): StateVariables? {
