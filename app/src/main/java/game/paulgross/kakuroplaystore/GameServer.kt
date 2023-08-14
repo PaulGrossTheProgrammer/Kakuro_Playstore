@@ -41,7 +41,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
     private var gameMode: GameMode = GameMode.LOCAL
 
-    private var remotePlayers: MutableList<Queue<String>> = mutableListOf()  // Only used in SERVER mode.
+    private var remotePlayers: MutableList<BlockingQueue<String>> = mutableListOf()  // Only used in SERVER mode.
 
     data class ClientRequest(val requestString: String, val responseQ: Queue<String>)
 
@@ -78,13 +78,13 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             if (im != null) {
                 // TODO- maybe just pass the whole message...
                 if (im.source == InboundMessageSource.APP) {
-                    handleActivityMessage(im.message, im.action!!)
+                    handleActivityMessage(im)
                 }
                 if (im.source == InboundMessageSource.CLIENT) {
-                    handleClientMessage(im.message, im.responseQueue!!)
+                    handleClientMessage(im)
                 }
                 if (im.source == InboundMessageSource.CLIENTHANDLER) {
-                    handleClientHandlerMessage(im.message, im.responseQueue!!)
+                    handleClientHandlerMessage(im)
                 }
             }
 
@@ -152,37 +152,37 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     private var previousStateUpdate = ""
 
-    private fun handleClientHandlerMessage(message: String, responseQ: BlockingQueue<String>) {
+    private fun handleClientHandlerMessage(im: InboundMessage) {
 
         var validRequest = false
-        if (message == "Initialise") {
+        if (im.message == "Initialise") {
             validRequest = true
-            remotePlayers.add(responseQ)
+            remotePlayers.add(im.responseQueue!!)
 
 //            messageGameplayDisplayState()
         }
 
         // TODO: Normal gameplay commands here...
 
-        if (message == "status") {
+        if (im.message == "status") {
             validRequest = true
-            responseQ.add("state,${encodeState()}")
+            im.responseQueue!!.add("state,${encodeState()}")
         }
-        if (message == "shutdown" || message == "abandoned") {
+        if (im.message == "shutdown" || im.message == "abandoned") {
             validRequest = true
-            responseQ.add(message)
-            remotePlayers.remove(responseQ)
+            im.responseQueue!!.add(im.message)
+            remotePlayers.remove(im.responseQueue)
 //            messageGameplayDisplayState()
         }
 
         if (!validRequest) {
-            Log.d(TAG, "invalid request: [$message]")
+            Log.d(TAG, "invalid request: [${im.message}]")
         }
     }
 
-    private fun handleClientMessage(message: String, responseQ: BlockingQueue<String>) {
-        if (message.startsWith("state,", true)) {
-            val remoteState = message.substringAfter("state,")
+    private fun handleClientMessage(im: InboundMessage) {
+        if (im.message.startsWith("state,", true)) {
+            val remoteState = im.message.substringAfter("state,")
 
             if (previousStateUpdate != remoteState) {
                 Log.d(TAG, "REMOTE Game Server sent state change: [$remoteState]")
@@ -196,62 +196,64 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 //                messageGameplayDisplayState() // FIXME ...
             }
         }
-        if (message == "shutdown" || message == "abandoned") {
-            responseQ.add(message)
+        if (im.message == "shutdown" || im.message == "abandoned") {
+            im.responseQueue!!.add(im.message)
             switchToPureLocalMode()
         }
     }
 
-    private fun handleActivityMessage(message: String, action: String) {
+    private fun handleActivityMessage(im: InboundMessage) {
+
+//        message: String, action: String
         var stateChanged = false
-        if (message == "Reset") {
-            resetGame(action)
+        if (im.message == "Reset") {
+            resetGame(im.action!!)
             stateChanged = true
         }
-        if (message == "Status") {
+        if (im.message == "Status") {
             // TODO - is this the best way to handle an individual status update request?
-            messageGameplayDisplayState(action)
+            messageGameplayDisplayState(im.action!!)
         }
 
-        if (message == "StartServer") {
+        if (im.message == "StartServer") {
             if (gameMode != GameMode.SERVER) {
                 switchToLocalServerMode()
             }
         }
-        if (message == "StartLocal") {
+        if (im.message == "StartLocal") {
             if (gameMode != GameMode.LOCAL) {
                 switchToPureLocalMode()
             }
         }
-        if (message.startsWith("RemoteServer")) {
+        if (im.message.startsWith("RemoteServer")) {
             if (gameMode != GameMode.CLIENT) {
-                val ip = message.substringAfter(":", "")
+                val ip = im.message.substringAfter(":", "")
                 if (ip != "") {
                     switchToRemoteServerMode(ip)
                 }
             }
         }
-        if (message == "StopGame") {
+        if (im.message == "StopGame") {
             stopGame()
         }
 
         // Normal gameplay commands
 
-        if (message.startsWith("Guess=")) {
-            val changed = submitGuess(message)
+        if (im.message.startsWith("Guess=")) {
+            val changed = submitGuess(im.message)
             if (changed) {
                 stateChanged = true
             }
         }
 
-        if (message.startsWith("Possible=")) {
-            val changed = markUnMarkPossible(message)
+        if (im.message.startsWith("Possible=")) {
+            val changed = markUnMarkPossible(im.message)
             if (changed) {
                 stateChanged = true
             }
         }
 
-        if (message == "Reset") {
+        if (im.message == "Reset") {
             val changed = resetPuzzle()
             if (changed) {
                 stateChanged = true
@@ -260,7 +262,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         if (stateChanged) {
             saveGameState()
-            pushStateToClients(action)
+            pushStateToClients(im.action!!)
         }
     }
 

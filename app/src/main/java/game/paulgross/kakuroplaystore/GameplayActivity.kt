@@ -412,5 +412,13 @@ class GameplayActivity : AppCompatActivity() {
     companion object {
         private val TAG = GameplayActivity::class.java.simpleName
         val MESSAGE_SUFFIX = ".$TAG.display.UPDATE"
+
+        // TODO - make this function a callback attached to messages.
+        // Can it be done without leaking memory???
+        // Put the instance from onCreate here, then call this statically.
+        // Maybe discard the Intent method of communicating?
+        fun queueMessage(message: String) {
+
+        }
     }
 }
