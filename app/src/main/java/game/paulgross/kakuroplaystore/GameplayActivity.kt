@@ -18,6 +18,8 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
 
 
 class GameplayActivity : AppCompatActivity() {
@@ -30,6 +32,8 @@ class GameplayActivity : AppCompatActivity() {
         val viewPlayGrid = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         viewPlayGrid.setActivity(this)
         viewPlayGrid.setOnTouchListener(PlayingGridView.CustomListener(this, viewPlayGrid))
+
+        instance = this  // TODO - beware of memory leak. How to clear this?
 
         enableMessagesFromGameServer()
         GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE))
@@ -409,9 +413,16 @@ class GameplayActivity : AppCompatActivity() {
         }
     }
 
+//    private fun queueMessageTest(message: String) {
+//        Log.d(TAG, "Successfully called the instance to queue: [$message]")
+//    }
+    private val inboundMessageQueue: BlockingQueue<String> = LinkedBlockingQueue()
+
     companion object {
         private val TAG = GameplayActivity::class.java.simpleName
         val MESSAGE_SUFFIX = ".$TAG.display.UPDATE"
+
+        var instance: GameplayActivity? = null
 
         // TODO - make this function a callback attached to messages.
         // Can it be done without leaking memory???
@@ -419,6 +430,10 @@ class GameplayActivity : AppCompatActivity() {
         // Maybe discard the Intent method of communicating?
         fun queueMessage(message: String) {
             Log.d(TAG, "Successfully called the response function with [$message]")
+
+//            instance?.inboundMessageQueue?.put(message)
+            // TODO: How do we ask for the UI thread to run again to respond to the queued message????
+//            instance.content
         }
     }
 }
