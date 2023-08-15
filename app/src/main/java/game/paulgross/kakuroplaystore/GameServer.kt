@@ -210,12 +210,12 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 //        message: String, action: String
         var stateChanged = false
         if (im.message == "Reset") {
-            resetGame(im.action!!)
+            resetGame(im)
             stateChanged = true
         }
         if (im.message == "Status") {
             // TODO - is this the best way to handle an individual status update request?
-            messageGameplayDisplayState(im.action!!)
+            messageGameplayDisplayState(im)
 
             // TODO: replace messageGameplayDisplayState with this:
             im.responseFunction?.let { it("State=${encodeState()}") }
@@ -268,7 +268,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         if (stateChanged) {
             saveGameState()
-            pushStateToClients(im.action!!)
+            pushStateToClients(im)
         }
     }
 
@@ -335,11 +335,11 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         return true
     }
 
-    private fun pushStateToClients(action: String) {
+    private fun pushStateToClients(im: InboundMessage) {
         if (gameMode == GameMode.SERVER) {
             socketServer?.pushMessageToClients("state,${encodeState()}")
         }
-        messageGameplayDisplayState(action)
+        messageGameplayDisplayState(im)
     }
 
     private fun stopGame() {
@@ -431,20 +431,22 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
     }
 
-    private fun messageGameplayDisplayState(action: String) {
+    private fun messageGameplayDisplayState(im: InboundMessage) {
         val intent = Intent()
-        //  TODO - get the MESSAGE_SUFFIX from the message queue
-        intent.action = action
+        intent.action = im.action
         intent.putExtra("State", encodeState())
 
         context.sendBroadcast(intent)
+
+        // TODO: replace messageGameplayDisplayState with this:
+        im.responseFunction?.let { it("State=${encodeState()}") }
     }
 
-    private fun resetGame(action: String) {
+    private fun resetGame(im: InboundMessage) {
         // TODO:
 
         saveGameState()
-        pushStateToClients(action)
+        pushStateToClients(im)
     }
 
     // -- Game here

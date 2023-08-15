@@ -36,6 +36,7 @@ class GameplayActivity : AppCompatActivity() {
         instance = this  // TODO - beware of memory leak. How to clear this?
 
         enableMessagesFromGameServer()
+        enableQueuedMessages()
         GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE))
 
         GameServer.queueActivityMessage("Status", responseMessageAction!!, ::queueMessage)  // Request a new State message
@@ -331,7 +332,8 @@ class GameplayActivity : AppCompatActivity() {
         val digit = tag.substringAfter("Guess")
 
         if (selectedId != -1) {
-            GameServer.queueActivityMessage("Guess=$selectedId,$digit", responseMessageAction!!, null)
+            GameServer.queueActivityMessage("Guess=$selectedId,$digit",
+                responseMessageAction!!, ::queueMessage)
         }
     }
 
@@ -413,14 +415,46 @@ class GameplayActivity : AppCompatActivity() {
         }
     }
 
-//    private fun queueMessageTest(message: String) {
-//        Log.d(TAG, "Successfully called the instance to queue: [$message]")
-//    }
+
+    private var queuedMessageAction: String? = null
+
+    private fun enableQueuedMessages() {
+        queuedMessageAction = packageName + MESSAGE_SUFFIX_NEW
+        val intentFilter = IntentFilter()
+        intentFilter.addAction(queuedMessageAction)
+        registerReceiver(activityMessageReceiver, intentFilter)
+        Log.d(TAG, "Enabled message receiver for [${queuedMessageAction}]")
+    }
+
+    /**
+    Receive messages from the GameServer.
+     */
+    private val activityMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            Log.d(TAG,"Size of inboundMessageQueue = ${inboundMessageQueue.size}")
+
+            // TODO - process the queue, and invalidate the Views as required...
+            inboundMessageQueue.clear()
+        }
+    }
+
     private val inboundMessageQueue: BlockingQueue<String> = LinkedBlockingQueue()
+
+    private fun queueAndNotifyMessage(message: String) {
+        Log.d(TAG, "Queuing [$message]")
+        inboundMessageQueue.put(message)
+
+        val intent = Intent()
+        intent.action = queuedMessageAction
+        intent.putExtra("MessageQueued", true)
+        sendBroadcast(intent)
+        Log.d(TAG, "Broadcast set ...")
+    }
 
     companion object {
         private val TAG = GameplayActivity::class.java.simpleName
         val MESSAGE_SUFFIX = ".$TAG.display.UPDATE"
+        val MESSAGE_SUFFIX_NEW = ".$TAG.activity.MESSAGE"
 
         var instance: GameplayActivity? = null
 
@@ -430,10 +464,7 @@ class GameplayActivity : AppCompatActivity() {
         // Maybe discard the Intent method of communicating?
         fun queueMessage(message: String) {
             Log.d(TAG, "Successfully called the response function with [$message]")
-
-//            instance?.inboundMessageQueue?.put(message)
-            // TODO: How do we ask for the UI thread to run again to respond to the queued message????
-//            instance.content
+            instance?.queueAndNotifyMessage(message)
         }
     }
 }
