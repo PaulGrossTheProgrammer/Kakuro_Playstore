@@ -26,9 +26,10 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         APP, CLIENT, CLIENTHANDLER
     }
 
+    // TODo - replace responseQueue with responseFunction
     data class InboundMessage(
         val message: String, val source: InboundMessageSource,
-        val responseQueue: BlockingQueue<String>?, val action: String?,
+        val responseQueue: BlockingQueue<String>?,
         val responseFunction: ((message: String) -> Unit)?  // TODO - why -> Unit???
     )
 
@@ -196,7 +197,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 // TODO:
 
                 saveGameState()
-//                messageGameplayDisplayState() // FIXME ...
+//                messageGameplayDisplayState() // FIXME ... maybe don't need this???
             }
         }
         if (im.message == "shutdown" || im.message == "abandoned") {
@@ -205,20 +206,24 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
     }
 
+    private var stateCallbacks: MutableList<(message: String) -> Unit> = mutableListOf()
+
     private fun handleActivityMessage(im: InboundMessage) {
 
-//        message: String, action: String
         var stateChanged = false
+        if (im.message == "RequestStateChanges") {
+            Log.d(TAG, "RequestStateChanges received...")
+            if (im.responseFunction != null) {
+                stateCallbacks.add(im.responseFunction)
+                im.responseFunction?.let { it("MessageType=State,${encodeState()}") }
+            }
+        }
         if (im.message == "Reset") {
             resetGame(im)
             stateChanged = true
         }
         if (im.message == "Status") {
-            // TODO - is this the best way to handle an individual status update request?
-            messageGameplayDisplayState(im)
-
-            // TODO: replace messageGameplayDisplayState with this:
-            im.responseFunction?.let { it("State=${encodeState()}") }
+            im.responseFunction?.let { it("MessageType=State,${encodeState()}") }
         }
 
         if (im.message == "StartServer") {
@@ -268,7 +273,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         if (stateChanged) {
             saveGameState()
-            pushStateToClients(im)
+            pushStateToClients()
         }
     }
 
@@ -335,11 +340,12 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         return true
     }
 
-    private fun pushStateToClients(im: InboundMessage) {
-        if (gameMode == GameMode.SERVER) {
-            socketServer?.pushMessageToClients("state,${encodeState()}")
+    private fun pushStateToClients() {
+        Log.d(TAG, "Pushing state to clients ...")
+        stateCallbacks.forEach {callback ->
+            Log.d(TAG, "Making a client callback ...")
+            callback("MessageType=State,${encodeState()}")
         }
-        messageGameplayDisplayState(im)
     }
 
     private fun stopGame() {
@@ -432,21 +438,14 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private fun messageGameplayDisplayState(im: InboundMessage) {
-        val intent = Intent()
-        intent.action = im.action
-        intent.putExtra("State", encodeState())
-
-        context.sendBroadcast(intent)
-
-        // TODO: replace messageGameplayDisplayState with this:
-        im.responseFunction?.let { it("State=${encodeState()}") }
+        im.responseFunction?.let { it("MessageType=State,${encodeState()}") }
     }
 
     private fun resetGame(im: InboundMessage) {
         // TODO:
 
         saveGameState()
-        pushStateToClients(im)
+        pushStateToClients()
     }
 
     // -- Game here
@@ -665,18 +664,18 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             return singletonGameServer?.getGameMode()
         }
 
-        fun queueActivityMessage(message: String, action: String, responseFunction: ((message: String) -> Unit)?) {
-            val im = InboundMessage(message, InboundMessageSource.APP, null, action, responseFunction)
+        fun queueActivityMessage(message: String, responseFunction: ((message: String) -> Unit)?) {
+            val im = InboundMessage(message, InboundMessageSource.APP, null, responseFunction)
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
         fun queueClientHandlerMessage(message: String, responseQ: BlockingQueue<String>) {
-            val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseQ, null, null)
+            val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseQ, null)
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
         fun queueClientMessage(message: String, responseQ: BlockingQueue<String>) {
-            val im = InboundMessage(message, InboundMessageSource.CLIENT, responseQ, null, null)
+            val im = InboundMessage(message, InboundMessageSource.CLIENT, responseQ, null)
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
 

@@ -39,7 +39,7 @@ class GameplayActivity : AppCompatActivity() {
         enableQueuedMessages()
         GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE))
 
-        GameServer.queueActivityMessage("Status", responseMessageAction!!, ::queueMessage)  // Request a new State message
+        GameServer.queueActivityMessage("RequestStateChanges", ::queueMessage)  // Request a new State message
     }
 
     override fun onBackPressed() {
@@ -332,8 +332,7 @@ class GameplayActivity : AppCompatActivity() {
         val digit = tag.substringAfter("Guess")
 
         if (selectedId != -1) {
-            GameServer.queueActivityMessage("Guess=$selectedId,$digit",
-                responseMessageAction!!, ::queueMessage)
+            GameServer.queueActivityMessage("Guess=$selectedId,$digit", ::queueMessage)
         }
     }
 
@@ -342,7 +341,7 @@ class GameplayActivity : AppCompatActivity() {
         val digit = tag.substringAfter("Possible")
         Log.d(TAG, "Possible digit: $digit")
         if (selectedId != -1) {
-            GameServer.queueActivityMessage("Possible=$selectedId,$digit", responseMessageAction!!, null)
+            GameServer.queueActivityMessage("Possible=$selectedId,$digit", ::queueMessage)
         }
     }
 
@@ -352,7 +351,7 @@ class GameplayActivity : AppCompatActivity() {
         builder.setMessage("Are you sure you want to reset?")
         builder.setPositiveButton("Reset") { _, _ ->
             selectedId = -1
-            GameServer.queueActivityMessage("Reset", responseMessageAction!!, null)
+            GameServer.queueActivityMessage("Reset", ::queueMessage)
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
@@ -375,7 +374,7 @@ class GameplayActivity : AppCompatActivity() {
     }
     private fun stopGameServer() {
         Log.d(TAG, "Stopping the game server ...")
-        GameServer.queueActivityMessage("StopGame", responseMessageAction!!, null)
+        GameServer.queueActivityMessage("StopGame", ::queueMessage)
     }
 
     private var responseMessageAction: String? = null
@@ -396,6 +395,9 @@ class GameplayActivity : AppCompatActivity() {
      */
     private val gameMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+
+            Log.d(TAG, "DISABLED old message receiver.")
+            return
 
             val stateString = intent.getStringExtra("State")
 
@@ -431,11 +433,33 @@ class GameplayActivity : AppCompatActivity() {
      */
     private val activityMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            Log.d(TAG,"Size of inboundMessageQueue = ${inboundMessageQueue.size}")
+            Log.d(TAG,"START: Size of inboundMessageQueue = ${inboundMessageQueue.size}")
 
-            // TODO - process the queue, and invalidate the Views as required...
-            inboundMessageQueue.clear()
+            val message = inboundMessageQueue.take()
+            if (message != null) {
+                if (message.startsWith("MessageType=State")) {
+
+                    val stateString = message.substringAfter(",", "")
+
+                    if (stateString != "" && previousStateString != stateString) {
+                        Log.d(TAG, "Got a new state string [$stateString]")
+                        previousStateString = stateString
+                        val newState = GameServer.decodeState(stateString)
+                        if (newState != null) {
+                            val puzzleWidth = newState.puzzleWidth
+                            val playerGrid = newState.playerGrid
+                            val hints = newState.playerHints
+                            val possibles = newState.possibles
+
+                            displayGrid(playerGrid, puzzleWidth, hints, possibles)
+                        }
+                    }
+                }
+
+            }
+            Log.d(TAG,"DONE: Size of inboundMessageQueue = ${inboundMessageQueue.size}")
         }
+
     }
 
     private val inboundMessageQueue: BlockingQueue<String> = LinkedBlockingQueue()
@@ -448,7 +472,7 @@ class GameplayActivity : AppCompatActivity() {
         intent.action = queuedMessageAction
         intent.putExtra("MessageQueued", true)
         sendBroadcast(intent)
-        Log.d(TAG, "Broadcast set ...")
+        Log.d(TAG, "Broadcast sent ...")
     }
 
     companion object {
@@ -456,12 +480,11 @@ class GameplayActivity : AppCompatActivity() {
         val MESSAGE_SUFFIX = ".$TAG.display.UPDATE"
         val MESSAGE_SUFFIX_NEW = ".$TAG.activity.MESSAGE"
 
-        var instance: GameplayActivity? = null
+        // TODO: Does this ever need to be set back to null?
+        var instance: GameplayActivity? = null // Set by onCreate()
 
-        // TODO - make this function a callback attached to messages.
-        // Can it be done without leaking memory???
-        // Put the instance from onCreate here, then call this statically.
-        // Maybe discard the Intent method of communicating?
+
+        // Callback function attached to messages.
         fun queueMessage(message: String) {
             Log.d(TAG, "Successfully called the response function with [$message]")
             instance?.queueAndNotifyMessage(message)
