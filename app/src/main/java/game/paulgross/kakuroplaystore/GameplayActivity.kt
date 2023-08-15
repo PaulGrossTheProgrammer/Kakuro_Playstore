@@ -34,10 +34,10 @@ class GameplayActivity : AppCompatActivity() {
         enableMessagesFromGameServer()
         GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE))
 
-        GameServer.queueActivityMessage("Status", responseMessageAction!!)  // Request a new State message
+        GameServer.queueActivityMessage("Status", responseMessageAction!!, ::queueMessage)  // Request a new State message
     }
 
-    public override fun onBackPressed() {
+    override fun onBackPressed() {
         confirmExitApp()
     }
 
@@ -327,7 +327,7 @@ class GameplayActivity : AppCompatActivity() {
         val digit = tag.substringAfter("Guess")
 
         if (selectedId != -1) {
-            GameServer.queueActivityMessage("Guess=$selectedId,$digit", responseMessageAction!!)
+            GameServer.queueActivityMessage("Guess=$selectedId,$digit", responseMessageAction!!, null)
         }
     }
 
@@ -336,7 +336,7 @@ class GameplayActivity : AppCompatActivity() {
         val digit = tag.substringAfter("Possible")
         Log.d(TAG, "Possible digit: $digit")
         if (selectedId != -1) {
-            GameServer.queueActivityMessage("Possible=$selectedId,$digit", responseMessageAction!!)
+            GameServer.queueActivityMessage("Possible=$selectedId,$digit", responseMessageAction!!, null)
         }
     }
 
@@ -346,7 +346,7 @@ class GameplayActivity : AppCompatActivity() {
         builder.setMessage("Are you sure you want to reset?")
         builder.setPositiveButton("Reset") { _, _ ->
             selectedId = -1
-            GameServer.queueActivityMessage("Reset", responseMessageAction!!)
+            GameServer.queueActivityMessage("Reset", responseMessageAction!!, null)
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
@@ -369,7 +369,7 @@ class GameplayActivity : AppCompatActivity() {
     }
     private fun stopGameServer() {
         Log.d(TAG, "Stopping the game server ...")
-        GameServer.queueActivityMessage("StopGame", responseMessageAction!!)
+        GameServer.queueActivityMessage("StopGame", responseMessageAction!!, null)
     }
 
     private var responseMessageAction: String? = null
@@ -418,7 +418,7 @@ class GameplayActivity : AppCompatActivity() {
         // Put the instance from onCreate here, then call this statically.
         // Maybe discard the Intent method of communicating?
         fun queueMessage(message: String) {
-
+            Log.d(TAG, "Successfully called the response function with [$message]")
         }
     }
 }

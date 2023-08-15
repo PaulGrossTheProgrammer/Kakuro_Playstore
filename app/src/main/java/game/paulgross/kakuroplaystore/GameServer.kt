@@ -26,8 +26,11 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         APP, CLIENT, CLIENTHANDLER
     }
 
-    data class InboundMessage(val message: String, val source: InboundMessageSource,
-                              val responseQueue: BlockingQueue<String>?, val action: String?)
+    data class InboundMessage(
+        val message: String, val source: InboundMessageSource,
+        val responseQueue: BlockingQueue<String>?, val action: String?,
+        val responseFunction: ((message: String) -> Unit)?  // TODO - why -> Unit???
+    )
 
     enum class GameMode {
         /** Game only responds to messages within the App. */
@@ -213,6 +216,9 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         if (im.message == "Status") {
             // TODO - is this the best way to handle an individual status update request?
             messageGameplayDisplayState(im.action!!)
+
+            // TODO: replace messageGameplayDisplayState with this:
+            im.responseFunction?.let { it("State=${encodeState()}") }
         }
 
         if (im.message == "StartServer") {
@@ -657,18 +663,18 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             return singletonGameServer?.getGameMode()
         }
 
-        fun queueActivityMessage(message: String, action: String) {
-            val im = InboundMessage(message, InboundMessageSource.APP, null, action)
+        fun queueActivityMessage(message: String, action: String, responseFunction: ((message: String) -> Unit)?) {
+            val im = InboundMessage(message, InboundMessageSource.APP, null, action, responseFunction)
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
         fun queueClientHandlerMessage(message: String, responseQ: BlockingQueue<String>) {
-            val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseQ, null)
+            val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseQ, null, null)
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
         fun queueClientMessage(message: String, responseQ: BlockingQueue<String>) {
-            val im = InboundMessage(message, InboundMessageSource.CLIENT, responseQ, null)
+            val im = InboundMessage(message, InboundMessageSource.CLIENT, responseQ, null, null)
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
