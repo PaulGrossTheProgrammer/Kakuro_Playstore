@@ -399,7 +399,7 @@ class GameplayActivity : AppCompatActivity() {
             Log.d(TAG, "DISABLED old message receiver.")
             return
 
-            val stateString = intent.getStringExtra("State")
+            val stateString = intent.getStringExtra("MessageType=State,")
 
             if (stateString != null && previousStateString != stateString) {
                 Log.d(TAG, "Got a new state string [$stateString]")
@@ -468,6 +468,8 @@ class GameplayActivity : AppCompatActivity() {
         Log.d(TAG, "Queuing [$message]")
         inboundMessageQueue.put(message)
 
+        // This Intent broadcast is used to notify the UI thread of the message on the inboundMessageQueue.
+        // TODO: Maybe there is another way to do this???
         val intent = Intent()
         intent.action = queuedMessageAction
         intent.putExtra("MessageQueued", true)
@@ -488,6 +490,8 @@ class GameplayActivity : AppCompatActivity() {
         fun queueMessage(message: String) {
             Log.d(TAG, "Successfully called the response function with [$message]")
             instance?.queueAndNotifyMessage(message)
+
+            // TODO - maybe go back to the old Intent notify method instead of the inboundMessageQueue...???
         }
     }
 }

@@ -606,7 +606,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 width = value.toInt()
             }
             if (key == "g") {  // User's guesses
-                // TODO - call the decode guesses method...
+                // TODO - call the decodeGuesses() method...
                 val ints = value.split(":")
                 ints.forEach {theIntString ->
                     grid.add(theIntString.toInt())
