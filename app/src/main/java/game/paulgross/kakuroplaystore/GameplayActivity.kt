@@ -18,8 +18,6 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.LinkedBlockingQueue
 
 
 class GameplayActivity : AppCompatActivity() {
@@ -33,13 +31,13 @@ class GameplayActivity : AppCompatActivity() {
         viewPlayGrid.setActivity(this)
         viewPlayGrid.setOnTouchListener(PlayingGridView.CustomListener(this, viewPlayGrid))
 
-        instance = this  // TODO - beware of memory leak. How to clear this?
+        instance = this  // TODO - beware of memory leak. How to clear this? Do we ever need to?
 
-        enableMessagesFromGameServer()
         enableQueuedMessages()
         GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE))
 
-        GameServer.queueActivityMessage("RequestStateChanges", ::queueMessage)  // Request a new State message
+        // The GameServer will call queueMessage() whenever the state changes.
+        GameServer.queueActivityMessage("RequestStateChanges", ::queueMessage)
     }
 
     override fun onBackPressed() {
@@ -377,23 +375,13 @@ class GameplayActivity : AppCompatActivity() {
         GameServer.queueActivityMessage("StopGame", ::queueMessage)
     }
 
-    private var responseMessageAction: String? = null
-
-    private fun enableMessagesFromGameServer() {
-        responseMessageAction = packageName + MESSAGE_SUFFIX
-        val intentFilter = IntentFilter()
-        intentFilter.addAction(responseMessageAction)
-        registerReceiver(gameMessageReceiver, intentFilter)
-        Log.d(TAG, "Enabled message receiver for [${packageName + MESSAGE_SUFFIX}]")
-    }
-
     private var previousStateString = ""
     var selectedId: Int = -1
 
     /**
     Receive messages from the GameServer.
      */
-    private val gameMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+    private val activityMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
 
             val message = intent.getStringExtra("Message")
@@ -418,83 +406,34 @@ class GameplayActivity : AppCompatActivity() {
         }
     }
 
-
     private var queuedMessageAction: String? = null
 
     private fun enableQueuedMessages() {
         queuedMessageAction = packageName + MESSAGE_SUFFIX_NEW
         val intentFilter = IntentFilter()
         intentFilter.addAction(queuedMessageAction)
-//        registerReceiver(activityMessageReceiver, intentFilter)
-        registerReceiver(gameMessageReceiver, intentFilter)
-        gameMessageReceiver
+        registerReceiver(activityMessageReceiver, intentFilter)
         Log.d(TAG, "Enabled message receiver for [${queuedMessageAction}]")
     }
 
-    /**
-    Receive messages from the GameServer.
-     */
-    private val activityMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            Log.d(TAG,"START: Size of inboundMessageQueue = ${inboundMessageQueue.size}")
-
-            val message = inboundMessageQueue.take()
-            if (message != null) {
-                if (message.startsWith("MessageType=State")) {
-
-                    val stateString = message.substringAfter(",", "")
-
-                    if (stateString != "" && previousStateString != stateString) {
-                        Log.d(TAG, "Got a new state string [$stateString]")
-                        previousStateString = stateString
-                        val newState = GameServer.decodeState(stateString)
-                        if (newState != null) {
-                            val puzzleWidth = newState.puzzleWidth
-                            val playerGrid = newState.playerGrid
-                            val hints = newState.playerHints
-                            val possibles = newState.possibles
-
-                            displayGrid(playerGrid, puzzleWidth, hints, possibles)
-                        }
-                    }
-                }
-
-            }
-            Log.d(TAG,"DONE: Size of inboundMessageQueue = ${inboundMessageQueue.size}")
-        }
-
-    }
-
-    private val inboundMessageQueue: BlockingQueue<String> = LinkedBlockingQueue()
-
-    private fun queueAndNotifyMessage(message: String) {
-        Log.d(TAG, "Queuing [$message]")
-//        inboundMessageQueue.put(message)
-
-        // This Intent broadcast is used to notify the UI thread of the message on the inboundMessageQueue.
-        // TODO: Maybe there is another way to do this???
+    private fun queueMessage(message: String) {
+        // The UI thread will call activityMessageReceiver() to handle the message.
         val intent = Intent()
         intent.action = queuedMessageAction
         intent.putExtra("Message", message)
         sendBroadcast(intent)
-        Log.d(TAG, "Broadcast sent ...")
     }
 
     companion object {
         private val TAG = GameplayActivity::class.java.simpleName
-        val MESSAGE_SUFFIX = ".$TAG.display.UPDATE"
         val MESSAGE_SUFFIX_NEW = ".$TAG.activity.MESSAGE"
 
         // TODO: Does this ever need to be set back to null?
         var instance: GameplayActivity? = null // Set by onCreate()
 
-
-        // Callback function attached to messages.
+        // Callback function attached to messages sent to other queues.
         fun queueMessage(message: String) {
-            Log.d(TAG, "Successfully called the response function with [$message]")
-            instance?.queueAndNotifyMessage(message)
-
-            // TODO - maybe go back to the old Intent notify method instead of the inboundMessageQueue...???
+            instance?.queueMessage(message)
         }
     }
 }

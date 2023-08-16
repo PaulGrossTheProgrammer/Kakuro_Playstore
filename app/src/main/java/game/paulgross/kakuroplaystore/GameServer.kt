@@ -72,15 +72,14 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             var im: InboundMessage? = null
 
             if (loopDelayMilliseconds < 0) {
-                // We are NOT using a loop delay, so WAIT here for messages ...
+                // We are NOT using a loop delay, so WAIT HERE for messages ...
                 im = inboundMessageQueue.take()
             } else {
-                // We are using a loop delay, so DON"T WAIT here for messages, just test to see if one is available ...
+                // We are using a loop delay, so DON'T WAIT HERE for messages, just test to see if one is available ...
                 im = inboundMessageQueue.poll()
             }
 
             if (im != null) {
-                // TODO- maybe just pass the whole message...
                 if (im.source == InboundMessageSource.APP) {
                     handleActivityMessage(im)
                 }
@@ -162,8 +161,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         if (im.message == "Initialise") {
             validRequest = true
             remotePlayers.add(im.responseQueue!!)
-
-//            messageGameplayDisplayState()
         }
 
         // TODO: Normal gameplay commands here...
@@ -176,17 +173,16 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             validRequest = true
             im.responseQueue!!.add(im.message)
             remotePlayers.remove(im.responseQueue)
-//            messageGameplayDisplayState()
         }
 
         if (!validRequest) {
-            Log.d(TAG, "invalid request: [${im.message}]")
+            Log.d(TAG, "invalid message: [${im.message}]")
         }
     }
 
     private fun handleClientMessage(im: InboundMessage) {
         if (im.message.startsWith("state,", true)) {
-            val remoteState = im.message.substringAfter("state,")
+            val remoteState = im.message.substringAfter("MessageType=State,")
 
             if (previousStateUpdate != remoteState) {
                 Log.d(TAG, "REMOTE Game Server sent state change: [$remoteState]")
@@ -197,7 +193,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 // TODO:
 
                 saveGameState()
-//                messageGameplayDisplayState() // FIXME ... maybe don't need this???
+                pushStateToClients()
             }
         }
         if (im.message == "shutdown" || im.message == "abandoned") {
@@ -341,9 +337,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private fun pushStateToClients() {
-        Log.d(TAG, "Pushing state to clients ...")
         stateCallbacks.forEach {callback ->
-            Log.d(TAG, "Making a client callback ...")
             callback("MessageType=State,${encodeState()}")
         }
     }
