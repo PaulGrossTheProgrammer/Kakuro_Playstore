@@ -396,14 +396,15 @@ class GameplayActivity : AppCompatActivity() {
     private val gameMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
 
-            Log.d(TAG, "DISABLED old message receiver.")
-            return
+            val message = intent.getStringExtra("Message")
 
-            val stateString = intent.getStringExtra("MessageType=State,")
+            // FIXME - allow other message types.
+            val stateString = message?.substringAfter("MessageType=State,", "")
 
             if (stateString != null && previousStateString != stateString) {
                 Log.d(TAG, "Got a new state string [$stateString]")
                 previousStateString = stateString
+                // TODO - investigate a "fast" convert that avoids string
                 val newState = GameServer.decodeState(stateString)
                 if (newState != null) {
                     val puzzleWidth = newState.puzzleWidth
@@ -424,7 +425,9 @@ class GameplayActivity : AppCompatActivity() {
         queuedMessageAction = packageName + MESSAGE_SUFFIX_NEW
         val intentFilter = IntentFilter()
         intentFilter.addAction(queuedMessageAction)
-        registerReceiver(activityMessageReceiver, intentFilter)
+//        registerReceiver(activityMessageReceiver, intentFilter)
+        registerReceiver(gameMessageReceiver, intentFilter)
+        gameMessageReceiver
         Log.d(TAG, "Enabled message receiver for [${queuedMessageAction}]")
     }
 
@@ -466,13 +469,13 @@ class GameplayActivity : AppCompatActivity() {
 
     private fun queueAndNotifyMessage(message: String) {
         Log.d(TAG, "Queuing [$message]")
-        inboundMessageQueue.put(message)
+//        inboundMessageQueue.put(message)
 
         // This Intent broadcast is used to notify the UI thread of the message on the inboundMessageQueue.
         // TODO: Maybe there is another way to do this???
         val intent = Intent()
         intent.action = queuedMessageAction
-        intent.putExtra("MessageQueued", true)
+        intent.putExtra("Message", message)
         sendBroadcast(intent)
         Log.d(TAG, "Broadcast sent ...")
     }
