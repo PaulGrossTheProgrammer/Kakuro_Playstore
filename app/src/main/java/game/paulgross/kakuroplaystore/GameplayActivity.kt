@@ -26,17 +26,17 @@ class GameplayActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gameplay)
 
-        // Attach the TouchListener to the custom PlayingGridView
+        // Attach the custom TouchListener to the custom PlayingGridView
         val viewPlayGrid = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         viewPlayGrid.setActivity(this)
         viewPlayGrid.setOnTouchListener(PlayingGridView.CustomListener(this, viewPlayGrid))
 
-        instance = this  // TODO - beware of memory leak. How to clear this? Do we ever need to?
+        instance = this  // Enables the Companion object to receive messages for this Class.
 
         enableQueuedMessages()
         GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE))
 
-        // The GameServer will call queueMessage() whenever the state changes.
+        // Request that the GameServer call queueMessage() whenever the game state changes.
         GameServer.queueActivityMessage("RequestStateChanges", ::queueMessage)
     }
 
@@ -44,14 +44,13 @@ class GameplayActivity : AppCompatActivity() {
         confirmExitApp()
     }
 
-    private fun displayGrid(playerGrid: MutableList<Int>, puzzleWidth:Int,
-                            playerHints: MutableList<GameServer.Hint>, possibles: MutableMap<Int, String>) {
+    /**
+     * Update the custom playGridView with the state and request a redraw.
+     */
+    private fun displayGrid(gameState: GameServer.StateVariables) {
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        playGridView.playerGrid = playerGrid
-        playGridView.puzzleWidth = puzzleWidth
-        playGridView.playerHints = playerHints
-        playGridView.playerPossibles = possibles
+        playGridView.gameState = gameState
         playGridView.invalidate() // Trigger a redraw
     }
 
@@ -68,17 +67,13 @@ class GameplayActivity : AppCompatActivity() {
         private var possiblesTextSize = 1f
         private var borderThickness =1f
 
-        var puzzleWidth = 1
-
         // Adjust these for scrolling around large puzzles
         private var firstDisplayRow = 1
         private var firstDisplayCol = 1 // FIXME - Doesn't work past 1.
         private var maxDisplayRows = 5  // FIXME - Doesn't work when smaller than puzzle width.
         private var maxDisplayCols = 5
 
-        var playerGrid: MutableList<Int> = mutableListOf()
-        var playerHints: MutableList<GameServer.Hint> = mutableListOf()
-        var playerPossibles: MutableMap<Int, String> = mutableMapOf()
+        var gameState: GameServer.StateVariables? = null
 
         private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
@@ -135,7 +130,7 @@ class GameplayActivity : AppCompatActivity() {
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
 
-            var displayRows = puzzleWidth + 1
+            var displayRows = gameState!!.puzzleWidth + 1
             if (displayRows > maxDisplayRows) {
                 displayRows = maxDisplayRows
             }
@@ -156,6 +151,10 @@ class GameplayActivity : AppCompatActivity() {
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
             Log.d("PlayingGridView", "onDraw() running")
+            if (gameState == null) {
+                Log.d("PlayingGridView", "onDraw() exiting - No gameState to draw.")
+                return
+            }
 
             canvas.drawBitmap(paperTexture, 0f, 0f, paint) // TODO scale this to the final size
 
@@ -175,8 +174,8 @@ class GameplayActivity : AppCompatActivity() {
             var currX = startX
             var currY = 0f
 
-            var rows = puzzleWidth + 1
-            var cols = playerGrid.size.div(puzzleWidth) + 1
+            var rows = gameState!!.puzzleWidth + 1
+            var cols = gameState!!.playerGrid.size.div(gameState!!.puzzleWidth) + 1
 
             if (rows > maxDisplayRows) {
                 rows = maxDisplayRows
@@ -193,12 +192,12 @@ class GameplayActivity : AppCompatActivity() {
                     val puzzleSquare = (col != 1 && row != 1)
 
                     if (puzzleSquare) {
-                        val gridValue = playerGrid[index]
+                        val gridValue = gameState!!.playerGrid[index]
                         // Non-playable grid value is -1, 0 means no guess yet, > 0 means a player guess
                         if (gridValue != -1) {
                             val selected = (index == gameplayActivity?.selectedId)
 
-                            var possiblesString = playerPossibles[index]
+                            var possiblesString = gameState!!.possibles[index]
                             if (gridValue != 0) {
                                 possiblesString = null
                             }
@@ -208,7 +207,7 @@ class GameplayActivity : AppCompatActivity() {
                             drawBlankSquare(currX, currY, canvas, paint)
                         }
 
-                        playerHints.forEach { hint ->
+                        gameState!!.playerHints.forEach { hint ->
                             if (index == hint.index) {
                                 if (hint.direction == GameServer.Direction.DOWN) {
                                     drawDownHint(hint.total.toString(), currX, currY, canvas, paint)
@@ -228,7 +227,7 @@ class GameplayActivity : AppCompatActivity() {
                 }
                 // next index needs to be offset if we are NOT viewing from the 1, 1 position.
                 // FIXME - doesn't work for puzzles larger than max rows
-                index = (col - 1) * puzzleWidth + firstDisplayCol - 1
+                index = (col - 1) * gameState!!.puzzleWidth + firstDisplayCol - 1
                 currX = startX
                 currY += squareWidth
             }
@@ -345,11 +344,11 @@ class GameplayActivity : AppCompatActivity() {
 
     fun onClickReset(view: View) {
         val builder = AlertDialog.Builder(this)
-        builder.setTitle("Reset")
-        builder.setMessage("Are you sure you want to reset?")
+        builder.setTitle("Restart Puzzle")
+        builder.setMessage("Are you sure you want to restart?")
         builder.setPositiveButton("Reset") { _, _ ->
             selectedId = -1
-            GameServer.queueActivityMessage("Reset", ::queueMessage)
+            GameServer.queueActivityMessage("RestartPuzzle", ::queueMessage)
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
@@ -370,6 +369,7 @@ class GameplayActivity : AppCompatActivity() {
         stopGameServer()
         finishAndRemoveTask()
     }
+
     private fun stopGameServer() {
         Log.d(TAG, "Stopping the game server ...")
         GameServer.queueActivityMessage("StopGame", ::queueMessage)
@@ -392,15 +392,10 @@ class GameplayActivity : AppCompatActivity() {
             if (stateString != null && previousStateString != stateString) {
                 Log.d(TAG, "Got a new state string [$stateString]")
                 previousStateString = stateString
-                // TODO - investigate a "fast" convert that avoids string
+                // TODO - investigate a "fast" convert that avoids string conversions
                 val newState = GameServer.decodeState(stateString)
                 if (newState != null) {
-                    val puzzleWidth = newState.puzzleWidth
-                    val playerGrid = newState.playerGrid
-                    val hints = newState.playerHints
-                    val possibles = newState.possibles
-
-                    displayGrid(playerGrid, puzzleWidth, hints, possibles)
+                    displayGrid(newState)
                 }
             }
         }
@@ -428,7 +423,6 @@ class GameplayActivity : AppCompatActivity() {
         private val TAG = GameplayActivity::class.java.simpleName
         val MESSAGE_SUFFIX_NEW = ".$TAG.activity.MESSAGE"
 
-        // TODO: Does this ever need to be set back to null?
         var instance: GameplayActivity? = null // Set by onCreate()
 
         // Callback function attached to messages sent to other queues.

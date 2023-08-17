@@ -2,7 +2,6 @@ package game.paulgross.kakuroplaystore
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.util.Log
@@ -30,7 +29,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     data class InboundMessage(
         val message: String, val source: InboundMessageSource,
         val responseQueue: BlockingQueue<String>?,
-        val responseFunction: ((message: String) -> Unit)?  // TODO - why -> Unit???
+        val responseFunction: ((message: String) -> Unit)?
     )
 
     enum class GameMode {
@@ -202,7 +201,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
     }
 
-    private var stateCallbacks: MutableList<(message: String) -> Unit> = mutableListOf()
+    private var stateChangeCallbacks: MutableList<(message: String) -> Unit> = mutableListOf()
 
     private fun handleActivityMessage(im: InboundMessage) {
 
@@ -210,12 +209,17 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         if (im.message == "RequestStateChanges") {
             Log.d(TAG, "RequestStateChanges received...")
             if (im.responseFunction != null) {
-                stateCallbacks.add(im.responseFunction)
+                stateChangeCallbacks.add(im.responseFunction)
+
+                // Assume that the caller does have the current state so send it back now.
                 im.responseFunction?.let { it("MessageType=State,${encodeState()}") }
             }
         }
+
+        // TODO - need a cancel request message too...
+
         if (im.message == "Reset") {
-            resetGame(im)
+            resetGame()
             stateChanged = true
         }
         if (im.message == "Status") {
@@ -260,8 +264,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             }
         }
 
-        if (im.message == "Reset") {
-            val changed = resetPuzzle()
+        if (im.message == "RestartPuzzle") {
+            val changed = restartPuzzle()
             if (changed) {
                 stateChanged = true
             }
@@ -287,7 +291,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         return true
     }
 
-    private fun resetPuzzle(): Boolean {
+    private fun restartPuzzle(): Boolean {
         for (i in 0 until playerGrid.size) {
             if (playerGrid[i] != -1) {
                 playerGrid[i] = 0
@@ -337,7 +341,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private fun pushStateToClients() {
-        stateCallbacks.forEach {callback ->
+        stateChangeCallbacks.forEach { callback ->
             callback("MessageType=State,${encodeState()}")
         }
     }
@@ -435,7 +439,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         im.responseFunction?.let { it("MessageType=State,${encodeState()}") }
     }
 
-    private fun resetGame(im: InboundMessage) {
+    private fun resetGame() {
         // TODO:
 
         saveGameState()
