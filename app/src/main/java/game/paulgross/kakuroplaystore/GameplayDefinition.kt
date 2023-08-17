@@ -2,14 +2,16 @@ package game.paulgross.kakuroplaystore
 
 import android.util.Log
 
-class GameplayDefinition {
+object GameplayDefinition {
+
+    private val TAG = GameplayDefinition::class.java.simpleName
 
     init {
+        Log.d(TAG, "Initialising the gameplay definition...")
         GameServer.pluginGameplay(::handleGameplayMessage)
     }
 
-    companion object {
-        private val TAG = GameplayDefinition::class.java.simpleName
+
 
         private var currPuzzle = ""
         private var puzzleWidth = 5
@@ -44,5 +46,4 @@ class GameplayDefinition {
 
             return true
         }
-    }
 }
