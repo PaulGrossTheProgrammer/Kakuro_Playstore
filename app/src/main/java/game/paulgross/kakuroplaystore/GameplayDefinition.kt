@@ -4,6 +4,10 @@ import android.util.Log
 
 class GameplayDefinition {
 
+    init {
+        GameServer.pluginGameplay(::handleGameplayMessage)
+    }
+
     companion object {
         private val TAG = GameplayDefinition::class.java.simpleName
 
@@ -16,8 +20,19 @@ class GameplayDefinition {
         // Possibles are user defined, and coded as 9-digit Strings.
         private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
 
+        private fun handleGameplayMessage(im: GameServer.InboundMessage) {
+            Log.d(TAG, "Handling: $im")
+            if (im.message.contains("Guess=")) {
+                submitGuess(im.message)
+            }
+        }
+
         private fun submitGuess(message: String): Boolean {
             Log.d(TAG, "The user sent a guess: $message")
+            
+            // For now, just abort...
+            return false
+
             val split = message.split("=")
             val guess = split[1].split(",")
 

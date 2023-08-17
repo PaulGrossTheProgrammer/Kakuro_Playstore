@@ -64,7 +64,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private var loopDelayMilliseconds = -1L  // -1 means disable looping,
 
     override fun run() {
-
         restoreGameState()
 
         while (gameIsRunning.get()) {
@@ -88,6 +87,9 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 if (im.source == InboundMessageSource.CLIENTHANDLER) {
                     handleClientHandlerMessage(im)
                 }
+
+                if (gameplayHandler != null)
+                    gameplayHandler?.let { it(im) }
             }
 
             if (loopDelayMilliseconds > 0) {
@@ -638,6 +640,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         return StateVariables(grid, width, hints, possibles)
     }
 
+    private var gameplayHandler: ((im: InboundMessage) -> Unit)? = null
+
     companion object {
         private val TAG = GameServer::class.java.simpleName
 
@@ -679,6 +683,11 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         fun decodeState(stateString: String): StateVariables? {
             return singletonGameServer?.decodeState(stateString)
+        }
+
+        fun pluginGameplay(gameplayHandler: (im: InboundMessage) -> Unit) {
+            Log.d(TAG, "Plugging in gameplay handler...")
+            singletonGameServer?.gameplayHandler = gameplayHandler
         }
     }
 }

@@ -35,6 +35,8 @@ class GameplayActivity : AppCompatActivity() {
 
         enableQueuedMessages()
         GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE))
+        // TODO - call the method to plugin gameplay to the GameServer...
+        GameplayDefinition()  // Hopefully this plugs-in the gameplay ...
 
         // Request that the GameServer call queueMessage() whenever the game state changes.
         GameServer.queueActivityMessage("RequestStateChanges", ::queueMessage)
