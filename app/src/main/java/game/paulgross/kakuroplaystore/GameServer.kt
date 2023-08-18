@@ -213,19 +213,19 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             if (im.responseFunction != null) {
                 stateChangeCallbacks.add(im.responseFunction)
 
-                // Assume that the caller does have the current state so send it back now.
-                im.responseFunction?.let { it("MessageType=State,${encodeState()}") }
+                // Assume that the caller does NOT have the current state.
+                im.responseFunction?.invoke("MessageType=State,${encodeState()}")
             }
         }
 
-        // TODO - need a cancel request message too...
+        // TODO - need a cancel state update requests message too...
 
         if (im.message == "Reset") {
             resetGame()
             stateChanged = true
         }
         if (im.message == "Status") {
-            im.responseFunction?.let { it("MessageType=State,${encodeState()}") }
+            im.responseFunction?.invoke("MessageType=State,${encodeState()}")
         }
 
         if (im.message == "StartServer") {
@@ -438,7 +438,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     }
 
     private fun messageGameplayDisplayState(im: InboundMessage) {
-        im.responseFunction?.let { it("MessageType=State,${encodeState()}") }
+        im.responseFunction?.invoke("MessageType=State,${encodeState()}")
+
     }
 
     private fun resetGame() {

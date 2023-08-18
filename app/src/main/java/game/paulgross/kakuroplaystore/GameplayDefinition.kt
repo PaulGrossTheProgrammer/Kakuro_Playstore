@@ -7,11 +7,10 @@ object GameplayDefinition {
     private val TAG = GameplayDefinition::class.java.simpleName
 
     init {
+        // TODO - also need the preferences pointer (getPreferences(MODE_PRIVATE)) to load and save state.
         Log.d(TAG, "Initialising the gameplay definition...")
         GameServer.pluginGameplay(::handleGameplayMessage)
     }
-
-
 
         private var currPuzzle = ""
         private var puzzleWidth = 5
