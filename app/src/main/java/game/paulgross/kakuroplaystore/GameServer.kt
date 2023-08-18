@@ -25,7 +25,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         APP, CLIENT, CLIENTHANDLER
     }
 
-    // TODo - replace responseQueue with responseFunction
+    // TODO - replace responseQueue with responseFunction
     data class InboundMessage(
         val message: String, val source: InboundMessageSource,
         val responseQueue: BlockingQueue<String>?,
@@ -65,6 +65,9 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     override fun run() {
         restoreGameState()
+        // TODO - get plugin here
+        GameplayDefinition  // Hopefully this plugs-in the gameplay ...
+        // TODO - set the initial state...
 
         while (gameIsRunning.get()) {
             var im: InboundMessage? = null
@@ -382,8 +385,19 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         Log.d(TAG, "Saved game state.")
     }
 
-    /**
+    // TODO -- call this form the definition to load the last save.
+    fun restoreData(name: String, default: String): String {
+        var data = preferences.getString("name", null)
+        if (data == null) {
+            data = default
+        }
+        return data
+    }
+
+        /**
      * Restores the Game state from the last time it was saved.
+     *
+     * TODO - return data that can be sent to the Definition...
      */
     private fun restoreGameState() {
         Log.d(TAG, "Restoring previous game state...")
@@ -418,7 +432,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         // Restore the player's own "possibles" list.
         val possiblesString = preferences.getString("Possibles", "")
-        Log.d(TAG, "Possibles = $possiblesString")
         playerPossibles = decodePossibles(possiblesString!!)
         // 0=103000000, 0=103000000, ... etc
 
