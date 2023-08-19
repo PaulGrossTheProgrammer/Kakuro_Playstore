@@ -91,8 +91,9 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                     handleClientHandlerMessage(im)
                 }
 
-                if (gameplayHandler != null)
-                    gameplayHandler?.let { it(im) }
+                if (gameplayHandler != null) {
+                    gameplayHandler?.invoke(im)
+                }
             }
 
             if (loopDelayMilliseconds > 0) {
@@ -394,7 +395,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         return data
     }
 
-        /**
+    /**
      * Restores the Game state from the last time it was saved.
      *
      * TODO - return data that can be sent to the Definition...
@@ -402,7 +403,10 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private fun restoreGameState() {
         Log.d(TAG, "Restoring previous game state...")
 
-        var restoredGame = preferences.getString("CurrPuzzle", null)
+        restorePuzzleFunction?.invoke()
+
+        // TODO - delete below after GameplayDefinition works properly...
+            var restoredGame = preferences.getString("CurrPuzzle", null)
         currPuzzle = if (restoredGame == null) {
             DEFAULTPUZZLE
         } else {
@@ -656,6 +660,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     private var gameplayHandler: ((im: InboundMessage) -> Unit)? = null
 
+    private var restorePuzzleFunction: (() -> Unit)? = null
+
     companion object {
         private val TAG = GameServer::class.java.simpleName
 
@@ -702,6 +708,11 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         fun pluginGameplay(gameplayHandler: (im: InboundMessage) -> Unit) {
             Log.d(TAG, "Plugging in gameplay handler...")
             singletonGameServer?.gameplayHandler = gameplayHandler
+        }
+
+        fun pluginRestorePuzzle(restorePuzzleFunction: () -> Unit) {
+            Log.d(TAG, "Plugging in gameplay handler...")
+            singletonGameServer?.restorePuzzleFunction = restorePuzzleFunction
         }
     }
 }

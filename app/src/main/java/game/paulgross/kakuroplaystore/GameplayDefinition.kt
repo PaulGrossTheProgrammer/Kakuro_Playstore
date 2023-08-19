@@ -11,8 +11,8 @@ object GameplayDefinition {
         Log.d(TAG, "Initialising the gameplay definition...")
         GameServer.pluginGameplay(::handleGameplayMessage)
 
-        // TODO:
-//        GameServer.pluginRestorePuzzle(::restorePuzzle)
+        // TODO: Doesn't seem to work...
+        GameServer.pluginRestorePuzzle(::restorePuzzle)
     }
 
     private var currPuzzle = ""
@@ -61,6 +61,7 @@ object GameplayDefinition {
         if (engine == null) {
             return
         }
+        Log.d(TAG, "NEW - restoring puzzle")
 
         currPuzzle = engine?.restoreData("CurrPuzzle", "").toString()
 
