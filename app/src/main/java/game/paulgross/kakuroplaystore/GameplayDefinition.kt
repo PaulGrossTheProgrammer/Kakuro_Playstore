@@ -10,6 +10,9 @@ object GameplayDefinition {
         // TODO - also need the preferences pointer (getPreferences(MODE_PRIVATE)) to load and save state.
         Log.d(TAG, "Initialising the gameplay definition...")
         GameServer.pluginGameplay(::handleGameplayMessage)
+
+        // TODO:
+//        GameServer.pluginRestorePuzzle(::restorePuzzle)
     }
 
     private var currPuzzle = ""
@@ -26,16 +29,7 @@ object GameplayDefinition {
         this.engine = engine
     }
 
-    // TODO -- Call from the GameServer
-    fun restoreGame() {
-        if (engine == null) {
-            return
-        }
 
-        val currPuzzle = engine?.restoreData("CurrPuzzle", "")
-        // TODO etc...
-
-    }
 
     private fun handleGameplayMessage(im: GameServer.InboundMessage) {
         Log.d(TAG, "Handling: $im")
@@ -60,6 +54,69 @@ object GameplayDefinition {
         playerPossibles.remove(index)
 
         return true
+    }
+
+    // TODO -- Call from the GameServer
+    fun restorePuzzle() {
+        if (engine == null) {
+            return
+        }
+
+        currPuzzle = engine?.restoreData("CurrPuzzle", "").toString()
+
+        startPuzzleFromString(currPuzzle)
+        playerHints.clear()
+        generateHints()
+
+        val guessesString = engine?.restoreData("Guesses", "")
+
+        playerGrid.clear()
+        if (guessesString == "") {
+            puzzleSolution.forEach { square ->
+                if (square == -1) {
+                    playerGrid.add(-1)
+                } else {
+                    playerGrid.add(0)
+                }
+            }
+        } else {
+            val guessList = guessesString?.split(":")
+            guessList?.forEach {guessString ->
+                playerGrid.add(guessString.toInt())
+            }
+        }
+
+        val possiblesString = engine?.restoreData("Possibles", "")
+        playerPossibles = decodePossibles(possiblesString!!)
+    }
+    private fun startPuzzleFromString(puzzleString: String) {
+        puzzleWidth = puzzleString.substring(0, 2).toInt()
+
+        puzzleSolution.clear()
+        for (char in puzzleString.substring(2)) {
+            if (char == '0') {
+                puzzleSolution.add(-1)
+            } else {
+                puzzleSolution.add(char.digitToInt())
+            }
+        }
+    }
+
+    private fun decodePossibles(possiblesString: String): MutableMap<Int, String> {
+        val newPossibles: MutableMap<Int, String> = mutableMapOf()
+        if (possiblesString == "") {
+            return newPossibles
+        }
+        val possiblesList = possiblesString.split("&")
+        possiblesList.forEach { currPossible ->
+            val keyValue = currPossible.split(":")
+            val indexInt = keyValue[0].toInt()
+            val valueString = keyValue[1]
+
+            newPossibles[indexInt] = valueString
+        }
+
+        return newPossibles
     }
 
     enum class Direction {ACROSS, DOWN}
