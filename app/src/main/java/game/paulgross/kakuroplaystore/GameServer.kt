@@ -64,10 +64,12 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private var loopDelayMilliseconds = -1L  // -1 means disable looping,
 
     override fun run() {
-        restoreGameState()
         // TODO - get plugin here
         GameplayDefinition  // Hopefully this plugs-in the gameplay ...
+        GameplayDefinition.setEngine(this)
         // TODO - set the initial state...
+
+        restoreGameState()
 
         while (gameIsRunning.get()) {
             var im: InboundMessage? = null
@@ -403,10 +405,13 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private fun restoreGameState() {
         Log.d(TAG, "Restoring previous game state...")
 
-        restorePuzzleFunction?.invoke()
+        if (restorePuzzleFunction != null) {
+            Log.d(TAG, "Calling plugin ...")
+            restorePuzzleFunction?.invoke()
+        }
 
         // TODO - delete below after GameplayDefinition works properly...
-            var restoredGame = preferences.getString("CurrPuzzle", null)
+        var restoredGame = preferences.getString("CurrPuzzle", null)
         currPuzzle = if (restoredGame == null) {
             DEFAULTPUZZLE
         } else {
@@ -711,7 +716,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         }
 
         fun pluginRestorePuzzle(restorePuzzleFunction: () -> Unit) {
-            Log.d(TAG, "Plugging in gameplay handler...")
+            Log.d(TAG, "Plugging in restore puzzle function...")
             singletonGameServer?.restorePuzzleFunction = restorePuzzleFunction
         }
     }

@@ -6,6 +6,8 @@ object GameplayDefinition {
 
     private val TAG = GameplayDefinition::class.java.simpleName
 
+    private val DEFAULTPUZZLE = "043100820006980071"
+
     init {
         // TODO - also need the preferences pointer (getPreferences(MODE_PRIVATE)) to load and save state.
         Log.d(TAG, "Initialising the gameplay definition...")
@@ -42,7 +44,7 @@ object GameplayDefinition {
         Log.d(TAG, "The user sent a guess: $message")
 
         // For now, just abort...
-        return false
+//        return false
 
         val split = message.split("=")
         val guess = split[1].split(",")
@@ -52,24 +54,35 @@ object GameplayDefinition {
         val value = guess[1].toInt()
         playerGrid[index] = value
         playerPossibles.remove(index)
+        Log.d(TAG, "NEW: Implemented guess!!!")
 
         return true
     }
 
     // TODO -- Call from the GameServer
     fun restorePuzzle() {
-        if (engine == null) {
-            return
-        }
         Log.d(TAG, "NEW - restoring puzzle")
 
-        currPuzzle = engine?.restoreData("CurrPuzzle", "").toString()
+        if (engine == null) {
+            Log.d(TAG, "ERROR - no engine...")
+            return
+        }
+
+        val restoredGame = engine?.restoreData("CurrPuzzle", "").toString()
+        currPuzzle = if (restoredGame == "") {
+            Log.d(TAG, "USING DEFAULT PUZZLE!!!!")
+            DEFAULTPUZZLE
+        } else {
+            restoredGame
+        }
+        Log.d(TAG, "currPuzzle = $currPuzzle")
 
         startPuzzleFromString(currPuzzle)
         playerHints.clear()
         generateHints()
 
         val guessesString = engine?.restoreData("Guesses", "")
+        Log.d(TAG, "guessesString = $guessesString")
 
         playerGrid.clear()
         if (guessesString == "") {
@@ -86,6 +99,7 @@ object GameplayDefinition {
                 playerGrid.add(guessString.toInt())
             }
         }
+        Log.d(TAG, "Size of play grid = ${playerGrid.size}")
 
         val possiblesString = engine?.restoreData("Possibles", "")
         playerPossibles = decodePossibles(possiblesString!!)
