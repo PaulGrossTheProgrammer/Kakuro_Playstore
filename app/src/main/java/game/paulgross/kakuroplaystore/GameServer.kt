@@ -373,6 +373,11 @@ class GameServer(private val context: Context, private val preferences: SharedPr
      * Saves the current Game state.
      */
     private fun saveGameState() {
+        if (savePuzzleFunction != null) {
+            Log.d(TAG, "Calling plugin ...")
+            savePuzzleFunction?.invoke()
+        }
+
         val editor = preferences.edit()
 
         editor.putString("CurrPuzzle", currPuzzle)
@@ -390,11 +395,17 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     // TODO -- call this form the definition to load the last save.
     fun restoreData(name: String, default: String): String {
-        var data = preferences.getString("name", null)
+        var data = preferences.getString(name, null)
         if (data == null) {
             data = default
         }
         return data
+    }
+
+    fun saveData(name: String, value: String) {
+        val editor = preferences.edit()
+        editor.putString(name, value)
+        editor.apply()
     }
 
     /**
@@ -443,7 +454,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         val possiblesString = preferences.getString("Possibles", "")
         playerPossibles = decodePossibles(possiblesString!!)
         // 0=103000000, 0=103000000, ... etc
-
     }
 
     private fun startPuzzleFromString(puzzleString: String) {
@@ -665,6 +675,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     private var gameplayHandler: ((im: InboundMessage) -> Unit)? = null
 
+    private var savePuzzleFunction: (() -> Unit)? = null
     private var restorePuzzleFunction: (() -> Unit)? = null
 
     companion object {
@@ -713,6 +724,12 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         fun pluginGameplay(gameplayHandler: (im: InboundMessage) -> Unit) {
             Log.d(TAG, "Plugging in gameplay handler...")
             singletonGameServer?.gameplayHandler = gameplayHandler
+        }
+
+
+        fun pluginSavePuzzle(savePuzzleFunction: () -> Unit) {
+            Log.d(TAG, "Plugging in restore puzzle function...")
+            singletonGameServer?.savePuzzleFunction = savePuzzleFunction
         }
 
         fun pluginRestorePuzzle(restorePuzzleFunction: () -> Unit) {

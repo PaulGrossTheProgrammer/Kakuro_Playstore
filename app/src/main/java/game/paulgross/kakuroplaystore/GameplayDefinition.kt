@@ -9,11 +9,9 @@ object GameplayDefinition {
     private val DEFAULTPUZZLE = "043100820006980071"
 
     init {
-        // TODO - also need the preferences pointer (getPreferences(MODE_PRIVATE)) to load and save state.
-
-        // TODO: Do I invert this???
-        Log.d(TAG, "Initialising the gameplay definition...")
+        Log.d(TAG, "Plug in the gameplay functions.")
         GameServer.pluginGameplay(::handleGameplayMessage)
+        GameServer.pluginSavePuzzle(::savePuzzle)
         GameServer.pluginRestorePuzzle(::restorePuzzle)
     }
 
@@ -43,23 +41,45 @@ object GameplayDefinition {
     private fun submitGuess(message: String): Boolean {
         Log.d(TAG, "The user sent a guess: $message")
 
-        // For now, just abort...
-//        return false
-
         val split = message.split("=")
+        if (split.size != 2) {
+            Log.e(TAG, "Invalid guess: $message")
+            return false
+        }
         val guess = split[1].split(",")
+        if (guess.size != 2) {
+            Log.e(TAG, "Invalid guess: $message")
+            return false
+        }
 
-        // TODO - handle invalid Ints...
-        val index = guess[0].toInt()
-        val value = guess[1].toInt()
-        playerGrid[index] = value
-        playerPossibles.remove(index)
-        Log.d(TAG, "NEW: Implemented guess!!!")
-
-        return true
+        try {
+            val index = guess[0].toInt()
+            val value = guess[1].toInt()
+            playerGrid[index] = value
+            playerPossibles.remove(index)
+            Log.d(TAG, "NEW: Implemented guess!!!")
+            return true
+        } catch (e: NumberFormatException) {
+            Log.e(TAG, "Invalid guess: $message")
+            return false
+        }
     }
 
-    // TODO -- Call from the GameServer
+    /**
+     * Saves the current Game state.
+     */
+    private fun savePuzzle() {
+        engine?.saveData("CurrPuzzle", currPuzzle)
+
+        val guessesToSave = encodeGuesses()
+        engine?.saveData("Guesses", currPuzzle)
+
+        // TODO - store possibles.
+        val possiblesToSave = encodePossibles()
+        engine?.saveData("Possibles", currPuzzle)
+        Log.d(TAG, "Saved game state.")
+    }
+
     fun restorePuzzle() {
         Log.d(TAG, "NEW - restoring puzzle")
 
@@ -115,6 +135,30 @@ object GameplayDefinition {
                 puzzleSolution.add(char.digitToInt())
             }
         }
+    }
+
+    private fun encodeGuesses(): String {
+        var guessString = ""
+        playerGrid.forEachIndexed {index, squareValue ->
+            guessString += squareValue.toString()
+            if (index < playerGrid.size - 1) {
+                guessString += ":"
+            }
+        }
+        return guessString
+    }
+
+    private fun encodePossibles(): String {
+        var possiblesString = ""
+        // ampersand separated entries, colon separated index and possibles.
+        // 0:1234567&5:100450000
+        // TODO
+        var firstEntry = true
+        playerPossibles.forEach { index, possibles ->
+            if (firstEntry) { firstEntry = false } else { possiblesString += "&" }
+            possiblesString += "$index:$possibles"
+        }
+        return possiblesString
     }
 
     private fun decodePossibles(possiblesString: String): MutableMap<Int, String> {
