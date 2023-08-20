@@ -94,7 +94,13 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                 }
 
                 if (gameplayHandler != null) {
-                    gameplayHandler?.invoke(im)
+                    var stateChanged = false
+                    stateChanged = gameplayHandler?.invoke(im) == true
+
+                    if (stateChanged) {
+                        saveGameState()
+                        pushStateToClients()
+                    }
                 }
             }
 
@@ -543,7 +549,13 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int,
                               var playerHints:MutableList<Hint>, var possibles: MutableMap<Int, String>)
 
-    private fun encodeState(): String {
+    private fun encodeState(): String? {
+        if (getStateFunction != null) {
+            Log.d(TAG, "Using NEW plugin for state...")
+            return getStateFunction?.invoke()
+        }
+
+        Log.d(TAG, "Using old state code...")
         var state = ""
 
         state += "w=$puzzleWidth,"
@@ -673,10 +685,30 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         return StateVariables(grid, width, hints, possibles)
     }
 
-    private var gameplayHandler: ((im: InboundMessage) -> Unit)? = null
-
+    private var gameplayHandler: ((im: InboundMessage) -> Boolean)? = null
+    private var getStateFunction: (() -> String)? = null
     private var savePuzzleFunction: (() -> Unit)? = null
     private var restorePuzzleFunction: (() -> Unit)? = null
+
+    fun pluginGameplay(gameplayHandler: (im: InboundMessage) -> Boolean) {
+        Log.d(TAG, "Plugging in gameplay handler...")
+        this.gameplayHandler = gameplayHandler
+    }
+
+    fun pluginGetState(getStateFunction: () -> String) {
+        Log.d(TAG, "Plugging in get state function...")
+        this.getStateFunction = getStateFunction
+    }
+
+    fun pluginSavePuzzle(savePuzzleFunction: () -> Unit) {
+        Log.d(TAG, "Plugging in save puzzle function...")
+        this.savePuzzleFunction = savePuzzleFunction
+    }
+
+    fun pluginRestorePuzzle(restorePuzzleFunction: () -> Unit) {
+        Log.d(TAG, "Plugging in restore puzzle function...")
+        this.restorePuzzleFunction = restorePuzzleFunction
+    }
 
     companion object {
         private val TAG = GameServer::class.java.simpleName
@@ -719,22 +751,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
         fun decodeState(stateString: String): StateVariables? {
             return singletonGameServer?.decodeState(stateString)
-        }
-
-        fun pluginGameplay(gameplayHandler: (im: InboundMessage) -> Unit) {
-            Log.d(TAG, "Plugging in gameplay handler...")
-            singletonGameServer?.gameplayHandler = gameplayHandler
-        }
-
-
-        fun pluginSavePuzzle(savePuzzleFunction: () -> Unit) {
-            Log.d(TAG, "Plugging in restore puzzle function...")
-            singletonGameServer?.savePuzzleFunction = savePuzzleFunction
-        }
-
-        fun pluginRestorePuzzle(restorePuzzleFunction: () -> Unit) {
-            Log.d(TAG, "Plugging in restore puzzle function...")
-            singletonGameServer?.restorePuzzleFunction = restorePuzzleFunction
         }
     }
 }

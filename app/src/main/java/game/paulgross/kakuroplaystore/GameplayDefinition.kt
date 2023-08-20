@@ -8,13 +8,6 @@ object GameplayDefinition {
 
     private val DEFAULTPUZZLE = "043100820006980071"
 
-    init {
-        Log.d(TAG, "Plug in the gameplay functions.")
-        GameServer.pluginGameplay(::handleGameplayMessage)
-        GameServer.pluginSavePuzzle(::savePuzzle)
-        GameServer.pluginRestorePuzzle(::restorePuzzle)
-    }
-
     private var currPuzzle = ""
     private var puzzleWidth = 5
     private var puzzleSolution: MutableList<Int> = mutableListOf()
@@ -27,15 +20,40 @@ object GameplayDefinition {
     private var engine: GameServer? = null
     fun setEngine(engine: GameServer) {
         this.engine = engine
+
+        Log.d(TAG, "Plug in the gameplay functions.")
+        engine.pluginGameplay(::handleGameplayMessage)
+        engine.pluginGetState(::encodeState)
+        engine.pluginSavePuzzle(::savePuzzle)
+        engine.pluginRestorePuzzle(::restorePuzzle)
     }
 
-
-
-    private fun handleGameplayMessage(im: GameServer.InboundMessage) {
+    private fun handleGameplayMessage(im: GameServer.InboundMessage): Boolean {
+        // TODO - return state changed flag
         Log.d(TAG, "Handling: $im")
         if (im.message.contains("Guess=")) {
-            submitGuess(im.message)
+            return submitGuess(im.message)
         }
+
+        if (im.message.contains("Possible=")) {
+            return markUnMarkPossible(im.message)
+        }
+
+        if (im.message.contains("RestartPuzzle")) {
+            return restartPuzzle()
+        }
+
+        return false
+    }
+
+    private fun restartPuzzle(): Boolean {
+        for (i in 0 until playerGrid.size) {
+            if (playerGrid[i] != -1) {
+                playerGrid[i] = 0
+            }
+        }
+        playerPossibles.clear()
+        return true
     }
 
     private fun submitGuess(message: String): Boolean {
@@ -65,6 +83,72 @@ object GameplayDefinition {
         }
     }
 
+    private fun markUnMarkPossible(message: String): Boolean {
+        Log.d(TAG, "The user sent a possible: $message")
+        val split = message.split("=")
+        val guess = split[1].split(",")
+
+        // TODO - handle invalid Ints...
+        val index = guess[0].toInt()
+        val value = guess[1].toInt()
+
+        // Don't allow possibles if there is currently a guess
+        if (playerGrid[index] > 0) {
+            Log.d(TAG, "Can't set possibles where there is a guess")
+            return false
+        }
+
+        // determine the current possibles for the index
+        var possible = playerPossibles[index]
+        if (possible == null) {
+            possible = "000000000"
+        }
+
+        // Get the position from the value
+        val digit = possible[value - 1]
+        var replacement = "0"
+        if (digit == '0') {
+            replacement = value.toString()
+        }
+
+        possible = possible.substring(0, value - 1) + replacement + possible.substring(value)
+        if (possible == "000000000") {
+            Log.d(TAG, "Removing index ...")
+            playerPossibles.remove(index)
+        } else {
+            playerPossibles[index] = possible
+        }
+
+        return true
+    }
+
+    private fun encodeState(): String {
+        var state = ""
+
+        state += "w=$puzzleWidth,"
+        state += "g=" + encodeGuesses()
+
+        // h=2ACROSS13:2DOWN23 ... etc
+        // TODO - call a method to encode
+        state += ",h="
+        playerHints.forEachIndexed {index, hint ->
+            hint.index
+            hint.direction
+            hint.total
+            state += "${hint.index}${hint.direction}${hint.total}"
+            if (index < playerHints.size - 1) {
+                state += ":"
+            }
+        }
+
+        // p=2:0123000000,8:0000006780
+        if (playerPossibles.isNotEmpty()) {
+            state += ",p="
+            state += encodePossibles()
+        }
+
+        return state
+    }
     /**
      * Saves the current Game state.
      */
