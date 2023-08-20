@@ -10,10 +10,10 @@ object GameplayDefinition {
 
     init {
         // TODO - also need the preferences pointer (getPreferences(MODE_PRIVATE)) to load and save state.
+
+        // TODO: Do I invert this???
         Log.d(TAG, "Initialising the gameplay definition...")
         GameServer.pluginGameplay(::handleGameplayMessage)
-
-        // TODO: Doesn't seem to work...
         GameServer.pluginRestorePuzzle(::restorePuzzle)
     }
 

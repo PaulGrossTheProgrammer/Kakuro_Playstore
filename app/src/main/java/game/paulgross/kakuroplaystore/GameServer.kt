@@ -11,7 +11,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class GameServer(private val context: Context, private val preferences: SharedPreferences): Thread() {
+class GameServer(private val context: Context, private val preferences: SharedPreferences, private val definition: GameplayDefinition): Thread() {
     private var socketServer: SocketServer? = null
     private var socketClient: SocketClient? = null
 
@@ -65,8 +65,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
 
     override fun run() {
         // TODO - get plugin here
-        GameplayDefinition  // Hopefully this plugs-in the gameplay ...
-        GameplayDefinition.setEngine(this)
+//        GameplayDefinition  // Hopefully this plugs-in the gameplay ...
+        definition.setEngine(this)
         // TODO - set the initial state...
 
         restoreGameState()
@@ -677,10 +677,10 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         @SuppressLint("StaticFieldLeak")
         private var singletonGameServer: GameServer? = null
 
-        fun activate(applicationContext: Context, sharedPreferences: SharedPreferences) {
+        fun activate(applicationContext: Context, sharedPreferences: SharedPreferences, definition: GameplayDefinition) {
             if (singletonGameServer == null) {
                 Log.d(TAG, "Starting new GameServer ...")
-                singletonGameServer = GameServer(applicationContext, sharedPreferences)
+                singletonGameServer = GameServer(applicationContext, sharedPreferences, definition)
                 singletonGameServer!!.start()
             } else {
                 Log.d(TAG, "Already created GameServer.")
