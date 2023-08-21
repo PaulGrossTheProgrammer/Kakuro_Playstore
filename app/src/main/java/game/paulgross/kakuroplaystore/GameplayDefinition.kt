@@ -6,6 +6,8 @@ object GameplayDefinition {
 
     private val TAG = GameplayDefinition::class.java.simpleName
 
+    private var engine: GameServer? = null
+
     private val DEFAULTPUZZLE = "043100820006980071"
 
     private var currPuzzle = ""
@@ -17,13 +19,19 @@ object GameplayDefinition {
     // Possibles are user defined, and coded as 9-digit Strings.
     private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
 
-    private var engine: GameServer? = null
+    data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int,
+                              var playerHints:MutableList<Hint>, var possibles: MutableMap<Int, String>)
+
+    enum class Direction {ACROSS, DOWN}
+    data class Hint(val index: Int, val direction: Direction, var total: Int)
+
     fun setEngine(engine: GameServer) {
         this.engine = engine
 
         Log.d(TAG, "Plug in the gameplay functions.")
         engine.pluginGameplay(::handleGameplayMessage)
-        engine.pluginGetState(::encodeState)
+        engine.pluginEncodeState(::encodeState)
+        engine.pluginDecodeState(::decodeState)
         engine.pluginSavePuzzle(::savePuzzle)
         engine.pluginRestorePuzzle(::restorePuzzle)
     }
@@ -149,6 +157,66 @@ object GameplayDefinition {
 
         return state
     }
+
+    fun decodeState(stateString: String): StateVariables {
+        Log.d(TAG, "decodeState() for [$stateString]")
+
+        var width = 0
+        val grid: MutableList<Int> = mutableListOf()
+        val hints: MutableList<Hint> = mutableListOf()
+        var possibles: MutableMap<Int, String> = mutableMapOf()
+
+        // Example
+        //w=4,g=-1:-1:0:0:-1:-1:0:0:0:-1:-1:-1:0:0:-1:-1
+        // split on commas into key-value pairs
+        var map: MutableMap<String, String> = mutableMapOf()
+        val parts = stateString.split(",")
+        for (part in parts) {
+            if (part.contains("=")) {
+                val keyValue = part.split("=")
+                map.put(keyValue[0], keyValue[1])
+            }
+        }
+
+        map.forEach { key, value ->
+            if (key == "w") {
+                width = value.toInt()
+            }
+            if (key == "g") {  // User's guesses
+                // TODO - call the decodeGuesses() method...
+                val ints = value.split(":")
+                ints.forEach {theIntString ->
+                    grid.add(theIntString.toInt())
+                }
+            }
+            if (key == "h") {  // Hints
+                // TODO - call a method to decode
+                val hintList = value.split(":")
+                hintList.forEach {theHintString ->
+                    val downString = Direction.DOWN.toString()
+                    val acrossString = Direction.ACROSS.toString()
+                    var dir = Direction.DOWN
+                    var index = -1
+                    var total = 0
+                    if (theHintString.contains(downString)) {
+                        index = theHintString.substringBefore(downString, "-1").toInt()
+                        total = theHintString.substringAfter(downString).toInt()
+                    } else if (theHintString.contains(acrossString)) {
+                        dir = Direction.ACROSS
+                        index = theHintString.substringBefore(acrossString, "-1").toInt()
+                        total = theHintString.substringAfter(acrossString).toInt()
+                    }
+                    hints.add(Hint(index, dir, total))
+                }
+            }
+            if (key == "p") {  // User's possibles
+                possibles = decodePossibles(value)
+            }
+        }
+
+        return StateVariables(grid, width, hints, possibles)
+    }
+
     /**
      * Saves the current Game state.
      */
@@ -262,9 +330,6 @@ object GameplayDefinition {
 
         return newPossibles
     }
-
-    enum class Direction {ACROSS, DOWN}
-    data class Hint(val index: Int, val direction: Direction, var total: Int)
 
     /**
      * Create the initial grid with no guesses .

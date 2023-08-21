@@ -1,7 +1,5 @@
 package game.paulgross.kakuroplaystore
 
-import android.annotation.SuppressLint
-import android.content.Context
 import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.util.Log
@@ -11,7 +9,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class GameServer(private val context: Context, private val preferences: SharedPreferences, private val definition: GameplayDefinition): Thread() {
+class GameServer(private val cm: ConnectivityManager, private val preferences: SharedPreferences, private val definition: GameplayDefinition): Thread() {
     private var socketServer: SocketServer? = null
     private var socketClient: SocketClient? = null
 
@@ -53,10 +51,10 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private fun determineIpAddresses() {
         // FUTURE: Need to monitor the network and react to IP address changes.
         allIpAddresses.clear()
-        val cm: ConnectivityManager = context.getSystemService(ConnectivityManager::class.java)
         val lp = cm.getLinkProperties(cm.activeNetwork)
         val addrs = lp?.linkAddresses
         addrs?.forEach { addr ->
+            Log.d(TAG, "IP Address: $addr")
             allIpAddresses.add(addr.address.hostAddress)
         }
     }
@@ -64,10 +62,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     private var loopDelayMilliseconds = -1L  // -1 means disable looping,
 
     override fun run() {
-        // TODO - get plugin here
-//        GameplayDefinition  // Hopefully this plugs-in the gameplay ...
         definition.setEngine(this)
-        // TODO - set the initial state...
 
         restoreGameState()
 
@@ -341,51 +336,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     enum class Direction {ACROSS, DOWN}
     data class Hint(val index: Int, val direction: Direction, var total: Int)
 
-    /**
-     * Create the initial grid with no guesses .
-     * Create all the ACROSS and DOWN hints based on the structure and solution.
-     */
-    private fun generateHints() {
-
-        // Traverse the solution grid and create hints for any number squares with empty squares to the left and/or above.
-        puzzleSolution.forEachIndexed { index, value ->
-            if (value  != -1) {
-                // Check for ACROSS hints.
-                // First column numbers always need a hint.
-                val isFirstColumn = (index.mod(puzzleWidth) == 0)
-                if (isFirstColumn || puzzleSolution[index - 1] == -1) {
-                    val sum = sumOfSquares(puzzleSolution, puzzleWidth, index, Direction.ACROSS)
-                    playerHints.add(Hint(index, Direction.ACROSS, sum))
-                }
-
-                // Check for DOWN hints (don't check last row)
-                // First colum row always need a hint.
-                val isFirstRow = (index < puzzleWidth)
-                if (isFirstRow || puzzleSolution[index - puzzleWidth] == -1) {
-                    val sum = sumOfSquares(puzzleSolution, puzzleWidth, index, Direction.DOWN)
-                    playerHints.add(Hint(index, Direction.DOWN, sum))
-                }
-            }
-        }
-    }
-
-    private fun sumOfSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): Int {
-        var sum = 0
-
-        var stepSize = 1
-        if (direction == Direction.DOWN) {
-            stepSize = width
-        }
-
-        var index = startIndex
-        while (index < grid.size && grid[index] != -1) {
-            sum += grid[index]
-            index += stepSize
-        }
-
-        return sum
-    }
-
     private var currPuzzle = ""
     private var puzzleWidth = 5
     private var puzzleSolution: MutableList<Int> = mutableListOf()
@@ -399,9 +349,9 @@ class GameServer(private val context: Context, private val preferences: SharedPr
                               var playerHints:MutableList<Hint>, var possibles: MutableMap<Int, String>)
 
     private fun encodeState(): String? {
-        if (getStateFunction != null) {
+        if (encodeStateFunction != null) {
             Log.d(TAG, "Using NEW plugin for state...")
-            return getStateFunction?.invoke()
+            return encodeStateFunction?.invoke()
         }
         return ""
     }
@@ -449,10 +399,15 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         return newPossibles
     }
 
-    fun decodeState(stateString: String): StateVariables {
+    fun decodeState(stateString: String): GameplayDefinition.StateVariables? {
         Log.d(TAG, "decodeState() for [$stateString]")
+        // TODO - call new code here...
+        if (decodeStateFunction != null) {
+            return decodeStateFunction?.invoke(stateString)
+        }
 
-        var width = 0
+        Log.d(TAG, "decodeState() OLD CODE")
+/*        var width = 0
         val grid: MutableList<Int> = mutableListOf()
         val hints: MutableList<Hint> = mutableListOf()
         var possibles: MutableMap<Int, String> = mutableMapOf()
@@ -505,11 +460,13 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             }
         }
 
-        return StateVariables(grid, width, hints, possibles)
+        return GameplayDefinition.StateVariables(grid, width, hints, possibles)*/
+        return null
     }
 
     private var gameplayHandler: ((im: InboundMessage) -> Boolean)? = null
-    private var getStateFunction: (() -> String)? = null
+    private var encodeStateFunction: (() -> String)? = null
+    private var decodeStateFunction: ((String) -> GameplayDefinition.StateVariables)? = null
     private var savePuzzleFunction: (() -> Unit)? = null
     private var restorePuzzleFunction: (() -> Unit)? = null
 
@@ -518,9 +475,14 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         this.gameplayHandler = gameplayHandler
     }
 
-    fun pluginGetState(getStateFunction: () -> String) {
-        Log.d(TAG, "Plugging in get state function...")
-        this.getStateFunction = getStateFunction
+    fun pluginEncodeState(encodeStateFunction: () -> String) {
+        Log.d(TAG, "Plugging in encode state function...")
+        this.encodeStateFunction = encodeStateFunction
+    }
+
+    fun pluginDecodeState(decodeStateFunction: (stateString: String) -> GameplayDefinition.StateVariables) {
+        Log.d(TAG, "Plugging in encode state function...")
+        this.decodeStateFunction = decodeStateFunction
     }
 
     fun pluginSavePuzzle(savePuzzleFunction: () -> Unit) {
@@ -536,17 +498,12 @@ class GameServer(private val context: Context, private val preferences: SharedPr
     companion object {
         private val TAG = GameServer::class.java.simpleName
 
-        private val DEFAULTPUZZLE = "043100820006980071"
-
-        // The GameServer always runs in it's own thread,
-        // and stopGame() must be called as the App closes to avoid a memory leak.
-        @SuppressLint("StaticFieldLeak")
         private var singletonGameServer: GameServer? = null
 
-        fun activate(applicationContext: Context, sharedPreferences: SharedPreferences, definition: GameplayDefinition) {
+        fun activate(cm: ConnectivityManager, sharedPreferences: SharedPreferences, definition: GameplayDefinition) {
             if (singletonGameServer == null) {
                 Log.d(TAG, "Starting new GameServer ...")
-                singletonGameServer = GameServer(applicationContext, sharedPreferences, definition)
+                singletonGameServer = GameServer(cm ,sharedPreferences, definition)
                 singletonGameServer!!.start()
             } else {
                 Log.d(TAG, "Already created GameServer.")
@@ -572,7 +529,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
-        fun decodeState(stateString: String): StateVariables? {
+        fun decodeState(stateString: String): GameplayDefinition.StateVariables? {
             return singletonGameServer?.decodeState(stateString)
         }
     }

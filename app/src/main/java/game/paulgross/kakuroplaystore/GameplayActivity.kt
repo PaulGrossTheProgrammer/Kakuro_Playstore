@@ -11,6 +11,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
@@ -34,7 +35,8 @@ class GameplayActivity : AppCompatActivity() {
         instance = this  // Enables the Companion object to receive messages for this Class.
 
         enableQueuedMessages()
-        GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE), GameplayDefinition)
+//        GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE), GameplayDefinition)
+        GameServer.activate(applicationContext.getSystemService(ConnectivityManager::class.java), getPreferences(MODE_PRIVATE), GameplayDefinition)
 
         // Request that the GameServer call queueMessage() whenever the game state changes.
         GameServer.queueActivityMessage("RequestStateChanges", ::queueMessage)
@@ -47,7 +49,7 @@ class GameplayActivity : AppCompatActivity() {
     /**
      * Update the custom playGridView with the state and request a redraw.
      */
-    private fun displayGrid(gameState: GameServer.StateVariables) {
+    private fun displayGrid(gameState: GameplayDefinition.StateVariables) {
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.gameState = gameState
@@ -73,7 +75,7 @@ class GameplayActivity : AppCompatActivity() {
         private var maxDisplayRows = 5  // FIXME - Doesn't work when smaller than puzzle width.
         private var maxDisplayCols = 5
 
-        var gameState: GameServer.StateVariables? = null
+        var gameState: GameplayDefinition.StateVariables? = null
 
         private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
@@ -209,9 +211,9 @@ class GameplayActivity : AppCompatActivity() {
 
                         gameState!!.playerHints.forEach { hint ->
                             if (index == hint.index) {
-                                if (hint.direction == GameServer.Direction.DOWN) {
+                                if (hint.direction == GameplayDefinition.Direction.DOWN) {
                                     drawDownHint(hint.total.toString(), currX, currY, canvas, paint)
-                                } else if (hint.direction == GameServer.Direction.ACROSS) {
+                                } else if (hint.direction == GameplayDefinition.Direction.ACROSS) {
                                     drawAcrossHint(hint.total.toString(), currX, currY, canvas, paint)
                                 }
                             }
