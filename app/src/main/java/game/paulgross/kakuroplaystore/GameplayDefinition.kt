@@ -156,11 +156,11 @@ object GameplayDefinition {
         engine?.saveData("CurrPuzzle", currPuzzle)
 
         val guessesToSave = encodeGuesses()
-        engine?.saveData("Guesses", currPuzzle)
+        engine?.saveData("Guesses", guessesToSave)
 
         // TODO - store possibles.
         val possiblesToSave = encodePossibles()
-        engine?.saveData("Possibles", currPuzzle)
+        engine?.saveData("Possibles", possiblesToSave)
         Log.d(TAG, "Saved game state.")
     }
 
@@ -186,6 +186,7 @@ object GameplayDefinition {
         generateHints()
 
         val guessesString = engine?.restoreData("Guesses", "")
+
         Log.d(TAG, "guessesString = $guessesString")
 
         playerGrid.clear()

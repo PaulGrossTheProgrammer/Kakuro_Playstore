@@ -261,97 +261,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
         if (im.message == "StopGame") {
             stopGame()
         }
-
-        // Normal gameplay commands
-
-        if (im.message.startsWith("Guess=")) {
-            val changed = submitGuess(im.message)
-            if (changed) {
-                stateChanged = true
-            }
-        }
-
-        if (im.message.startsWith("Possible=")) {
-            val changed = markUnMarkPossible(im.message)
-            if (changed) {
-                stateChanged = true
-            }
-        }
-
-        if (im.message == "RestartPuzzle") {
-            val changed = restartPuzzle()
-            if (changed) {
-                stateChanged = true
-            }
-        }
-
-        if (stateChanged) {
-            saveGameState()
-            pushStateToClients()
-        }
-    }
-
-    private fun submitGuess(message: String): Boolean {
-        Log.d(TAG, "The user sent a guess: $message")
-        val split = message.split("=")
-        val guess = split[1].split(",")
-
-        // TODO - handle invalid Ints...
-        val index = guess[0].toInt()
-        val value = guess[1].toInt()
-        playerGrid[index] = value
-        playerPossibles.remove(index)
-
-        return true
-    }
-
-    private fun restartPuzzle(): Boolean {
-        for (i in 0 until playerGrid.size) {
-            if (playerGrid[i] != -1) {
-                playerGrid[i] = 0
-            }
-        }
-        playerPossibles.clear()
-        return true
-    }
-
-    private fun markUnMarkPossible(message: String): Boolean {
-        Log.d(TAG, "The user sent a possible: $message")
-        val split = message.split("=")
-        val guess = split[1].split(",")
-
-        // TODO - handle invalid Ints...
-        val index = guess[0].toInt()
-        val value = guess[1].toInt()
-
-        // Don't allow possibles if there is currently a guess
-        if (playerGrid[index] > 0) {
-            Log.d(TAG, "Can't set possibles where there is a guess")
-            return false
-        }
-
-        // determine the current possibles for the index
-        var possible = playerPossibles[index]
-        if (possible == null) {
-            possible = "000000000"
-        }
-
-        // Get the position from the value
-        val digit = possible[value - 1]
-        var replacement = "0"
-        if (digit == '0') {
-            replacement = value.toString()
-        }
-
-        possible = possible.substring(0, value - 1) + replacement + possible.substring(value)
-        if (possible == "000000000") {
-            Log.d(TAG, "Removing index ...")
-            playerPossibles.remove(index)
-        } else {
-            playerPossibles[index] = possible
-        }
-
-        return true
     }
 
     private fun pushStateToClients() {
@@ -383,20 +292,6 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             Log.d(TAG, "Calling plugin ...")
             savePuzzleFunction?.invoke()
         }
-
-        val editor = preferences.edit()
-
-        editor.putString("CurrPuzzle", currPuzzle)
-
-        val guessesToSave = encodeGuesses()
-        editor.putString("Guesses", guessesToSave)
-
-        // TODO - store possibles.
-        val possiblesToSave = encodePossibles()
-        editor.putString("Possibles", possiblesToSave)
-
-        editor.apply()
-        Log.d(TAG, "Saved game state.")
     }
 
     // TODO -- call this form the definition to load the last save.
@@ -426,54 +321,8 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             Log.d(TAG, "Calling plugin ...")
             restorePuzzleFunction?.invoke()
         }
-
-        // TODO - delete below after GameplayDefinition works properly...
-        var restoredGame = preferences.getString("CurrPuzzle", null)
-        currPuzzle = if (restoredGame == null) {
-            DEFAULTPUZZLE
-        } else {
-            restoredGame
-        }
-        startPuzzleFromString(currPuzzle!!)
-
-        playerGrid.clear()
-        val guessesString = preferences.getString("Guesses", "")
-        if (guessesString == "") {
-            puzzleSolution.forEach { square ->
-                if (square == -1) {
-                    playerGrid.add(-1)
-                } else {
-                    playerGrid.add(0)
-                }
-            }
-        } else {
-            val guessList = guessesString?.split(":")
-            guessList?.forEach {guessString ->
-                playerGrid.add(guessString.toInt())
-            }
-        }
-
-        playerHints.clear()
-        generateHints()
-
-        // Restore the player's own "possibles" list.
-        val possiblesString = preferences.getString("Possibles", "")
-        playerPossibles = decodePossibles(possiblesString!!)
-        // 0=103000000, 0=103000000, ... etc
     }
 
-    private fun startPuzzleFromString(puzzleString: String) {
-        puzzleWidth = puzzleString.substring(0, 2).toInt()
-
-        puzzleSolution.clear()
-        for (char in puzzleString.substring(2)) {
-            if (char == '0') {
-                puzzleSolution.add(-1)
-            } else {
-                puzzleSolution.add(char.digitToInt())
-            }
-        }
-    }
 
     private fun messageGameplayDisplayState(im: InboundMessage) {
         im.responseFunction?.invoke("MessageType=State,${encodeState()}")
@@ -554,33 +403,7 @@ class GameServer(private val context: Context, private val preferences: SharedPr
             Log.d(TAG, "Using NEW plugin for state...")
             return getStateFunction?.invoke()
         }
-
-        Log.d(TAG, "Using old state code...")
-        var state = ""
-
-        state += "w=$puzzleWidth,"
-        state += "g=" + encodeGuesses()
-
-        // h=2ACROSS13:2DOWN23 ... etc
-        // TODO - call a method to encode
-        state += ",h="
-        playerHints.forEachIndexed {index, hint ->
-            hint.index
-            hint.direction
-            hint.total
-            state += "${hint.index}${hint.direction}${hint.total}"
-            if (index < playerHints.size - 1) {
-                state += ":"
-            }
-        }
-
-        // p=2:0123000000,8:0000006780
-        if (playerPossibles.isNotEmpty()) {
-            state += ",p="
-            state += encodePossibles()
-        }
-
-        return state
+        return ""
     }
 
     private fun encodeGuesses(): String {
