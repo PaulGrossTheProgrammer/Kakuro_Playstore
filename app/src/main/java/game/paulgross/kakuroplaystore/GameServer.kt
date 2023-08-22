@@ -89,6 +89,10 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
                 }
 
                 if (gameplayHandler != null) {
+                    // TODO - testing new message decoder:
+                    val gm: GeneralMessage = decodeMessage(im.message)
+                    Log.d(TAG,"Testing GeneralMassage: $gm")
+
                     var stateChanged = false
                     stateChanged = gameplayHandler?.invoke(im) == true
 
@@ -161,7 +165,42 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
         gameMode = GameMode.LOCAL
     }
 
-    private var previousStateUpdate = ""
+    private var previousStateUpdate = ""  // TODO - this should only be in GameplayDefinition.
+
+    data class GeneralMessage(val type: String, val body: Map<String, String>?)
+
+    fun decodeMessage(message: String): GeneralMessage {
+        Log.d(TAG, "decodeMessage: $message")
+
+        var type = ""
+        val messageBody = mutableMapOf<String, String>()
+
+        if (message.indexOf("=") == -1) {
+            messageBody["ErrorMessage"] = "Expected 'MessageType'"
+            messageBody["SentMessage"] = message
+            return GeneralMessage("FormatError", messageBody)
+        }
+
+        val parts: List<String> = message.split(",")
+        parts.forEach { pair ->
+            val keyValue = pair.split("=")
+            if (keyValue[0] == "MessageType") {
+                type = keyValue[1]
+            } else {
+                messageBody[keyValue[0]] = keyValue[1]
+            }
+        }
+
+        if (type == "") {
+            messageBody.clear()
+            messageBody["ErrorMessage"] = "Expected 'MessageType'"
+            messageBody["SentMessage"] = message
+            return GeneralMessage("FormatError", messageBody)
+        }
+
+        return GeneralMessage(type, messageBody)
+    }
+
 
     private fun handleClientHandlerMessage(im: InboundMessage) {
 

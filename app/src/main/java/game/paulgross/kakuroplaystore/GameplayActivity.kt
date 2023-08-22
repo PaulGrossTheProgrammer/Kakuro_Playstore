@@ -330,8 +330,10 @@ class GameplayActivity : AppCompatActivity() {
         val tag = view.tag.toString()
         val digit = tag.substringAfter("Guess")
 
+        // TODO - convert to index=? and value=?
+
         if (selectedId != -1) {
-            GameServer.queueActivityMessage("Guess=$selectedId,$digit", ::queueMessage)
+            GameServer.queueActivityMessage("Guess=$selectedId:$digit", ::queueMessage)
         }
     }
 
@@ -339,8 +341,11 @@ class GameplayActivity : AppCompatActivity() {
         val tag = view.tag.toString()
         val digit = tag.substringAfter("Possible")
         Log.d(TAG, "Possible digit: $digit")
+
+        // TODO - convert to index=? and value=?
+
         if (selectedId != -1) {
-            GameServer.queueActivityMessage("Possible=$selectedId,$digit", ::queueMessage)
+            GameServer.queueActivityMessage("Possible=$selectedId:$digit", ::queueMessage)
         }
     }
 

@@ -66,6 +66,7 @@ object GameplayDefinition {
         return true
     }
 
+    // TODO - convert to index=? and value=?
     private fun submitGuess(message: String): Boolean {
         Log.d(TAG, "The user sent a guess: $message")
 
@@ -74,7 +75,7 @@ object GameplayDefinition {
             Log.e(TAG, "Invalid guess: $message")
             return false
         }
-        val guess = split[1].split(",")
+        val guess = split[1].split(":")
         if (guess.size != 2) {
             Log.e(TAG, "Invalid guess: $message")
             return false
@@ -93,10 +94,11 @@ object GameplayDefinition {
         }
     }
 
+    // TODO - convert to index=? and value=?
     private fun markUnMarkPossible(message: String): Boolean {
         Log.d(TAG, "The user sent a possible: $message")
         val split = message.split("=")
-        val guess = split[1].split(",")
+        val guess = split[1].split(":")
 
         // TODO - handle invalid Ints...
         val index = guess[0].toInt()
