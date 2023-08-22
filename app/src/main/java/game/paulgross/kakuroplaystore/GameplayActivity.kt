@@ -394,7 +394,10 @@ class GameplayActivity : AppCompatActivity() {
             if (stateString != null && previousStateString != stateString) {
                 Log.d(TAG, "Got a new state string [$stateString]")
                 previousStateString = stateString
-                // TODO - investigate a "fast" convert that avoids string conversions
+                // FIXME - This Activity should NOT get the un-decoded message string.
+                //  It should only get the already decoded objects. The engine should do that String conversion.
+                // PLUS: The engine should avoid string conversions if the network wasn't the source of the data.
+                // The engine should make a threadsafe copy of the data for the activity.
                 val newState = GameServer.decodeState(stateString)
                 if (newState != null) {
                     displayGrid(newState)

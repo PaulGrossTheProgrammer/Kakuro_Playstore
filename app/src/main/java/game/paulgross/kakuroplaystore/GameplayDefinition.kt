@@ -8,13 +8,13 @@ object GameplayDefinition {
 
     private var engine: GameServer? = null
 
-    private val DEFAULTPUZZLE = "043100820006980071"
+    private const val DEFAULT_PUZZLE = "043100820006980071"
 
     private var currPuzzle = ""
     private var puzzleWidth = 5
     private var puzzleSolution: MutableList<Int> = mutableListOf()
     private var playerGrid: MutableList<Int> = mutableListOf()
-    private var playerHints: MutableList<GameServer.Hint> = mutableListOf()
+    private var playerHints: MutableList<Hint> = mutableListOf()
 
     // Possibles are user defined, and coded as 9-digit Strings.
     private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
@@ -158,6 +158,8 @@ object GameplayDefinition {
         return state
     }
 
+    // TODO - create methods for decode guesses, hints and possibles.
+
     fun decodeState(stateString: String): StateVariables {
         Log.d(TAG, "decodeState() for [$stateString]")
 
@@ -169,7 +171,7 @@ object GameplayDefinition {
         // Example
         //w=4,g=-1:-1:0:0:-1:-1:0:0:0:-1:-1:-1:0:0:-1:-1
         // split on commas into key-value pairs
-        var map: MutableMap<String, String> = mutableMapOf()
+        val map: MutableMap<String, String> = mutableMapOf()
         val parts = stateString.split(",")
         for (part in parts) {
             if (part.contains("=")) {
@@ -243,7 +245,7 @@ object GameplayDefinition {
         val restoredGame = engine?.restoreData("CurrPuzzle", "").toString()
         currPuzzle = if (restoredGame == "") {
             Log.d(TAG, "USING DEFAULT PUZZLE!!!!")
-            DEFAULTPUZZLE
+            DEFAULT_PUZZLE
         } else {
             restoredGame
         }
@@ -344,26 +346,26 @@ object GameplayDefinition {
                 // First column numbers always need a hint.
                 val isFirstColumn = (index.mod(puzzleWidth) == 0)
                 if (isFirstColumn || puzzleSolution[index - 1] == -1) {
-                    val sum = sumOfSquares(puzzleSolution, puzzleWidth, index, GameServer.Direction.ACROSS)
-                    playerHints.add(GameServer.Hint(index, GameServer.Direction.ACROSS, sum))
+                    val sum = sumOfSquares(puzzleSolution, puzzleWidth, index, Direction.ACROSS)
+                    playerHints.add(Hint(index, Direction.ACROSS, sum))
                 }
 
                 // Check for DOWN hints (don't check last row)
                 // First colum row always need a hint.
                 val isFirstRow = (index < puzzleWidth)
                 if (isFirstRow || puzzleSolution[index - puzzleWidth] == -1) {
-                    val sum = sumOfSquares(puzzleSolution, puzzleWidth, index, GameServer.Direction.DOWN)
-                    playerHints.add(GameServer.Hint(index, GameServer.Direction.DOWN, sum))
+                    val sum = sumOfSquares(puzzleSolution, puzzleWidth, index, Direction.DOWN)
+                    playerHints.add(Hint(index, Direction.DOWN, sum))
                 }
             }
         }
     }
 
-    private fun sumOfSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: GameServer.Direction): Int {
+    private fun sumOfSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): Int {
         var sum = 0
 
         var stepSize = 1
-        if (direction == GameServer.Direction.DOWN) {
+        if (direction == Direction.DOWN) {
             stepSize = width
         }
 

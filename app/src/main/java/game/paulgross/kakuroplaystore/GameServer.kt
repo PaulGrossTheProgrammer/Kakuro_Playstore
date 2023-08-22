@@ -279,9 +279,6 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
         singletonGameServer = null
     }
 
-    /**
-     * Saves the current Game state.
-     */
     private fun saveGameState() {
         if (savePuzzleFunction != null) {
             Log.d(TAG, "Calling plugin ...")
@@ -289,7 +286,6 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
         }
     }
 
-    // TODO -- call this form the definition to load the last save.
     fun restoreData(name: String, default: String): String {
         var data = preferences.getString(name, null)
         if (data == null) {
@@ -318,35 +314,12 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
         }
     }
 
-
-    private fun messageGameplayDisplayState(im: InboundMessage) {
-        im.responseFunction?.invoke("MessageType=State,${encodeState()}")
-
-    }
-
     private fun resetGame() {
         // TODO:
 
         saveGameState()
         pushStateToClients()
     }
-
-    // -- Game here
-
-    enum class Direction {ACROSS, DOWN}
-    data class Hint(val index: Int, val direction: Direction, var total: Int)
-
-    private var currPuzzle = ""
-    private var puzzleWidth = 5
-    private var puzzleSolution: MutableList<Int> = mutableListOf()
-    private var playerGrid: MutableList<Int> = mutableListOf()
-    private var playerHints: MutableList<Hint> = mutableListOf()
-
-    // Possibles are user defined, and coded as 9-digit Strings.
-    private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
-
-    data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int,
-                              var playerHints:MutableList<Hint>, var possibles: MutableMap<Int, String>)
 
     private fun encodeState(): String? {
         if (encodeStateFunction != null) {
@@ -356,111 +329,11 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
         return ""
     }
 
-    private fun encodeGuesses(): String {
-        var guessString = ""
-        playerGrid.forEachIndexed {index, squareValue ->
-            guessString += squareValue.toString()
-            if (index < playerGrid.size - 1) {
-                guessString += ":"
-            }
-        }
-        return guessString
-    }
-
-    private fun encodePossibles(): String {
-        var possiblesString = ""
-        // ampersand separated entries, colon separated index and possibles.
-        // 0:1234567&5:100450000
-        // TODO
-        var firstEntry = true
-        playerPossibles.forEach { index, possibles ->
-            if (firstEntry) { firstEntry = false } else { possiblesString += "&" }
-            possiblesString += "$index:$possibles"
-        }
-        return possiblesString
-    }
-
-    // TODO - create methods for decode guesses, hints and possibles.
-
-    private fun decodePossibles(possiblesString: String): MutableMap<Int, String> {
-        val newPossibles: MutableMap<Int, String> = mutableMapOf()
-        if (possiblesString == "") {
-            return newPossibles
-        }
-        val possiblesList = possiblesString.split("&")
-        possiblesList.forEach { currPossible ->
-            val keyValue = currPossible.split(":")
-            val indexInt = keyValue[0].toInt()
-            val valueString = keyValue[1]
-
-            newPossibles[indexInt] = valueString
-        }
-
-        return newPossibles
-    }
-
     fun decodeState(stateString: String): GameplayDefinition.StateVariables? {
         Log.d(TAG, "decodeState() for [$stateString]")
-        // TODO - call new code here...
         if (decodeStateFunction != null) {
             return decodeStateFunction?.invoke(stateString)
         }
-
-        Log.d(TAG, "decodeState() OLD CODE")
-/*        var width = 0
-        val grid: MutableList<Int> = mutableListOf()
-        val hints: MutableList<Hint> = mutableListOf()
-        var possibles: MutableMap<Int, String> = mutableMapOf()
-
-        // Example
-        //w=4,g=-1:-1:0:0:-1:-1:0:0:0:-1:-1:-1:0:0:-1:-1
-        // split on commas into key-value pairs
-        var map: MutableMap<String, String> = mutableMapOf()
-        val parts = stateString.split(",")
-        for (part in parts) {
-            if (part.contains("=")) {
-                val keyValue = part.split("=")
-                map.put(keyValue[0], keyValue[1])
-            }
-        }
-
-        map.forEach { key, value ->
-            if (key == "w") {
-                width = value.toInt()
-            }
-            if (key == "g") {  // User's guesses
-                // TODO - call the decodeGuesses() method...
-                val ints = value.split(":")
-                ints.forEach {theIntString ->
-                    grid.add(theIntString.toInt())
-                }
-            }
-            if (key == "h") {  // Hints
-                // TODO - call a method to decode
-                val hintList = value.split(":")
-                hintList.forEach {theHintString ->
-                    val downString = Direction.DOWN.toString()
-                    val acrossString = Direction.ACROSS.toString()
-                    var dir = Direction.DOWN
-                    var index = -1
-                    var total = 0
-                    if (theHintString.contains(downString)) {
-                        index = theHintString.substringBefore(downString, "-1").toInt()
-                        total = theHintString.substringAfter(downString).toInt()
-                    } else if (theHintString.contains(acrossString)) {
-                        dir = Direction.ACROSS
-                        index = theHintString.substringBefore(acrossString, "-1").toInt()
-                        total = theHintString.substringAfter(acrossString).toInt()
-                    }
-                    hints.add(Hint(index, dir, total))
-                }
-            }
-            if (key == "p") {  // User's possibles
-                possibles = decodePossibles(value)
-            }
-        }
-
-        return GameplayDefinition.StateVariables(grid, width, hints, possibles)*/
         return null
     }
 
@@ -508,10 +381,6 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
             } else {
                 Log.d(TAG, "Already created GameServer.")
             }
-        }
-
-        fun getGameMode(): GameMode? {
-            return singletonGameServer?.getGameMode()
         }
 
         fun queueActivityMessage(message: String, responseFunction: ((message: String) -> Unit)?) {
