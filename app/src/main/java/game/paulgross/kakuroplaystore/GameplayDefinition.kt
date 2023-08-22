@@ -28,7 +28,7 @@ object GameplayDefinition {
     fun setEngine(engine: GameServer) {
         this.engine = engine
 
-        Log.d(TAG, "Plug in the gameplay functions.")
+        Log.d(TAG, "Plugin the gameplay functions.")
         engine.pluginGameplay(::handleGameplayMessage)
         engine.pluginEncodeState(::encodeState)
         engine.pluginDecodeState(::decodeState)
@@ -37,7 +37,9 @@ object GameplayDefinition {
     }
 
     private fun handleGameplayMessage(im: GameServer.InboundMessage): Boolean {
-        // TODO - return state changed flag
+        // TODO - break this into separate handler for Message types like Guess, Possible etc,
+        // and register those with the handler.
+
         Log.d(TAG, "Handling: $im")
         if (im.message.contains("Guess=")) {
             return submitGuess(im.message)
