@@ -167,7 +167,18 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
 
     private var previousStateUpdate = ""  // TODO - this should only be in GameplayDefinition.
 
-    data class GeneralMessage(val type: String, val body: Map<String, String>?)
+    data class GeneralMessage(val type: String, var body: MutableMap<String, String>?)
+
+    fun makeMessage(type: String): GeneralMessage {
+        return GeneralMessage(type, null)
+    }
+
+    fun setKeyString(gm: GeneralMessage, key: String, value: String) {
+        if (gm.body == null) {
+            gm.body = mutableMapOf<String, String>()
+        }
+        gm.body!!.put(key, value)
+    }
 
     fun decodeMessage(message: String): GeneralMessage {
         Log.d(TAG, "decodeMessage: $message")
@@ -176,9 +187,13 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
         val messageBody = mutableMapOf<String, String>()
 
         if (message.indexOf("=") == -1) {
-            messageBody["ErrorMessage"] = "Expected 'MessageType'"
-            messageBody["SentMessage"] = message
-            return GeneralMessage("FormatError", messageBody)
+            var gm = makeMessage("FormatError")
+            setKeyString(gm, "ErrorMessage", "Expected 'MessageType'")
+            setKeyString(gm, "SentMessage", message)
+            return gm
+//            messageBody["ErrorMessage"] = "Expected 'MessageType'"
+//            messageBody["SentMessage"] = message
+//            return GeneralMessage("FormatError", messageBody)
         }
 
         val parts: List<String> = message.split(",")
@@ -192,10 +207,14 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
         }
 
         if (type == "") {
-            messageBody.clear()
-            messageBody["ErrorMessage"] = "Expected 'MessageType'"
-            messageBody["SentMessage"] = message
-            return GeneralMessage("FormatError", messageBody)
+//            messageBody.clear()
+//            messageBody["ErrorMessage"] = "Expected 'MessageType'"
+//            messageBody["SentMessage"] = message
+//            return GeneralMessage("FormatError", messageBody)
+            var gm = makeMessage("FormatError")
+            setKeyString(gm, "ErrorMessage", "Expected 'MessageType'")
+            setKeyString(gm, "SentMessage", message)
+            return gm
         }
 
         return GeneralMessage(type, messageBody)
