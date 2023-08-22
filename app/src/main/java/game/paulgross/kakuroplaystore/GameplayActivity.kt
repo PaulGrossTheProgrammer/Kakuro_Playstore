@@ -334,6 +334,10 @@ class GameplayActivity : AppCompatActivity() {
 
         if (selectedId != -1) {
             GameServer.queueActivityMessage("Guess=$selectedId:$digit", ::queueMessage)
+
+            val gm = GameServer.Message("Guess")
+            gm.setKeyString("id", selectedId.toString())
+            gm.setKeyString("digit", digit)
         }
     }
 
@@ -346,6 +350,7 @@ class GameplayActivity : AppCompatActivity() {
 
         if (selectedId != -1) {
             GameServer.queueActivityMessage("Possible=$selectedId:$digit", ::queueMessage)
+
         }
     }
 

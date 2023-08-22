@@ -90,7 +90,7 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
 
                 if (gameplayHandler != null) {
                     // TODO - testing new message decoder:
-                    val gm: GeneralMessage = decodeMessage(im.message)
+                    val gm: Message = Message.decodeMessage(im.message)
                     Log.d(TAG,"Testing GeneralMassage: $gm")
 
                     var stateChanged = false
@@ -108,10 +108,6 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
             }
         }
         Log.d(TAG, "The Game Server has shut down.")
-    }
-
-    fun getGameMode(): GameMode {
-        return gameMode
     }
 
     private fun switchToRemoteServerMode(address: String) {
@@ -167,59 +163,59 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
 
     private var previousStateUpdate = ""  // TODO - this should only be in GameplayDefinition.
 
-    data class GeneralMessage(val type: String, var body: MutableMap<String, String>?)
+    class Message(val type: String) {
+        private var body: MutableMap<String, String>? = null
 
-    fun makeMessage(type: String): GeneralMessage {
-        return GeneralMessage(type, null)
-    }
-
-    fun setKeyString(gm: GeneralMessage, key: String, value: String) {
-        if (gm.body == null) {
-            gm.body = mutableMapOf<String, String>()
-        }
-        gm.body!!.put(key, value)
-    }
-
-    fun decodeMessage(message: String): GeneralMessage {
-        Log.d(TAG, "decodeMessage: $message")
-
-        var type = ""
-        val messageBody = mutableMapOf<String, String>()
-
-        if (message.indexOf("=") == -1) {
-            var gm = makeMessage("FormatError")
-            setKeyString(gm, "ErrorMessage", "Expected 'MessageType'")
-            setKeyString(gm, "SentMessage", message)
-            return gm
-//            messageBody["ErrorMessage"] = "Expected 'MessageType'"
-//            messageBody["SentMessage"] = message
-//            return GeneralMessage("FormatError", messageBody)
+        fun setKeyString(key: String, value: String) {
+            if (body == null) {
+                body = mutableMapOf<String, String>()
+            }
+            body!!.put(key, value)
         }
 
-        val parts: List<String> = message.split(",")
-        parts.forEach { pair ->
-            val keyValue = pair.split("=")
-            if (keyValue[0] == "MessageType") {
-                type = keyValue[1]
-            } else {
-                messageBody[keyValue[0]] = keyValue[1]
+        companion object {
+            fun decodeMessage(message: String): Message {
+                Log.d(TAG, "decodeMessage: $message")
+
+                var type = ""
+                val messageBody = mutableMapOf<String, String>()
+
+                if (message.indexOf("=") == -1) {
+                    val gm = Message("FormatError")
+                    gm.setKeyString("ErrorMessage", "Expected 'MessageType'")
+                    gm.setKeyString("SentMessage", message)
+                    return gm
+                }
+
+                val parts: List<String> = message.split(",")
+                parts.forEach { pair ->
+                    val keyValue = pair.split("=")
+                    if (keyValue[0] == "MessageType") {
+                        type = keyValue[1]
+                    } else {
+                        messageBody[keyValue[0]] = keyValue[1]
+                    }
+                }
+
+                if (type == "") {
+                    val gm = Message("FormatError")
+                    gm.setKeyString("ErrorMessage", "Expected 'MessageType'")
+                    gm.setKeyString("SentMessage", message)
+                    return gm
+                }
+
+                val gm = Message(type)
+                gm.setKeyString("ErrorMessage", "Expected 'MessageType'")
+                gm.setKeyString("SentMessage", message)
+
+                messageBody.forEach { (key, value) ->
+                    gm.setKeyString(key, value)
+                }
+
+                return gm
             }
         }
-
-        if (type == "") {
-//            messageBody.clear()
-//            messageBody["ErrorMessage"] = "Expected 'MessageType'"
-//            messageBody["SentMessage"] = message
-//            return GeneralMessage("FormatError", messageBody)
-            var gm = makeMessage("FormatError")
-            setKeyString(gm, "ErrorMessage", "Expected 'MessageType'")
-            setKeyString(gm, "SentMessage", message)
-            return gm
-        }
-
-        return GeneralMessage(type, messageBody)
     }
-
 
     private fun handleClientHandlerMessage(im: InboundMessage) {
 
@@ -441,6 +437,7 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
             }
         }
 
+        // TODO - use Message class instead of String.
         fun queueActivityMessage(message: String, responseFunction: ((message: String) -> Unit)?) {
             val im = InboundMessage(message, InboundMessageSource.APP, null, responseFunction)
             singletonGameServer?.inboundMessageQueue?.add(im)
