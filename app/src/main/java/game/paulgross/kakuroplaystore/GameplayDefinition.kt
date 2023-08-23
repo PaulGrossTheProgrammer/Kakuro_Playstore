@@ -36,20 +36,20 @@ object GameplayDefinition {
         engine.pluginRestorePuzzle(::restorePuzzle)
     }
 
-    private fun handleGameplayMessage(im: GameServer.InboundMessage): Boolean {
+    private fun handleGameplayMessage(message: GameServer.Message): Boolean {
         // TODO - break this into separate handler for Message types like Guess, Possible etc,
         // and register those with the handler.
 
-        Log.d(TAG, "Handling: $im")
-        if (im.message.contains("Guess=")) {
-            return submitGuess(im.message)
+        Log.d(TAG, "Handling: $message")
+        if (message.type == "Guess") {
+            return submitGuess(message)
         }
 
-        if (im.message.contains("Possible=")) {
-            return markUnMarkPossible(im.message)
+        if (message.type == "Possible") {
+            return markUnMarkPossible(message)
         }
 
-        if (im.message.contains("RestartPuzzle")) {
+        if (message.type == "RestartPuzzle") {
             return restartPuzzle()
         }
 
@@ -66,43 +66,59 @@ object GameplayDefinition {
         return true
     }
 
-    // TODO - convert to index=? and value=?
-    private fun submitGuess(message: String): Boolean {
+    private fun submitGuess(message: GameServer.Message): Boolean {
         Log.d(TAG, "The user sent a guess: $message")
 
-        val split = message.split("=")
-        if (split.size != 2) {
-            Log.e(TAG, "Invalid guess: $message")
-            return false
-        }
-        val guess = split[1].split(":")
-        if (guess.size != 2) {
-            Log.e(TAG, "Invalid guess: $message")
+        var index = -1
+        var value = -1
+        try {
+            index = message.getString("Index")?.toInt()!!
+            value = message.getString("Value")?.toInt()!!
+        } catch (e: NumberFormatException) {
+            Log.d(TAG, "Invalid [Index] or [Value].")
             return false
         }
 
-        try {
-            val index = guess[0].toInt()
-            val value = guess[1].toInt()
-            playerGrid[index] = value
-            playerPossibles.remove(index)
-            Log.d(TAG, "NEW: Implemented guess!!!")
-            return true
-        } catch (e: NumberFormatException) {
-            Log.e(TAG, "Invalid guess: $message")
+        if (index < 0 || index >= playerGrid.size) {
+            Log.d(TAG, "Index is outside of grid boundary.")
             return false
         }
+        if (value < 0 || value > 9) {
+            Log.d(TAG, "Digit must be from 0 to 9.")
+            return false
+        }
+
+        playerGrid[index] = value
+        playerPossibles.remove(index)
+        return true
     }
 
     // TODO - convert to index=? and value=?
-    private fun markUnMarkPossible(message: String): Boolean {
+    private fun markUnMarkPossible(message: GameServer.Message): Boolean {
         Log.d(TAG, "The user sent a possible: $message")
-        val split = message.split("=")
-        val guess = split[1].split(":")
+        if (!message.hasString("Index") || !message.hasString("Value")) {
+            Log.d(TAG, "Missing [Index] or [Value].")
+            return false
+        }
 
-        // TODO - handle invalid Ints...
-        val index = guess[0].toInt()
-        val value = guess[1].toInt()
+        var index = -1
+        var value = -1
+        try {
+            index = message.getString("Index")?.toInt()!!
+            value = message.getString("Value")?.toInt()!!
+        } catch (e: NumberFormatException) {
+            Log.d(TAG, "Invalid [Index] or [Value].")
+            return false
+        }
+
+        if (index < 0 || index >= playerGrid.size) {
+            Log.d(TAG, "Index is outside of grid boundary.")
+            return false
+        }
+        if (value < 1 || value > 9) {
+            Log.d(TAG, "Digit must be from 1 to 9.")
+            return false
+        }
 
         // Don't allow possibles if there is currently a guess
         if (playerGrid[index] > 0) {

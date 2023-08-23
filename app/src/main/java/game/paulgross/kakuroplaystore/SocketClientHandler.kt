@@ -102,9 +102,9 @@ class SocketClientHandler(private val socket: Socket, private val socketServer: 
                     if (data == null) {
                         Log.d(TAG, "ERROR: Remote data from Socket was unexpected NULL - abandoning socket Listener.")
                         listeningToSocket.set(false)
-                        GameServer.queueClientHandlerMessage("abandoned", sendToThisHandlerQ)
+                        GameServer.queueClientHandlerMessage(GameServer.Message("Abandoned"), sendToThisHandlerQ)
                     } else {
-                        GameServer.queueClientHandlerMessage(data, sendToThisHandlerQ)
+                        GameServer.queueClientHandlerMessage(GameServer.Message.decodeMessage(data), sendToThisHandlerQ)
                     }
                 }
             } catch (e: SocketException) {

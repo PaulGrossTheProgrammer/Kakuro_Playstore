@@ -39,7 +39,7 @@ class GameplayActivity : AppCompatActivity() {
         GameServer.activate(applicationContext.getSystemService(ConnectivityManager::class.java), getPreferences(MODE_PRIVATE), GameplayDefinition)
 
         // Request that the GameServer call queueMessage() whenever the game state changes.
-        GameServer.queueActivityMessage("RequestStateChanges", ::queueMessage)
+        GameServer.queueActivityMessage(GameServer.Message("RequestStateChanges"), ::queueMessage)
     }
 
     override fun onBackPressed() {
@@ -197,7 +197,7 @@ class GameplayActivity : AppCompatActivity() {
                         val gridValue = gameState!!.playerGrid[index]
                         // Non-playable grid value is -1, 0 means no guess yet, > 0 means a player guess
                         if (gridValue != -1) {
-                            val selected = (index == gameplayActivity?.selectedId)
+                            val selected = (index == gameplayActivity?.selectedIndex)
 
                             var possiblesString = gameState!!.possibles[index]
                             if (gridValue != 0) {
@@ -316,41 +316,44 @@ class GameplayActivity : AppCompatActivity() {
     }
 
     private fun touchedGuess(touchedIndex: Int) {
-        selectedId = touchedIndex
+        selectedIndex = touchedIndex
         findViewById<PlayingGridView>(R.id.viewPlayGrid).invalidate() // Trigger a redraw
     }
 
     private fun touchedGuessClear() {
-        selectedId = -1
+        selectedIndex = -1
         findViewById<PlayingGridView>(R.id.viewPlayGrid).invalidate() // Trigger a redraw
     }
 
     fun onClickDigit(view: View) {
         Log.d(TAG, "Clicked a guess: ${view.tag}")
         val tag = view.tag.toString()
-        val digit = tag.substringAfter("Guess")
+        val value = tag.substringAfter("Guess")
 
         // TODO - convert to index=? and value=?
 
-        if (selectedId != -1) {
-            GameServer.queueActivityMessage("Guess=$selectedId:$digit", ::queueMessage)
-
+        if (selectedIndex != -1) {
             val gm = GameServer.Message("Guess")
-            gm.setKeyString("id", selectedId.toString())
-            gm.setKeyString("digit", digit)
+            gm.setKeyString("Index", selectedIndex.toString())
+            gm.setKeyString("Value", value)
+
+            GameServer.queueActivityMessage(gm, ::queueMessage)
         }
     }
 
     fun onClickPossibleDigit(view: View) {
         val tag = view.tag.toString()
-        val digit = tag.substringAfter("Possible")
-        Log.d(TAG, "Possible digit: $digit")
+        val value = tag.substringAfter("Possible")
+        Log.d(TAG, "Possible digit: $value")
 
         // TODO - convert to index=? and value=?
 
-        if (selectedId != -1) {
-            GameServer.queueActivityMessage("Possible=$selectedId:$digit", ::queueMessage)
+        if (selectedIndex != -1) {
+            val gm = GameServer.Message("Possible")
+            gm.setKeyString("Index", selectedIndex.toString())
+            gm.setKeyString("Value", value)
 
+            GameServer.queueActivityMessage(gm, ::queueMessage)
         }
     }
 
@@ -359,8 +362,8 @@ class GameplayActivity : AppCompatActivity() {
         builder.setTitle("Restart Puzzle")
         builder.setMessage("Are you sure you want to restart?")
         builder.setPositiveButton("Reset") { _, _ ->
-            selectedId = -1
-            GameServer.queueActivityMessage("RestartPuzzle", ::queueMessage)
+            selectedIndex = -1
+            GameServer.queueActivityMessage(GameServer.Message("RestartPuzzle"), ::queueMessage)
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
@@ -384,11 +387,11 @@ class GameplayActivity : AppCompatActivity() {
 
     private fun stopGameServer() {
         Log.d(TAG, "Stopping the game server ...")
-        GameServer.queueActivityMessage("StopGame", ::queueMessage)
+        GameServer.queueActivityMessage(GameServer.Message("StopGame"), ::queueMessage)
     }
 
     private var previousStateString = ""
-    var selectedId: Int = -1
+    var selectedIndex: Int = -1
 
     /**
     Receive messages from the GameServer.

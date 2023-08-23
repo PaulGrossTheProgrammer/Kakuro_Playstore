@@ -25,7 +25,8 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
 
     // TODO - replace responseQueue with responseFunction
     data class InboundMessage(
-        val message: String, val source: InboundMessageSource,
+        val message: Message,
+        val source: InboundMessageSource,
         val responseQueue: BlockingQueue<String>?,
         val responseFunction: ((message: String) -> Unit)?
     )
@@ -90,11 +91,12 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
 
                 if (gameplayHandler != null) {
                     // TODO - testing new message decoder:
-                    val gm: Message = Message.decodeMessage(im.message)
-                    Log.d(TAG,"Testing GeneralMassage: $gm")
+//                    val gm: Message = Message.decodeMessage(im.message)
+//                    Log.d(TAG,"Testing GeneralMassage: $gm")
 
                     var stateChanged = false
-                    stateChanged = gameplayHandler?.invoke(im) == true
+                    // TODO Change invoke signature to Message
+                    stateChanged = gameplayHandler?.invoke(im.message) == true
 
                     if (stateChanged) {
                         saveGameState()
@@ -173,6 +175,17 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
             body!!.put(key, value)
         }
 
+        fun getString(key: String): String? {
+            return body?.get(key)
+        }
+
+        fun hasString(s: String): Boolean {
+            if (body?.get(s) != null) {
+                return true
+            }
+            return false
+        }
+
         companion object {
             fun decodeMessage(message: String): Message {
                 Log.d(TAG, "decodeMessage: $message")
@@ -220,20 +233,20 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
     private fun handleClientHandlerMessage(im: InboundMessage) {
 
         var validRequest = false
-        if (im.message == "Initialise") {
+        if (im.message.type == "Initialise") {
             validRequest = true
             remotePlayers.add(im.responseQueue!!)
         }
 
         // TODO: Normal gameplay commands here...
 
-        if (im.message == "status") {
+        if (im.message.type == "Status") {
             validRequest = true
             im.responseQueue!!.add("state,${encodeState()}")
         }
-        if (im.message == "shutdown" || im.message == "abandoned") {
+        if (im.message.type == "Shutdown" || im.message.type == "Abandoned") {
             validRequest = true
-            im.responseQueue!!.add(im.message)
+            im.responseQueue!!.add(im.message.type)
             remotePlayers.remove(im.responseQueue)
         }
 
@@ -243,10 +256,10 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
     }
 
     private fun handleClientMessage(im: InboundMessage) {
-        if (im.message.startsWith("state,", true)) {
-            val remoteState = im.message.substringAfter("MessageType=State,")
+        if (im.message.type == "state") {
+            val remoteState = im.message.getString("RemoteState")
 
-            if (previousStateUpdate != remoteState) {
+            if (remoteState != null && previousStateUpdate != remoteState) {
                 Log.d(TAG, "REMOTE Game Server sent state change: [$remoteState]")
 
                 previousStateUpdate = remoteState
@@ -258,8 +271,8 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
                 pushStateToClients()
             }
         }
-        if (im.message == "shutdown" || im.message == "abandoned") {
-            im.responseQueue!!.add(im.message)
+        if (im.message.type == "Shutdown" || im.message.type == "Abandoned") {
+            im.responseQueue!!.add(im.message.type)
             switchToPureLocalMode()
         }
     }
@@ -269,7 +282,7 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
     private fun handleActivityMessage(im: InboundMessage) {
 
         var stateChanged = false
-        if (im.message == "RequestStateChanges") {
+        if (im.message.type == "RequestStateChanges") {
             Log.d(TAG, "RequestStateChanges received...")
             if (im.responseFunction != null) {
                 stateChangeCallbacks.add(im.responseFunction)
@@ -281,33 +294,33 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
 
         // TODO - need a cancel state update requests message too...
 
-        if (im.message == "Reset") {
+        if (im.message.type == "Reset") {
             resetGame()
             stateChanged = true
         }
-        if (im.message == "Status") {
+        if (im.message.type == "Status") {
             im.responseFunction?.invoke("MessageType=State,${encodeState()}")
         }
 
-        if (im.message == "StartServer") {
+        if (im.message.type == "StartServer") {
             if (gameMode != GameMode.SERVER) {
                 switchToLocalServerMode()
             }
         }
-        if (im.message == "StartLocal") {
+        if (im.message.type == "StartLocal") {
             if (gameMode != GameMode.LOCAL) {
                 switchToPureLocalMode()
             }
         }
-        if (im.message.startsWith("RemoteServer")) {
+        if (im.message.type == "RemoteServer") {
             if (gameMode != GameMode.CLIENT) {
-                val ip = im.message.substringAfter(":", "")
-                if (ip != "") {
+                val ip = im.message.getString("Address")
+                if (ip!= null && ip != "") {
                     switchToRemoteServerMode(ip)
                 }
             }
         }
-        if (im.message == "StopGame") {
+        if (im.message.type == "StopGame") {
             stopGame()
         }
     }
@@ -391,13 +404,13 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
         return null
     }
 
-    private var gameplayHandler: ((im: InboundMessage) -> Boolean)? = null
+    private var gameplayHandler: ((m: Message) -> Boolean)? = null
     private var encodeStateFunction: (() -> String)? = null
     private var decodeStateFunction: ((String) -> GameplayDefinition.StateVariables)? = null
     private var savePuzzleFunction: (() -> Unit)? = null
     private var restorePuzzleFunction: (() -> Unit)? = null
 
-    fun pluginGameplay(gameplayHandler: (im: InboundMessage) -> Boolean) {
+    fun pluginGameplay(gameplayHandler: (m: Message) -> Boolean) {
         Log.d(TAG, "Plugging in gameplay handler...")
         this.gameplayHandler = gameplayHandler
     }
@@ -438,17 +451,17 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
         }
 
         // TODO - use Message class instead of String.
-        fun queueActivityMessage(message: String, responseFunction: ((message: String) -> Unit)?) {
+        fun queueActivityMessage(message: Message, responseFunction: ((message: String) -> Unit)?) {
             val im = InboundMessage(message, InboundMessageSource.APP, null, responseFunction)
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
-        fun queueClientHandlerMessage(message: String, responseQ: BlockingQueue<String>) {
+        fun queueClientHandlerMessage(message: Message, responseQ: BlockingQueue<String>) {
             val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseQ, null)
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
 
-        fun queueClientMessage(message: String, responseQ: BlockingQueue<String>) {
+        fun queueClientMessage(message: Message, responseQ: BlockingQueue<String>) {
             val im = InboundMessage(message, InboundMessageSource.CLIENT, responseQ, null)
             singletonGameServer?.inboundMessageQueue?.add(im)
         }
