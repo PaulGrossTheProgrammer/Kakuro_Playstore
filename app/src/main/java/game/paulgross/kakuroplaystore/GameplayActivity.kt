@@ -404,10 +404,9 @@ class GameplayActivity : AppCompatActivity() {
 
             val message = GameEngine.Message.decodeMessage(messageString)
             if (message.type == "State") {
-                val newState = GameEngine.decodeState(message)
-                if (newState != null) {
-                    displayGrid(newState)
-                }
+//                val newState = GameEngine.decodeState(message)
+                val newState = GameplayDefinition.decodeState(message)
+                displayGrid(newState)
             }
         }
     }

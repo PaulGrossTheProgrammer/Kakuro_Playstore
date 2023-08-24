@@ -245,12 +245,11 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
             remotePlayers.add(im.responseQueue!!)
         }
 
-        // TODO: Normal gameplay commands here...
-
-        if (im.message.type == "Status") {
-            validRequest = true
-            im.responseQueue!!.add("state,${encodeState()}")
-        }
+            // Is this even needed???
+//        if (im.message.type == "Status") {
+//            validRequest = true
+//            im.responseQueue!!.add("state,${encodeState()}")
+//        }
         if (im.message.type == "Shutdown" || im.message.type == "Abandoned") {
             validRequest = true
             im.responseQueue!!.add(im.message.type)
@@ -271,7 +270,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
                 previousStateUpdate = remoteState
 
-                val stateVars = decodeState(Message.decodeMessage(remoteState))
+//                val stateVars = decodeState(Message.decodeMessage(remoteState))
                 // TODO:
 
                 saveGameState()
@@ -378,19 +377,18 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     /**
      * Restores the Game state from the last time it was saved.
      *
-     * TODO - return data that can be sent to the Definition...
+     * TODO - return data that can be sent to the Definition...???? Why ???
      */
     private fun restoreGameState() {
         Log.d(TAG, "Restoring previous game state...")
 
-        if (restorePuzzleFunction != null) {
-            Log.d(TAG, "Calling plugin ...")
-            restorePuzzleFunction?.invoke()
+        if (restoreStateFunction != null) {
+            restoreStateFunction?.invoke()
         }
     }
 
     private fun resetGame() {
-        // TODO:
+        // TODO: Plugin a reset game function here....
 
         saveGameState()
         pushStateToClients()
@@ -398,24 +396,23 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
     private fun encodeState(): String? {
         if (encodeStateFunction != null) {
-            Log.d(TAG, "Using NEW plugin for state...")
             return encodeStateFunction?.invoke()
         }
         return ""
     }
 
-    fun decodeState(message: Message): GameplayDefinition.StateVariables? {
-        if (decodeStateFunction != null) {
-            return decodeStateFunction?.invoke(message)
-        }
-        return null
-    }
+//    fun decodeState(message: Message): GameplayDefinition.StateVariables? {
+//        if (decodeStateFunction != null) {
+//            return decodeStateFunction?.invoke(message)
+//        }
+//        return null
+//    }
 
     private var gameplayHandler: ((m: Message) -> Boolean)? = null
     private var encodeStateFunction: (() -> String)? = null
-    private var decodeStateFunction: ((Message) -> GameplayDefinition.StateVariables)? = null
+//    private var decodeStateFunction: ((Message) -> GameplayDefinition.StateVariables)? = null
     private var savePuzzleFunction: (() -> Unit)? = null
-    private var restorePuzzleFunction: (() -> Unit)? = null
+    private var restoreStateFunction: (() -> Unit)? = null
 
     fun pluginGameplay(gameplayHandler: (m: Message) -> Boolean) {
         Log.d(TAG, "Plugging in gameplay handler...")
@@ -427,19 +424,19 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         this.encodeStateFunction = encodeStateFunction
     }
 
-    fun pluginDecodeState(decodeStateFunction: (message: Message) -> GameplayDefinition.StateVariables) {
-        Log.d(TAG, "Plugging in encode state function...")
-        this.decodeStateFunction = decodeStateFunction
-    }
+//    fun pluginDecodeState(decodeStateFunction: (message: Message) -> GameplayDefinition.StateVariables) {
+//        Log.d(TAG, "Plugging in encode state function...")
+//        this.decodeStateFunction = decodeStateFunction
+//    }
 
-    fun pluginSaveState(savePuzzleFunction: () -> Unit) {
+    fun pluginSaveState(saveStateFunction: () -> Unit) {
         Log.d(TAG, "Plugging in save puzzle function...")
-        this.savePuzzleFunction = savePuzzleFunction
+        this.savePuzzleFunction = saveStateFunction
     }
 
-    fun pluginRestoreState(restorePuzzleFunction: () -> Unit) {
+    fun pluginRestoreState(restoreStateFunction: () -> Unit) {
         Log.d(TAG, "Plugging in restore puzzle function...")
-        this.restorePuzzleFunction = restorePuzzleFunction
+        this.restoreStateFunction = restoreStateFunction
     }
 
     companion object {
@@ -473,8 +470,8 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
             singletonGameEngine?.inboundMessageQueue?.add(im)
         }
 
-        fun decodeState(message: Message): GameplayDefinition.StateVariables? {
-            return singletonGameEngine?.decodeState(message)
-        }
+//        fun decodeState(message: Message): GameplayDefinition.StateVariables? {
+//            return singletonGameEngine?.decodeState(message)
+//        }
     }
 }

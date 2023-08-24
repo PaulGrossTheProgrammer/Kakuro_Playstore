@@ -31,7 +31,7 @@ object GameplayDefinition {
         Log.d(TAG, "Plugin the gameplay functions.")
         engine.pluginGameplay(::handleGameplayMessage)
         engine.pluginEncodeState(::encodeState)
-        engine.pluginDecodeState(::decodeState)
+//        engine.pluginDecodeState(::decodeState)
         engine.pluginSaveState(::saveState)
         engine.pluginRestoreState(::restoreState)
     }
