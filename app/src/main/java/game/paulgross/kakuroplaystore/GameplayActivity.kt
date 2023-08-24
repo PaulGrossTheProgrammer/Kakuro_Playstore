@@ -437,6 +437,7 @@ class GameplayActivity : AppCompatActivity() {
 
         // Callback function attached to messages sent to other queues.
         fun queueMessage(message: String) {
+            // TODO - why is this flagged as "never used" ??????
             instance?.queueMessage(message)
         }
     }
