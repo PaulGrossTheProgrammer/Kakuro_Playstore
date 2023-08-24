@@ -30,18 +30,18 @@ class SocketClientHandler(private val socket: Socket, private val socketServer: 
 
         try {
             while (listeningToGameServer.get()) {
-                // Wait here for any messages from the GameServer.
-                Log.d(TAG, "Waiting for GameServer message...")
+                // Wait here for any messages from the GameEngine.
+                Log.d(TAG, "Waiting for GameEngine message...")
                 val message = sendToThisHandlerQ.take()  // Blocked until we get data.
-                Log.d(TAG, "Got GameServer message.")
+                Log.d(TAG, "Got GameEngine message.")
 
                 if (message == "abandoned") {
-                    // Special case: GameServer wants to shutdown this Handler.
+                    // Special case: GameEngine wants to shutdown this Handler.
                     Log.d(TAG, "Remote socket abandoned. Shutting down.")
                     shutdown()
                 } else {
                     if (message == "shutdown") {
-                        // Special case: GameServer wants to shutdown this Handler.
+                        // Special case: GameEngine wants to shutdown this Handler.
                         shutdown()
                     }
 
@@ -102,9 +102,9 @@ class SocketClientHandler(private val socket: Socket, private val socketServer: 
                     if (data == null) {
                         Log.d(TAG, "ERROR: Remote data from Socket was unexpected NULL - abandoning socket Listener.")
                         listeningToSocket.set(false)
-                        GameServer.queueClientHandlerMessage(GameServer.Message("Abandoned"), sendToThisHandlerQ)
+                        GameEngine.queueClientHandlerMessage(GameEngine.Message("Abandoned"), sendToThisHandlerQ)
                     } else {
-                        GameServer.queueClientHandlerMessage(GameServer.Message.decodeMessage(data), sendToThisHandlerQ)
+                        GameEngine.queueClientHandlerMessage(GameEngine.Message.decodeMessage(data), sendToThisHandlerQ)
                     }
                 }
             } catch (e: SocketException) {

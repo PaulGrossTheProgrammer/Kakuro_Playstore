@@ -35,11 +35,13 @@ class GameplayActivity : AppCompatActivity() {
         instance = this  // Enables the Companion object to receive messages for this Class.
 
         enableQueuedMessages()
-//        GameServer.activate(applicationContext, getPreferences(MODE_PRIVATE), GameplayDefinition)
-        GameServer.activate(applicationContext.getSystemService(ConnectivityManager::class.java), getPreferences(MODE_PRIVATE), GameplayDefinition)
 
-        // Request that the GameServer call queueMessage() whenever the game state changes.
-        GameServer.queueActivityMessage(GameServer.Message("RequestStateChanges"), ::queueMessage)
+        GameEngine.activate(applicationContext.getSystemService(ConnectivityManager::class.java),
+            getPreferences(MODE_PRIVATE),
+            GameplayDefinition)
+
+        // Request that the GameEngine call queueMessage() whenever the game state changes.
+        GameEngine.queueActivityMessage(GameEngine.Message("RequestStateChanges"), ::queueMessage)
     }
 
     override fun onBackPressed() {
@@ -333,11 +335,11 @@ class GameplayActivity : AppCompatActivity() {
         // TODO - convert to index=? and value=?
 
         if (selectedIndex != -1) {
-            val gm = GameServer.Message("Guess")
+            val gm = GameEngine.Message("Guess")
             gm.setKeyString("Index", selectedIndex.toString())
             gm.setKeyString("Value", value)
 
-            GameServer.queueActivityMessage(gm, ::queueMessage)
+            GameEngine.queueActivityMessage(gm, ::queueMessage)
         }
     }
 
@@ -349,11 +351,11 @@ class GameplayActivity : AppCompatActivity() {
         // TODO - convert to index=? and value=?
 
         if (selectedIndex != -1) {
-            val gm = GameServer.Message("Possible")
+            val gm = GameEngine.Message("Possible")
             gm.setKeyString("Index", selectedIndex.toString())
             gm.setKeyString("Value", value)
 
-            GameServer.queueActivityMessage(gm, ::queueMessage)
+            GameEngine.queueActivityMessage(gm, ::queueMessage)
         }
     }
 
@@ -363,7 +365,7 @@ class GameplayActivity : AppCompatActivity() {
         builder.setMessage("Are you sure you want to restart?")
         builder.setPositiveButton("Reset") { _, _ ->
             selectedIndex = -1
-            GameServer.queueActivityMessage(GameServer.Message("RestartPuzzle"), ::queueMessage)
+            GameEngine.queueActivityMessage(GameEngine.Message("RestartPuzzle"), ::queueMessage)
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
@@ -387,31 +389,22 @@ class GameplayActivity : AppCompatActivity() {
 
     private fun stopGameServer() {
         Log.d(TAG, "Stopping the game server ...")
-        GameServer.queueActivityMessage(GameServer.Message("StopGame"), ::queueMessage)
+        GameEngine.queueActivityMessage(GameEngine.Message("StopGame"), ::queueMessage)
     }
 
-    private var previousStateString = ""
     var selectedIndex: Int = -1
 
     /**
-    Receive messages from the GameServer.
+    Receive messages from the GameEngine.
      */
     private val activityMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
 
-            val message = intent.getStringExtra("Message")
+            val messageString = intent.getStringExtra("Message") ?: return
 
-            // FIXME - allow other message types.
-            val stateString = message?.substringAfter("MessageType=State,", "")
-
-            if (stateString != null && previousStateString != stateString) {
-                Log.d(TAG, "Got a new state string [$stateString]")
-                previousStateString = stateString
-                // FIXME - This Activity should NOT get the un-decoded message string.
-                //  It should only get the already decoded objects. The engine should do that String conversion.
-                // PLUS: The engine should avoid string conversions if the network wasn't the source of the data.
-                // The engine should make a threadsafe copy of the data for the activity.
-                val newState = GameServer.decodeState(stateString)
+            val message = GameEngine.Message.decodeMessage(messageString)
+            if (message.type == "State") {
+                val newState = GameEngine.decodeState(message)
                 if (newState != null) {
                     displayGrid(newState)
                 }

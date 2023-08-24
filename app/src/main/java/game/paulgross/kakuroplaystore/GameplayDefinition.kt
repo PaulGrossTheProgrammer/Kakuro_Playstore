@@ -6,7 +6,7 @@ object GameplayDefinition {
 
     private val TAG = GameplayDefinition::class.java.simpleName
 
-    private var engine: GameServer? = null
+    private var engine: GameEngine? = null
 
     private const val DEFAULT_PUZZLE = "043100820006980071"
 
@@ -25,19 +25,19 @@ object GameplayDefinition {
     enum class Direction {ACROSS, DOWN}
     data class Hint(val index: Int, val direction: Direction, var total: Int)
 
-    fun setEngine(engine: GameServer) {
+    fun setEngine(engine: GameEngine) {
         this.engine = engine
 
         Log.d(TAG, "Plugin the gameplay functions.")
         engine.pluginGameplay(::handleGameplayMessage)
         engine.pluginEncodeState(::encodeState)
         engine.pluginDecodeState(::decodeState)
-        engine.pluginSavePuzzle(::savePuzzle)
-        engine.pluginRestorePuzzle(::restorePuzzle)
+        engine.pluginSaveState(::saveState)
+        engine.pluginRestoreState(::restoreState)
     }
 
-    private fun handleGameplayMessage(message: GameServer.Message): Boolean {
-        // TODO - break this into separate handler for Message types like Guess, Possible etc,
+    private fun handleGameplayMessage(message: GameEngine.Message): Boolean {
+        // TODO - break this into separate handler functions for Message types like Guess, Possible etc,
         // and register those with the handler.
 
         Log.d(TAG, "Handling: $message")
@@ -46,7 +46,7 @@ object GameplayDefinition {
         }
 
         if (message.type == "Possible") {
-            return markUnMarkPossible(message)
+            return togglePossible(message)
         }
 
         if (message.type == "RestartPuzzle") {
@@ -66,8 +66,13 @@ object GameplayDefinition {
         return true
     }
 
-    private fun submitGuess(message: GameServer.Message): Boolean {
+    private fun submitGuess(message: GameEngine.Message): Boolean {
         Log.d(TAG, "The user sent a guess: $message")
+
+        if (!message.hasString("Index") || !message.hasString("Value")) {
+            Log.d(TAG, "Missing [Index] or [Value].")
+            return false
+        }
 
         var index = -1
         var value = -1
@@ -93,10 +98,10 @@ object GameplayDefinition {
         return true
     }
 
-    // TODO - convert to index=? and value=?
-    private fun markUnMarkPossible(message: GameServer.Message): Boolean {
+    private fun togglePossible(message: GameEngine.Message): Boolean {
         Log.d(TAG, "The user sent a possible: $message")
-        if (!message.hasString("Index") || !message.hasString("Value")) {
+
+        if (message.missingString("Index") || message.missingString("Value")) {
             Log.d(TAG, "Missing [Index] or [Value].")
             return false
         }
@@ -132,14 +137,17 @@ object GameplayDefinition {
             possible = "000000000"
         }
 
-        // Get the position from the value
+        // Get the replacement position from the value
         val digit = possible[value - 1]
         var replacement = "0"
         if (digit == '0') {
             replacement = value.toString()
         }
 
+        // Insert the replacement at the digit value position.
         possible = possible.substring(0, value - 1) + replacement + possible.substring(value)
+
+        // Remove ir update the range of possibles.
         if (possible == "000000000") {
             Log.d(TAG, "Removing index ...")
             playerPossibles.remove(index)
@@ -178,71 +186,69 @@ object GameplayDefinition {
         return state
     }
 
-    // TODO - create methods for decode guesses, hints and possibles.
+    fun decodeState(message: GameEngine.Message): StateVariables {
+        Log.d(TAG, "DecodeState() for [$message]")
 
-    fun decodeState(stateString: String): StateVariables {
-        Log.d(TAG, "decodeState() for [$stateString]")
+        if (message.missingString("w") || message.missingString("g") || message.missingString("h") ) {
+            Log.d(TAG, "Missing width, grid and and/or hints.")
+            return StateVariables(mutableListOf(), 0, mutableListOf(), mutableMapOf())
+        }
 
-        var width = 0
-        val grid: MutableList<Int> = mutableListOf()
-        val hints: MutableList<Hint> = mutableListOf()
+        val width = message.getString("w")?.toInt()
+        if (width == null || width < 1) {
+            Log.d(TAG, "Invalid width ${message.getString("w")}.")
+            return StateVariables(mutableListOf(), 0, mutableListOf(), mutableMapOf())
+        }
+
         var possibles: MutableMap<Int, String> = mutableMapOf()
-
-        // Example
-        //w=4,g=-1:-1:0:0:-1:-1:0:0:0:-1:-1:-1:0:0:-1:-1
-        // split on commas into key-value pairs
-        val map: MutableMap<String, String> = mutableMapOf()
-        val parts = stateString.split(",")
-        for (part in parts) {
-            if (part.contains("=")) {
-                val keyValue = part.split("=")
-                map.put(keyValue[0], keyValue[1])
-            }
+        if (message.hasString("p")) {
+            possibles = decodePossibles(message.getString("p")!!)
         }
 
-        map.forEach { key, value ->
-            if (key == "w") {
-                width = value.toInt()
-            }
-            if (key == "g") {  // User's guesses
-                // TODO - call the decodeGuesses() method...
-                val ints = value.split(":")
-                ints.forEach {theIntString ->
-                    grid.add(theIntString.toInt())
-                }
-            }
-            if (key == "h") {  // Hints
-                // TODO - call a method to decode
-                val hintList = value.split(":")
-                hintList.forEach {theHintString ->
-                    val downString = Direction.DOWN.toString()
-                    val acrossString = Direction.ACROSS.toString()
-                    var dir = Direction.DOWN
-                    var index = -1
-                    var total = 0
-                    if (theHintString.contains(downString)) {
-                        index = theHintString.substringBefore(downString, "-1").toInt()
-                        total = theHintString.substringAfter(downString).toInt()
-                    } else if (theHintString.contains(acrossString)) {
-                        dir = Direction.ACROSS
-                        index = theHintString.substringBefore(acrossString, "-1").toInt()
-                        total = theHintString.substringAfter(acrossString).toInt()
-                    }
-                    hints.add(Hint(index, dir, total))
-                }
-            }
-            if (key == "p") {  // User's possibles
-                possibles = decodePossibles(value)
-            }
+        return StateVariables(decodeGrid(message.getString("g")!!), width,
+            decodeHints(message.getString("h")!!), possibles)
+    }
+
+    // TODO - create methods for decode guesses, hints and possibles.
+    private fun decodeGrid(guessesString: String): MutableList<Int> {
+        val grid: MutableList<Int> = mutableListOf()
+
+        val ints = guessesString.split(":")
+        ints.forEach {theIntString ->
+            grid.add(theIntString.toInt())
         }
 
-        return StateVariables(grid, width, hints, possibles)
+        return grid
+    }
+
+    private fun decodeHints(hintsString: String): MutableList<Hint> {
+        val hints: MutableList<Hint> = mutableListOf()
+
+        val hintList = hintsString.split(":")
+        hintList.forEach {theHintString ->
+            val downString = Direction.DOWN.toString()
+            val acrossString = Direction.ACROSS.toString()
+            var dir = Direction.DOWN
+            var index = -1
+            var total = 0
+            if (theHintString.contains(downString)) {
+                index = theHintString.substringBefore(downString, "-1").toInt()
+                total = theHintString.substringAfter(downString).toInt()
+            } else if (theHintString.contains(acrossString)) {
+                dir = Direction.ACROSS
+                index = theHintString.substringBefore(acrossString, "-1").toInt()
+                total = theHintString.substringAfter(acrossString).toInt()
+            }
+            hints.add(Hint(index, dir, total))
+        }
+
+        return hints
     }
 
     /**
      * Saves the current Game state.
      */
-    private fun savePuzzle() {
+    private fun saveState() {
         engine?.saveData("CurrPuzzle", currPuzzle)
 
         val guessesToSave = encodeGuesses()
@@ -254,7 +260,7 @@ object GameplayDefinition {
         Log.d(TAG, "Saved game state.")
     }
 
-    fun restorePuzzle() {
+    fun restoreState() {
         Log.d(TAG, "NEW - restoring puzzle")
 
         if (engine == null) {

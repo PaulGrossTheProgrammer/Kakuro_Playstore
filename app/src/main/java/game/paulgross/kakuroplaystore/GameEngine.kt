@@ -9,7 +9,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class GameServer(private val cm: ConnectivityManager, private val preferences: SharedPreferences, private val definition: GameplayDefinition): Thread() {
+class GameEngine(private val cm: ConnectivityManager, private val preferences: SharedPreferences, private val definition: GameplayDefinition): Thread() {
     private var socketServer: SocketServer? = null
     private var socketClient: SocketClient? = null
 
@@ -35,10 +35,10 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
         /** Game only responds to messages within the App. */
         LOCAL,
 
-        /** Allow remote users to play by joining this GameServer over the network. */
+        /** Allow remote users to play by joining this GameEngine over the network. */
         SERVER,
 
-        /** Joined a network GameServer. */
+        /** Joined a network GameEngine. */
         CLIENT
     }
     private var gameMode: GameMode = GameMode.LOCAL
@@ -186,6 +186,13 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
             return false
         }
 
+        fun missingString(s: String): Boolean {
+            if (body?.get(s) != null) {
+                return false
+            }
+            return true
+        }
+
         companion object {
             fun decodeMessage(message: String): Message {
                 Log.d(TAG, "decodeMessage: $message")
@@ -264,7 +271,7 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
 
                 previousStateUpdate = remoteState
 
-                val stateVars = decodeState(remoteState)
+                val stateVars = decodeState(Message.decodeMessage(remoteState))
                 // TODO:
 
                 saveGameState()
@@ -327,6 +334,7 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
 
     private fun pushStateToClients() {
         stateChangeCallbacks.forEach { callback ->
+            // TODO - make this a Message
             callback("MessageType=State,${encodeState()}")
         }
     }
@@ -343,7 +351,7 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
             socketClient?.shutdownRequest()
         }
 
-        singletonGameServer = null
+        singletonGameEngine = null
     }
 
     private fun saveGameState() {
@@ -396,17 +404,16 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
         return ""
     }
 
-    fun decodeState(stateString: String): GameplayDefinition.StateVariables? {
-        Log.d(TAG, "decodeState() for [$stateString]")
+    fun decodeState(message: Message): GameplayDefinition.StateVariables? {
         if (decodeStateFunction != null) {
-            return decodeStateFunction?.invoke(stateString)
+            return decodeStateFunction?.invoke(message)
         }
         return null
     }
 
     private var gameplayHandler: ((m: Message) -> Boolean)? = null
     private var encodeStateFunction: (() -> String)? = null
-    private var decodeStateFunction: ((String) -> GameplayDefinition.StateVariables)? = null
+    private var decodeStateFunction: ((Message) -> GameplayDefinition.StateVariables)? = null
     private var savePuzzleFunction: (() -> Unit)? = null
     private var restorePuzzleFunction: (() -> Unit)? = null
 
@@ -420,54 +427,54 @@ class GameServer(private val cm: ConnectivityManager, private val preferences: S
         this.encodeStateFunction = encodeStateFunction
     }
 
-    fun pluginDecodeState(decodeStateFunction: (stateString: String) -> GameplayDefinition.StateVariables) {
+    fun pluginDecodeState(decodeStateFunction: (message: Message) -> GameplayDefinition.StateVariables) {
         Log.d(TAG, "Plugging in encode state function...")
         this.decodeStateFunction = decodeStateFunction
     }
 
-    fun pluginSavePuzzle(savePuzzleFunction: () -> Unit) {
+    fun pluginSaveState(savePuzzleFunction: () -> Unit) {
         Log.d(TAG, "Plugging in save puzzle function...")
         this.savePuzzleFunction = savePuzzleFunction
     }
 
-    fun pluginRestorePuzzle(restorePuzzleFunction: () -> Unit) {
+    fun pluginRestoreState(restorePuzzleFunction: () -> Unit) {
         Log.d(TAG, "Plugging in restore puzzle function...")
         this.restorePuzzleFunction = restorePuzzleFunction
     }
 
     companion object {
-        private val TAG = GameServer::class.java.simpleName
+        private val TAG = GameEngine::class.java.simpleName
 
-        private var singletonGameServer: GameServer? = null
+        private var singletonGameEngine: GameEngine? = null
 
         fun activate(cm: ConnectivityManager, sharedPreferences: SharedPreferences, definition: GameplayDefinition) {
-            if (singletonGameServer == null) {
-                Log.d(TAG, "Starting new GameServer ...")
-                singletonGameServer = GameServer(cm ,sharedPreferences, definition)
-                singletonGameServer!!.start()
+            if (singletonGameEngine == null) {
+                Log.d(TAG, "Starting new GameEngine ...")
+                singletonGameEngine = GameEngine(cm ,sharedPreferences, definition)
+                singletonGameEngine!!.start()
             } else {
-                Log.d(TAG, "Already created GameServer.")
+                Log.d(TAG, "Already created GameEngine.")
             }
         }
 
         // TODO - use Message class instead of String.
         fun queueActivityMessage(message: Message, responseFunction: ((message: String) -> Unit)?) {
             val im = InboundMessage(message, InboundMessageSource.APP, null, responseFunction)
-            singletonGameServer?.inboundMessageQueue?.add(im)
+            singletonGameEngine?.inboundMessageQueue?.add(im)
         }
 
         fun queueClientHandlerMessage(message: Message, responseQ: BlockingQueue<String>) {
             val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseQ, null)
-            singletonGameServer?.inboundMessageQueue?.add(im)
+            singletonGameEngine?.inboundMessageQueue?.add(im)
         }
 
         fun queueClientMessage(message: Message, responseQ: BlockingQueue<String>) {
             val im = InboundMessage(message, InboundMessageSource.CLIENT, responseQ, null)
-            singletonGameServer?.inboundMessageQueue?.add(im)
+            singletonGameEngine?.inboundMessageQueue?.add(im)
         }
 
-        fun decodeState(stateString: String): GameplayDefinition.StateVariables? {
-            return singletonGameServer?.decodeState(stateString)
+        fun decodeState(message: Message): GameplayDefinition.StateVariables? {
+            return singletonGameEngine?.decodeState(message)
         }
     }
 }
