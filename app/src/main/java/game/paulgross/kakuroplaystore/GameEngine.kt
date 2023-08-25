@@ -27,7 +27,6 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     data class InboundMessage(
         val message: Message,
         val source: InboundMessageSource,
-        val responseQueue: BlockingQueue<String>?,
         val responseFunction: ((message: String) -> Unit)?
     )
 
@@ -43,7 +42,8 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     }
     private var gameMode: GameMode = GameMode.LOCAL
 
-    private var remotePlayers: MutableList<BlockingQueue<String>> = mutableListOf()  // Only used in SERVER mode.
+    private var remotePlayers: MutableList<(message: String) -> Unit> = mutableListOf()  // Only used in SERVER mode.
+    private var localPlayer: MutableList<(message: String) -> Unit> = mutableListOf()  // Only used in SERVER mode.
 
     data class ClientRequest(val requestString: String, val responseQ: Queue<String>)
 
@@ -79,6 +79,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
             }
 
             if (im != null) {
+                // TODO - consolidate these handle calls...
                 if (im.source == InboundMessageSource.APP) {
                     handleActivityMessage(im)
                 }
@@ -242,7 +243,9 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         var validRequest = false
         if (im.message.type == "Initialise") {
             validRequest = true
-            remotePlayers.add(im.responseQueue!!)
+
+            // Add the response function to the list of remote clients
+            im.responseFunction?.let { remotePlayers.add(it) }
         }
 
             // Is this even needed???
@@ -252,8 +255,12 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 //        }
         if (im.message.type == "Shutdown" || im.message.type == "Abandoned") {
             validRequest = true
-            im.responseQueue!!.add(im.message.type)
-            remotePlayers.remove(im.responseQueue)
+            remotePlayers.remove(im.responseFunction)
+
+            if (im.message.type == "Shutdown") {
+                // Echo the shutdown back to the socket
+                im.responseFunction?.invoke(im.message.type)
+            }
         }
 
         if (!validRequest) {
@@ -262,8 +269,9 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     }
 
     private fun handleClientMessage(im: InboundMessage) {
-        if (im.message.type == "state") {
-            val remoteState = im.message.getString("RemoteState")
+        // This might be unnecessary... already handled by Gameplay Definition
+        if (im.message.type == "State") {
+            val remoteState = im.message.getString("State")
 
             if (remoteState != null && previousStateUpdate != remoteState) {
                 Log.d(TAG, "REMOTE Game Server sent state change: [$remoteState]")
@@ -277,12 +285,13 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
                 pushStateToClients()
             }
         }
+
         if (im.message.type == "Shutdown" || im.message.type == "Abandoned") {
-            im.responseQueue!!.add(im.message.type)
-            switchToPureLocalMode()
+            remotePlayers.remove(im.responseFunction)
         }
     }
 
+    // TODO - combine this with the remote and local players lists...
     private var stateChangeCallbacks: MutableList<(message: String) -> Unit> = mutableListOf()
 
     private fun handleActivityMessage(im: InboundMessage) {
@@ -293,6 +302,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
             if (im.responseFunction != null) {
                 stateChangeCallbacks.add(im.responseFunction)
 
+                Log.d(TAG, "Invoking the response function....")
                 // Assume that the caller does NOT have the current state.
                 im.responseFunction?.invoke("MessageType=State,${encodeState()}")
             }
@@ -329,11 +339,17 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         if (im.message.type == "StopGame") {
             stopGame()
         }
+
+        if (stateChanged) {
+            saveGameState()
+            pushStateToClients()
+        }
     }
 
     private fun pushStateToClients() {
+        Log.d(TAG, "Pushing State to clients...")
         stateChangeCallbacks.forEach { callback ->
-            // TODO - make this a Message
+            // TODO - make this a Message for the local client?
             callback("MessageType=State,${encodeState()}")
         }
     }
@@ -456,17 +472,17 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
         // TODO - use Message class instead of String.
         fun queueActivityMessage(message: Message, responseFunction: ((message: String) -> Unit)?) {
-            val im = InboundMessage(message, InboundMessageSource.APP, null, responseFunction)
+            val im = InboundMessage(message, InboundMessageSource.APP, responseFunction)
             singletonGameEngine?.inboundMessageQueue?.add(im)
         }
 
-        fun queueClientHandlerMessage(message: Message, responseQ: BlockingQueue<String>) {
-            val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseQ, null)
+        fun queueClientHandlerMessage(message: Message, responseFunction: (message: String) -> Unit) {
+            val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseFunction)
             singletonGameEngine?.inboundMessageQueue?.add(im)
         }
 
-        fun queueClientMessage(message: Message, responseQ: BlockingQueue<String>) {
-            val im = InboundMessage(message, InboundMessageSource.CLIENT, responseQ, null)
+        fun queueClientMessage(message: Message, responseFunction: (message: String) -> Unit) {
+            val im = InboundMessage(message, InboundMessageSource.CLIENT, responseFunction)
             singletonGameEngine?.inboundMessageQueue?.add(im)
         }
 

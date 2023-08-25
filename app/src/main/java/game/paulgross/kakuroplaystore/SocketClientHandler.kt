@@ -1,5 +1,6 @@
 package game.paulgross.kakuroplaystore
 
+import android.content.Intent
 import android.util.Log
 import java.io.BufferedReader
 import java.io.BufferedWriter
@@ -70,11 +71,6 @@ class SocketClientHandler(private val socket: Socket, private val socketServer: 
         Log.d(TAG, "The Writer has shut down.")
     }
 
-    fun queueMessage(message: String) {
-        Log.d(TAG, "Pushing message to client: [$message]")
-        sendToThisHandlerQ.add(message)
-    }
-
     private fun shutdown() {
         socketServer.removeClientHandler(this)  // Can't the SocketServer do this by itself???
 
@@ -102,9 +98,9 @@ class SocketClientHandler(private val socket: Socket, private val socketServer: 
                     if (data == null) {
                         Log.d(TAG, "ERROR: Remote data from Socket was unexpected NULL - abandoning socket Listener.")
                         listeningToSocket.set(false)
-                        GameEngine.queueClientHandlerMessage(GameEngine.Message("Abandoned"), sendToThisHandlerQ)
+                        GameEngine.queueClientHandlerMessage(GameEngine.Message("Abandoned"), ::queueMessage)
                     } else {
-                        GameEngine.queueClientHandlerMessage(GameEngine.Message.decodeMessage(data), sendToThisHandlerQ)
+                        GameEngine.queueClientHandlerMessage(GameEngine.Message.decodeMessage(data), ::queueMessage)
                     }
                 }
             } catch (e: SocketException) {
@@ -123,6 +119,14 @@ class SocketClientHandler(private val socket: Socket, private val socketServer: 
 
             input.close()
             Log.d(TAG, "The Listener has shut down.")
+        }
+
+        /**
+         * This is the callback function to be used when a message needs to be queued for this Socket.
+         */
+        fun queueMessage(message: String) {
+            Log.d(TAG, "Pushing message to Socket client handler queue: [$message]")
+            sendToThisHandlerQ.add(message)
         }
     }
 

@@ -21,9 +21,9 @@ class SocketClient(private val server: String, private val port: Int): Thread() 
 
     private val clientSocket: Socket = Socket(server, port)
 
-    private val fromGameServerQ: BlockingQueue<String> = LinkedBlockingQueue()
+    private val fromGameEngineQ: BlockingQueue<String> = LinkedBlockingQueue()
 
-    private val listeningToGameServer = AtomicBoolean(true)
+    private val listeningToGameEngine = AtomicBoolean(true)
     private val listeningToSocket = AtomicBoolean(true)
 
     override fun run() {
@@ -33,31 +33,33 @@ class SocketClient(private val server: String, private val port: Int): Thread() 
         output.println("Initialise")
         output.flush()
 
-        SocketReaderThread(clientSocket, fromGameServerQ, listeningToSocket).start()
+        SocketReaderThread(clientSocket, fromGameEngineQ, listeningToSocket).start()
 
         try {
-            while (listeningToGameServer.get()) {
-                val gameMessage = fromGameServerQ.take()  // Blocked until we get data.
-                Log.d(TAG, "From LOCAL game server: [$gameMessage]")
+            while (listeningToGameEngine.get()) {
+                val gameMessage = fromGameEngineQ.take()  // Blocked until we get data.
+                Log.d(TAG, "From LOCAL Game Engine: [$gameMessage]")
 
-                if (gameMessage == "abandoned") {
+                if (gameMessage == "Abandoned") {
                     Log.d(TAG, "Remote socket abandoned. Shutting down.")
                     shutdown()
                 } else {
-                    if (gameMessage == "shutdown") {
+                    if (gameMessage == "Shutdown") {
                         shutdown()
                     }
+
+                    // All other messages are passed to the network.
                     output.println(gameMessage)
                     output.flush()
                 }
             }
         } catch (e: SocketException) {
-            if (listeningToGameServer.get()) {
+            if (listeningToGameEngine.get()) {
                 Log.d(TAG, "ERROR: Writing to Remote Socket caused unexpected error - abandoning socket.")
                 e.printStackTrace()
             }
         } catch (e: IOException) {
-            if (listeningToGameServer.get()) {
+            if (listeningToGameEngine.get()) {
                 Log.d(TAG, "ERROR: Writing to Remote Socket caused unexpected error - abandoning socket.")
                 e.printStackTrace()
             }
@@ -68,25 +70,25 @@ class SocketClient(private val server: String, private val port: Int): Thread() 
         Log.i(TAG, "The Writer has shut down.")
     }
 
-    fun getServer(): String {
+/*    fun getServer(): String {
         return server
     }
 
     fun messageFromGameServer(message: String) {
         fromGameServerQ.add(message)
-    }
+    }*/
 
     private fun shutdown() {
         listeningToSocket.set(false)
-        listeningToGameServer.set(false)
+        listeningToGameEngine.set(false)
         clientSocket.close()
     }
 
     fun shutdownRequest() {
-        fromGameServerQ.add("shutdown")
+        fromGameEngineQ.add("Shutdown")
     }
 
-    private class SocketReaderThread(private val socket: Socket, private val sendToThisHandlerQ: BlockingQueue<String>,
+    private class SocketReaderThread(private val socket: Socket, private val fromGameServerQ: BlockingQueue<String>,
                                      private var listeningToSocket: AtomicBoolean
     ): Thread() {
 
@@ -99,12 +101,12 @@ class SocketClient(private val server: String, private val port: Int): Thread() 
                     if (data == null) {
                         Log.d(TAG, "ERROR: Remote data from Socket was unexpected NULL - abandoning socket Listener.")
                         listeningToSocket.set(false)
-                        GameEngine.queueClientMessage(GameEngine.Message("Abandoned"), sendToThisHandlerQ)
+                        GameEngine.queueClientMessage(GameEngine.Message("Abandoned"), ::queueMessage)
                     }
 
                     if (data != null) {
                         Log.d(TAG, "From REMOTE game server: [$data]")
-                        GameEngine.queueClientMessage(GameEngine.Message.decodeMessage(data), sendToThisHandlerQ)
+                        GameEngine.queueClientMessage(GameEngine.Message.decodeMessage(data), ::queueMessage)
                     }
                 }
             } catch (e: SocketException) {
@@ -121,6 +123,14 @@ class SocketClient(private val server: String, private val port: Int): Thread() 
 
             input.close()
             Log.d(TAG, "The Listener has shut down.")
+        }
+
+        /**
+         * This is the callback function to be used when a message needs to be queued for this Socket Client.
+         */
+        fun queueMessage(message: String) {
+            Log.d(TAG, "Pushing message to Socket Client queue: [$message]")
+            fromGameServerQ.add(message)
         }
     }
 

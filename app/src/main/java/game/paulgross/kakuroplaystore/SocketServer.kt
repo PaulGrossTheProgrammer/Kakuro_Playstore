@@ -51,12 +51,13 @@ class SocketServer(): Thread() {
         return clientHandlers.size
     }
 
-    fun pushMessageToClients(message: String) {
+    // This is replaced by the queueMessage callbacks used by the Engine
+/*    fun pushMessageToClients(message: String) {
         Log.d(TAG, "The Socket Server is pushing a message to all clients:  [${message}]")
         clientHandlers.forEach {handler ->
             handler.queueMessage(message)
         }
-    }
+    }*/
 
     fun shutdownRequest() {
         Log.d(TAG, "The Socket Server is shutting down ...")

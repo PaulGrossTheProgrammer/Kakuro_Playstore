@@ -22,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity
 
 
 class GameplayActivity : AppCompatActivity() {
+
     @SuppressLint("ClickableViewAccessibility")  // Why do I need this??? Something to do with setOnTouchListener()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,8 +32,6 @@ class GameplayActivity : AppCompatActivity() {
         val viewPlayGrid = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         viewPlayGrid.setActivity(this)
         viewPlayGrid.setOnTouchListener(PlayingGridView.CustomListener(this, viewPlayGrid))
-
-        instance = this  // Enables the Companion object to receive messages for this Class.
 
         enableQueuedMessages()
 
@@ -404,7 +403,6 @@ class GameplayActivity : AppCompatActivity() {
 
             val message = GameEngine.Message.decodeMessage(messageString)
             if (message.type == "State") {
-//                val newState = GameEngine.decodeState(message)
                 val newState = GameplayDefinition.decodeState(message)
                 displayGrid(newState)
             }
@@ -421,7 +419,11 @@ class GameplayActivity : AppCompatActivity() {
         Log.d(TAG, "Enabled message receiver for [${queuedMessageAction}]")
     }
 
+    /**
+     * This is the callback function to be used when a message needs to be queued for this Activity.
+     */
     private fun queueMessage(message: String) {
+        Log.d(TAG, "CALLED THE INSTANCE queueMessage() FUNCTION!!!")
         // The UI thread will call activityMessageReceiver() to handle the message.
         val intent = Intent()
         intent.action = queuedMessageAction
@@ -432,13 +434,5 @@ class GameplayActivity : AppCompatActivity() {
     companion object {
         private val TAG = GameplayActivity::class.java.simpleName
         val MESSAGE_SUFFIX_NEW = ".$TAG.activity.MESSAGE"
-
-        var instance: GameplayActivity? = null // Set by onCreate()
-
-        // Callback function attached to messages sent to other queues.
-        fun queueMessage(message: String) {
-            // TODO - why is this flagged as "never used" ??????
-            instance?.queueMessage(message)
-        }
-    }
+   }
 }
