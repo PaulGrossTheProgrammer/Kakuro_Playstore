@@ -42,6 +42,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     }
     private var gameMode: GameMode = GameMode.LOCAL
 
+    // TDSO merge this with the state change callbacks???
     private var remotePlayers: MutableList<(message: String) -> Unit> = mutableListOf()  // Only used in SERVER mode.
     private var localPlayer: MutableList<(message: String) -> Unit> = mutableListOf()  // Only used in SERVER mode.
 

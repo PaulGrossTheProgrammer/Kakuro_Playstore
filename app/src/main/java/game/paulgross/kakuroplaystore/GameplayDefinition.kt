@@ -31,6 +31,8 @@ object GameplayDefinition {
         Log.d(TAG, "Plugin the gameplay functions.")
         engine.pluginGameplay(::handleGameplayMessage)
         engine.pluginEncodeState(::encodeState)
+
+        // TODO - Allow a pluginDecodeState() that is used to restore the saved game.
         engine.pluginSaveState(::saveState)
         engine.pluginRestoreState(::restoreState)
     }
