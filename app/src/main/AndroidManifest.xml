@@ -14,7 +14,7 @@
         android:theme="@style/Theme.KakuroPlaystore"
         tools:targetApi="31">
         <activity
-            android:name=".GameplayActivity"
+            android:name=".KakuroGameplayActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

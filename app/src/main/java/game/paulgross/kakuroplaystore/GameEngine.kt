@@ -461,7 +461,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
         private var singletonGameEngine: GameEngine? = null
 
-        fun activate(cm: ConnectivityManager, sharedPreferences: SharedPreferences, definition: GameplayDefinition) {
+        fun activate(definition: GameplayDefinition, cm: ConnectivityManager, sharedPreferences: SharedPreferences) {
             if (singletonGameEngine == null) {
                 Log.d(TAG, "Starting new GameEngine ...")
                 singletonGameEngine = GameEngine(cm ,sharedPreferences, definition)

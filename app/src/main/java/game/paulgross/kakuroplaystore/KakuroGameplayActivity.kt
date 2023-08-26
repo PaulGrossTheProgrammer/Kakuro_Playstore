@@ -21,7 +21,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 
-class GameplayActivity : AppCompatActivity() {
+class KakuroGameplayActivity : AppCompatActivity() {
 
     @SuppressLint("ClickableViewAccessibility")  // Why do I need this??? Something to do with setOnTouchListener()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,9 +35,11 @@ class GameplayActivity : AppCompatActivity() {
 
         enableQueuedMessages()
 
-        GameEngine.activate(applicationContext.getSystemService(ConnectivityManager::class.java),
-            getPreferences(MODE_PRIVATE),
-            GameplayDefinition)
+        GameEngine.activate(
+            KakuroGameplayDefinition,  // Defines the data and rules for playing the game.
+            applicationContext.getSystemService(ConnectivityManager::class.java),  // Used for Internet access.
+            getPreferences(MODE_PRIVATE)  // Use to save and load the game state.
+        )
 
         // Request that the GameEngine call queueMessage() whenever the game state changes.
         GameEngine.queueActivityMessage(GameEngine.Message("RequestStateChanges"), ::queueMessage)
@@ -50,7 +52,7 @@ class GameplayActivity : AppCompatActivity() {
     /**
      * Update the custom playGridView with the state and request a redraw.
      */
-    private fun displayGrid(gameState: GameplayDefinition.StateVariables) {
+    private fun displayGrid(gameState: KakuroGameplayDefinition.StateVariables) {
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.gameState = gameState
@@ -76,7 +78,7 @@ class GameplayActivity : AppCompatActivity() {
         private var maxDisplayRows = 5  // FIXME - Doesn't work when smaller than puzzle width.
         private var maxDisplayCols = 5
 
-        var gameState: GameplayDefinition.StateVariables? = null
+        var gameState: KakuroGameplayDefinition.StateVariables? = null
 
         private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
@@ -85,8 +87,8 @@ class GameplayActivity : AppCompatActivity() {
         private val colourGuessSquare = Color.argb(180, 188, 190, 194)
         private val colourGuessSquareSelected = Color.argb(180, 255, 255, 255)
 
-        private var gameplayActivity: GameplayActivity? = null
-        fun setActivity(gameplayActivity: GameplayActivity) {
+        private var gameplayActivity: KakuroGameplayActivity? = null
+        fun setActivity(gameplayActivity: KakuroGameplayActivity) {
             this.gameplayActivity = gameplayActivity
         }
 
@@ -96,7 +98,7 @@ class GameplayActivity : AppCompatActivity() {
         data class TouchArea(val xMin: Float, val yMin: Float, val xMax: Float, val yMax: Float)
         var playSquareTouchLookUpId: MutableMap<TouchArea, Int> = mutableMapOf()
 
-        class CustomListener(private val theActivity: GameplayActivity, private val view: PlayingGridView): View.OnTouchListener {
+        class CustomListener(private val theActivity: KakuroGameplayActivity, private val view: PlayingGridView): View.OnTouchListener {
             override fun onTouch(view: View, event: MotionEvent): Boolean {
                 val x = event.x
                 val y = event.y
@@ -212,9 +214,9 @@ class GameplayActivity : AppCompatActivity() {
 
                         gameState!!.playerHints.forEach { hint ->
                             if (index == hint.index) {
-                                if (hint.direction == GameplayDefinition.Direction.DOWN) {
+                                if (hint.direction == KakuroGameplayDefinition.Direction.DOWN) {
                                     drawDownHint(hint.total.toString(), currX, currY, canvas, paint)
-                                } else if (hint.direction == GameplayDefinition.Direction.ACROSS) {
+                                } else if (hint.direction == KakuroGameplayDefinition.Direction.ACROSS) {
                                     drawAcrossHint(hint.total.toString(), currX, currY, canvas, paint)
                                 }
                             }
@@ -403,7 +405,7 @@ class GameplayActivity : AppCompatActivity() {
 
             val message = GameEngine.Message.decodeMessage(messageString)
             if (message.type == "State") {
-                val newState = GameplayDefinition.decodeState(message)
+                val newState = KakuroGameplayDefinition.decodeState(message)
                 displayGrid(newState)
             }
         }
@@ -432,7 +434,7 @@ class GameplayActivity : AppCompatActivity() {
     }
 
     companion object {
-        private val TAG = GameplayActivity::class.java.simpleName
+        private val TAG = KakuroGameplayActivity::class.java.simpleName
         val MESSAGE_SUFFIX_NEW = ".$TAG.activity.MESSAGE"
    }
 }

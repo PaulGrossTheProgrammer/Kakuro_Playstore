@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".GameplayActivity">
+    tools:context=".KakuroGameplayActivity">
 
     <TextView
         android:id="@+id/textViewButton17"
@@ -290,7 +290,7 @@
 
     <view
         android:id="@+id/viewPlayGrid"
-        class="game.paulgross.kakuroplaystore.GameplayActivity$PlayingGridView"
+        class="game.paulgross.kakuroplaystore.KakuroGameplayActivity$PlayingGridView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintDimensionRatio="1:1"
