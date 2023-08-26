@@ -29,6 +29,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         this.engine = engine
 
         Log.d(TAG, "Plugin the gameplay functions.")
+        // TODO: Call engine.registerHandler() to replace handleGameplayMessage...
         engine.pluginGameplay(::handleGameplayMessage)
         engine.pluginEncodeState(::encodeState)
 

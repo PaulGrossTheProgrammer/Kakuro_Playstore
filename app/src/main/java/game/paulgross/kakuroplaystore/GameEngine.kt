@@ -25,7 +25,6 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         APP, CLIENT, CLIENTHANDLER
     }
 
-    // TODO - replace responseQueue with responseFunction
     data class InboundMessage(
         val message: Message,
         val source: InboundMessageSource,
@@ -51,6 +50,14 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     data class ClientRequest(val requestString: String, val responseQ: Queue<String>)
 
     private val allIpAddresses: MutableList<String> = mutableListOf()
+
+    private data class MessageHandler(val type: String, val handlerFunction: (message: String) -> Boolean)
+
+    private val listOfGameHandlers: MutableList<MessageHandler> = mutableListOf()
+
+    fun registerHandler(type: String, handlerFunction: (message: String) -> Boolean) {
+        listOfGameHandlers.add(MessageHandler(type, handlerFunction))
+    }
 
     private fun determineIpAddresses() {
         // FUTURE: Need to monitor the network and react to IP address changes.
@@ -94,12 +101,8 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
                 }
 
                 if (gameplayHandler != null) {
-                    // TODO - testing new message decoder:
-//                    val gm: Message = Message.decodeMessage(im.message)
-//                    Log.d(TAG,"Testing GeneralMassage: $gm")
-
                     var stateChanged = false
-                    // TODO Change invoke signature to Message
+                    // TODO: Call a sequence of handlers
                     stateChanged = gameplayHandler?.invoke(im.message) == true
 
                     if (stateChanged) {
