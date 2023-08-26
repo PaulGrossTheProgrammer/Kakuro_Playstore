@@ -191,6 +191,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
             var index = 0
 
+            // TODO: Use x and y offsets to allow the player to move around large puzzles.
             for (col in (firstDisplayCol..firstDisplayCol + maxDisplayCols - 1)) {
                 for (row in (firstDisplayRow..firstDisplayRow + maxDisplayRows - 1)) {
                     // First row and colum are only used as space for showing hints.
@@ -333,8 +334,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val tag = view.tag.toString()
         val value = tag.substringAfter("Guess")
 
-        // TODO - convert to index=? and value=?
-
         if (selectedIndex != -1) {
             val gm = GameEngine.Message("Guess")
             gm.setKeyString("Index", selectedIndex.toString())
@@ -348,8 +347,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val tag = view.tag.toString()
         val value = tag.substringAfter("Possible")
         Log.d(TAG, "Possible digit: $value")
-
-        // TODO - convert to index=? and value=?
 
         if (selectedIndex != -1) {
             val gm = GameEngine.Message("Possible")

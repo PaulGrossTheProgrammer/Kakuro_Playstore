@@ -19,6 +19,8 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     // https://developer.android.com/reference/java/util/concurrent/BlockingQueue
     private val inboundMessageQueue: BlockingQueue<InboundMessage> = LinkedBlockingQueue()
 
+    //  TODO: Remove static use of this class by passing a function to each source
+    //   so that the function automatically identifies the source.
     enum class InboundMessageSource {
         APP, CLIENT, CLIENTHANDLER
     }
@@ -471,7 +473,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
             }
         }
 
-        // TODO - use Message class instead of String.
+        // TODO - move these to instance functions by passing them to the message sources as arguments.
         fun queueActivityMessage(message: Message, responseFunction: ((message: String) -> Unit)?) {
             val im = InboundMessage(message, InboundMessageSource.APP, responseFunction)
             singletonGameEngine?.inboundMessageQueue?.add(im)

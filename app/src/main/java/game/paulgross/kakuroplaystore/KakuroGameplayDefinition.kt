@@ -11,7 +11,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private const val DEFAULT_PUZZLE = "043100820006980071"
 
     private var currPuzzle = ""
-    private var puzzleWidth = 5
+    private var puzzleWidth = 1
     private var puzzleSolution: MutableList<Int> = mutableListOf()
     private var playerGrid: MutableList<Int> = mutableListOf()
     private var playerHints: MutableList<Hint> = mutableListOf()
@@ -261,10 +261,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         Log.d(TAG, "Saved game state.")
     }
 
-    fun restoreState() {
-        Log.d(TAG, "NEW - restoring puzzle")
-
-        if (engine == null) {
+    private fun restoreState() {
+        if (engine == null) { // TODO - can I avoid this check???
             Log.d(TAG, "ERROR - no engine...")
             return
         }
@@ -306,6 +304,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         val possiblesString = engine?.restoreData("Possibles", "")
         playerPossibles = decodePossibles(possiblesString!!)
     }
+
     private fun startPuzzleFromString(puzzleString: String) {
         puzzleWidth = puzzleString.substring(0, 2).toInt()
 
