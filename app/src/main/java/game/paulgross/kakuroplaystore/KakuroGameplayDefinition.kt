@@ -28,37 +28,20 @@ object KakuroGameplayDefinition: GameplayDefinition {
     override fun setEngine(engine: GameEngine) {
         this.engine = engine
 
-        Log.d(TAG, "Plugin the gameplay functions.")
-        // TODO: Call engine.registerHandler() to replace handleGameplayMessage...
-        engine.pluginGameplay(::handleGameplayMessage)
+        Log.d(TAG, "Plugin the gameplay functions ...")
+        engine.registerHandler("Guess", ::submitGuess)
+        engine.registerHandler("Possible", ::togglePossible)
+        engine.registerHandler("RestartPuzzle", ::restartPuzzle)
+
+        // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
         engine.pluginEncodeState(::encodeState)
 
-        // TODO - Allow a pluginDecodeState() that is used to restore the saved game.
+        // Override the default save and load usage of encode and decode state.
         engine.pluginSaveState(::saveState)
         engine.pluginRestoreState(::restoreState)
     }
 
-    private fun handleGameplayMessage(message: GameEngine.Message): Boolean {
-        // TODO - break this into separate handler functions for Message types like Guess, Possible etc,
-        // and register those with the handler.
-
-        Log.d(TAG, "Handling: $message")
-        if (message.type == "Guess") {
-            return submitGuess(message)
-        }
-
-        if (message.type == "Possible") {
-            return togglePossible(message)
-        }
-
-        if (message.type == "RestartPuzzle") {
-            return restartPuzzle()
-        }
-
-        return false
-    }
-
-    private fun restartPuzzle(): Boolean {
+    private fun restartPuzzle(message: GameEngine.Message): Boolean {
         for (i in 0 until playerGrid.size) {
             if (playerGrid[i] != -1) {
                 playerGrid[i] = 0

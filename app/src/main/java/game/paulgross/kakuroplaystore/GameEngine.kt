@@ -51,11 +51,12 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
     private val allIpAddresses: MutableList<String> = mutableListOf()
 
-    private data class MessageHandler(val type: String, val handlerFunction: (message: String) -> Boolean)
+    private data class MessageHandler(val type: String, val handlerFunction: (message: Message) -> Boolean)
 
     private val listOfGameHandlers: MutableList<MessageHandler> = mutableListOf()
 
-    fun registerHandler(type: String, handlerFunction: (message: String) -> Boolean) {
+//    fun registerHandler(type: String, handlerFunction: (message: String) -> Boolean) {
+    fun registerHandler(type: String, handlerFunction: (message: Message) -> Boolean) {
         listOfGameHandlers.add(MessageHandler(type, handlerFunction))
     }
 
@@ -100,15 +101,19 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
                     handleClientHandlerMessage(im)
                 }
 
-                if (gameplayHandler != null) {
-                    var stateChanged = false
-                    // TODO: Call a sequence of handlers
-                    stateChanged = gameplayHandler?.invoke(im.message) == true
-
-                    if (stateChanged) {
-                        saveGameState()
-                        pushStateToClients()
+                var stateChanged = false
+                listOfGameHandlers.forEach { handler ->
+                    if (handler.type == im.message.type) {
+                        val changed = handler.handlerFunction.invoke(im.message)
+                        if (changed) {
+                            stateChanged = true
+                        }
                     }
+                }
+
+                if (stateChanged) {
+                    saveGameState()
+                    pushStateToClients()
                 }
             }
 
@@ -430,16 +435,16 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 //        return null
 //    }
 
-    private var gameplayHandler: ((m: Message) -> Boolean)? = null
+//    private var gameplayHandler: ((m: Message) -> Boolean)? = null
     private var encodeStateFunction: (() -> String)? = null
 //    private var decodeStateFunction: ((Message) -> GameplayDefinition.StateVariables)? = null
     private var savePuzzleFunction: (() -> Unit)? = null
     private var restoreStateFunction: (() -> Unit)? = null
 
-    fun pluginGameplay(gameplayHandler: (m: Message) -> Boolean) {
+    /*fun pluginGameplay(gameplayHandler: (m: Message) -> Boolean) {
         Log.d(TAG, "Plugging in gameplay handler...")
         this.gameplayHandler = gameplayHandler
-    }
+    }*/
 
     fun pluginEncodeState(encodeStateFunction: () -> String) {
         Log.d(TAG, "Plugging in encode state function...")
