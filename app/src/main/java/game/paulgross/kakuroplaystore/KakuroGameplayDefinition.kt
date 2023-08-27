@@ -34,6 +34,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine.registerHandler("RestartPuzzle", ::restartPuzzle)
 
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
+        // TODO - BUT decodeState returns StateVariables from this class, which isn't generic.
+        // Maybe a Map is generic???
         engine.pluginEncodeState(::encodeState)
 
         // Override the default save and load usage of encode and decode state.
