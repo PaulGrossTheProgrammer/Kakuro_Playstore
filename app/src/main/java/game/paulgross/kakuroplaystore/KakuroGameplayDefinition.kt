@@ -37,6 +37,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         // TODO - BUT decodeState returns StateVariables from this class, which isn't generic.
         // Maybe a Map is generic???
         engine.pluginEncodeState(::encodeState)
+        engine.pluginDecodeState(::decodeState)
 
         // Override the default save and load usage of encode and decode state.
         engine.pluginSaveState(::saveState)

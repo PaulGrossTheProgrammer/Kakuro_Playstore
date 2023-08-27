@@ -1,6 +1,5 @@
 package game.paulgross.kakuroplaystore
 
-//import android.R
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -23,6 +22,8 @@ import androidx.appcompat.app.AppCompatActivity
 
 class KakuroGameplayActivity : AppCompatActivity() {
 
+    var engine: GameEngine? = null
+
     @SuppressLint("ClickableViewAccessibility")  // Why do I need this??? Something to do with setOnTouchListener()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,14 +36,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         enableQueuedMessages()
 
-        GameEngine.activate(
+        engine = GameEngine.activate(
             KakuroGameplayDefinition,  // Defines the data and rules for playing the game.
             applicationContext.getSystemService(ConnectivityManager::class.java),  // Used for Internet access.
             getPreferences(MODE_PRIVATE)  // Use to save and load the game state.
         )
 
         // Request that the GameEngine call queueMessage() whenever the game state changes.
-        GameEngine.queueActivityMessage(GameEngine.Message("RequestStateChanges"), ::queueMessage)
+        engine?.queueActivityMessage(GameEngine.Message("RequestStateChanges"), ::queueMessage)
     }
 
     override fun onBackPressed() {
@@ -335,11 +336,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val value = tag.substringAfter("Guess")
 
         if (selectedIndex != -1) {
-            val gm = GameEngine.Message("Guess")
-            gm.setKeyString("Index", selectedIndex.toString())
-            gm.setKeyString("Value", value)
+            val message = GameEngine.Message("Guess")
+            message.setKeyString("Index", selectedIndex.toString())
+            message.setKeyString("Value", value)
 
-            GameEngine.queueActivityMessage(gm, ::queueMessage)
+            engine?.queueActivityMessage(message, ::queueMessage)
         }
     }
 
@@ -349,11 +350,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
         Log.d(TAG, "Possible digit: $value")
 
         if (selectedIndex != -1) {
-            val gm = GameEngine.Message("Possible")
-            gm.setKeyString("Index", selectedIndex.toString())
-            gm.setKeyString("Value", value)
+            val message = GameEngine.Message("Possible")
+            message.setKeyString("Index", selectedIndex.toString())
+            message.setKeyString("Value", value)
 
-            GameEngine.queueActivityMessage(gm, ::queueMessage)
+            // replace with engine instance call...
+            engine?.queueActivityMessage(message, ::queueMessage)
         }
     }
 
@@ -363,7 +365,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         builder.setMessage("Are you sure you want to restart?")
         builder.setPositiveButton("Reset") { _, _ ->
             selectedIndex = -1
-            GameEngine.queueActivityMessage(GameEngine.Message("RestartPuzzle"), ::queueMessage)
+            engine?.queueActivityMessage(GameEngine.Message("RestartPuzzle"), ::queueMessage)
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
@@ -387,13 +389,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private fun stopGameServer() {
         Log.d(TAG, "Stopping the game server ...")
-        GameEngine.queueActivityMessage(GameEngine.Message("StopGame"), ::queueMessage)
+        engine?.queueActivityMessage(GameEngine.Message("StopGame"), ::queueMessage)
     }
 
     var selectedIndex: Int = -1
 
     /**
-    Receive messages from the GameEngine.
+     * Receive messages from the GameEngine.
      */
     private val activityMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -402,8 +404,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
             val message = GameEngine.Message.decodeMessage(messageString)
             if (message.type == "State") {
-                val newState = KakuroGameplayDefinition.decodeState(message)
-                displayGrid(newState)
+                val newState = engine?.decodeState(message)
+                if (newState is KakuroGameplayDefinition.StateVariables) {
+                    displayGrid(newState)
+                }
             }
         }
     }
@@ -419,10 +423,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     /**
-     * This is the callback function to be used when a message needs to be queued for this Activity.
+     * This is the CALLBACK function to be used when a message needs to be queued for this Activity.
      */
     private fun queueMessage(message: String) {
-        Log.d(TAG, "CALLED THE INSTANCE queueMessage() FUNCTION!!!")
         // The UI thread will call activityMessageReceiver() to handle the message.
         val intent = Intent()
         intent.action = queuedMessageAction

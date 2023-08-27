@@ -55,7 +55,6 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
     private val listOfGameHandlers: MutableList<MessageHandler> = mutableListOf()
 
-//    fun registerHandler(type: String, handlerFunction: (message: String) -> Boolean) {
     fun registerHandler(type: String, handlerFunction: (message: Message) -> Boolean) {
         listOfGameHandlers.add(MessageHandler(type, handlerFunction))
     }
@@ -403,8 +402,6 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
     /**
      * Restores the Game state from the last time it was saved.
-     *
-     * TODO - return data that can be sent to the Definition...???? Why ???
      */
     private fun restoreGameState() {
         Log.d(TAG, "Restoring previous game state...")
@@ -428,33 +425,27 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         return ""
     }
 
-//    fun decodeState(message: Message): GameplayDefinition.StateVariables? {
-//        if (decodeStateFunction != null) {
-//            return decodeStateFunction?.invoke(message)
-//        }
-//        return null
-//    }
+    fun decodeState(message: Message): Any? {
+        if (decodeStateFunction != null) {
+            return decodeStateFunction?.invoke(message)
+        }
+        return null
+    }
 
-//    private var gameplayHandler: ((m: Message) -> Boolean)? = null
     private var encodeStateFunction: (() -> String)? = null
-//    private var decodeStateFunction: ((Message) -> GameplayDefinition.StateVariables)? = null
+    private var decodeStateFunction: ((Message) -> Any)? = null
     private var savePuzzleFunction: (() -> Unit)? = null
     private var restoreStateFunction: (() -> Unit)? = null
-
-    /*fun pluginGameplay(gameplayHandler: (m: Message) -> Boolean) {
-        Log.d(TAG, "Plugging in gameplay handler...")
-        this.gameplayHandler = gameplayHandler
-    }*/
 
     fun pluginEncodeState(encodeStateFunction: () -> String) {
         Log.d(TAG, "Plugging in encode state function...")
         this.encodeStateFunction = encodeStateFunction
     }
 
-//    fun pluginDecodeState(decodeStateFunction: (message: Message) -> GameplayDefinition.StateVariables) {
-//        Log.d(TAG, "Plugging in encode state function...")
-//        this.decodeStateFunction = decodeStateFunction
-//    }
+    fun pluginDecodeState(decodeStateFunction: (message: Message) -> Any) {
+        Log.d(TAG, "Plugging in encode state function...")
+        this.decodeStateFunction = decodeStateFunction
+    }
 
     fun pluginSaveState(saveStateFunction: () -> Unit) {
         Log.d(TAG, "Plugging in save puzzle function...")
@@ -466,12 +457,17 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         this.restoreStateFunction = restoreStateFunction
     }
 
+    fun queueActivityMessage(message: Message, responseFunction: ((message: String) -> Unit)?) {
+        val im = InboundMessage(message, InboundMessageSource.APP, responseFunction)
+        inboundMessageQueue.add(im)
+    }
+
     companion object {
         private val TAG = GameEngine::class.java.simpleName
 
         private var singletonGameEngine: GameEngine? = null
 
-        fun activate(definition: GameplayDefinition, cm: ConnectivityManager, sharedPreferences: SharedPreferences) {
+        fun activate(definition: GameplayDefinition, cm: ConnectivityManager, sharedPreferences: SharedPreferences): GameEngine {
             if (singletonGameEngine == null) {
                 Log.d(TAG, "Starting new GameEngine ...")
                 singletonGameEngine = GameEngine(cm ,sharedPreferences, definition)
@@ -479,13 +475,11 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
             } else {
                 Log.d(TAG, "Already created GameEngine.")
             }
+            return singletonGameEngine!!
         }
 
         // TODO - move these to instance functions by passing them to the message sources as arguments.
-        fun queueActivityMessage(message: Message, responseFunction: ((message: String) -> Unit)?) {
-            val im = InboundMessage(message, InboundMessageSource.APP, responseFunction)
-            singletonGameEngine?.inboundMessageQueue?.add(im)
-        }
+
 
         fun queueClientHandlerMessage(message: Message, responseFunction: (message: String) -> Unit) {
             val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseFunction)
@@ -497,8 +491,5 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
             singletonGameEngine?.inboundMessageQueue?.add(im)
         }
 
-//        fun decodeState(message: Message): GameplayDefinition.StateVariables? {
-//            return singletonGameEngine?.decodeState(message)
-//        }
     }
 }
