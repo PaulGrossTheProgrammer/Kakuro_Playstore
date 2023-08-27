@@ -1,7 +1,6 @@
 package game.paulgross.kakuroplaystore
 
 import android.annotation.SuppressLint
-import android.app.GameState
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -28,7 +27,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")  // Why do I need this??? Something to do with setOnTouchListener()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_gameplay)
+        setContentView(R.layout.activity_kakurogameplay)
 
         // Attach the custom TouchListener to the custom PlayingGridView
         val viewPlayGrid = findViewById<PlayingGridView>(R.id.viewPlayGrid)

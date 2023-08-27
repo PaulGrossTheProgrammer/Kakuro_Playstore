@@ -10,6 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
 class GameEngine(private val cm: ConnectivityManager, private val preferences: SharedPreferences, private val definition: GameplayDefinition): Thread() {
+
     private var socketServer: SocketServer? = null
     private var socketClient: SocketClient? = null
 
@@ -56,6 +57,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     private val listOfGameHandlers: MutableList<MessageHandler> = mutableListOf()
 
     fun registerHandler(type: String, handlerFunction: (message: Message) -> Boolean) {
+        // TODO - throw exceptions for overwriting existing types.
         listOfGameHandlers.add(MessageHandler(type, handlerFunction))
     }
 
@@ -73,6 +75,8 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     private var loopDelayMilliseconds = -1L  // -1 means disable looping,
 
     override fun run() {
+        // TODO - register all the reserved system commands
+
         definition.setEngine(this)
 
         restoreGameState()
@@ -88,8 +92,12 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
                 im = inboundMessageQueue.poll()
             }
 
+            var stateChanged = false
+
             if (im != null) {
-                // TODO - consolidate these handle calls...
+
+                // TODO - consolidate these three system handler functions...
+                // Handle system messages.
                 if (im.source == InboundMessageSource.APP) {
                     handleActivityMessage(im)
                 }
@@ -100,7 +108,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
                     handleClientHandlerMessage(im)
                 }
 
-                var stateChanged = false
+                // Handle game messages.
                 listOfGameHandlers.forEach { handler ->
                     if (handler.type == im.message.type) {
                         val changed = handler.handlerFunction.invoke(im.message)
@@ -110,10 +118,16 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
                     }
                 }
 
-                if (stateChanged) {
-                    saveGameState()
-                    pushStateToClients()
-                }
+            }
+
+            if (loopDelayMilliseconds > 0) {
+                // TODO - call the optional periodic game actions
+
+            }
+
+            if (stateChanged) {
+                saveGameState()
+                pushStateToClients()
             }
 
             if (loopDelayMilliseconds > 0) {
@@ -125,6 +139,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
     private fun switchToRemoteServerMode(address: String) {
         // FIXME - doesn't handle when the remote server isn't running...
+        // TODO - implement a timeout when attempting to join a remote game.
 
         Log.d(TAG, "Switch to Remote Server at: $address")
         if (socketServer != null) {
@@ -174,7 +189,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         gameMode = GameMode.LOCAL
     }
 
-    private var previousStateUpdate = ""  // TODO - this should only be in GameplayDefinition.
+//    private var previousStateUpdate = ""  // TODO - this should only be in GameplayDefinition.
 
     class Message(val type: String) {
         private var body: MutableMap<String, String>? = null
@@ -283,22 +298,20 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         if (im.message.type == "State") {
             val remoteState = im.message.getString("State")
 
-            if (remoteState != null && previousStateUpdate != remoteState) {
-                Log.d(TAG, "REMOTE Game Server sent state change: [$remoteState]")
+            Log.d(TAG, "REMOTE Game Server sent state change: [$remoteState]")
 
-                previousStateUpdate = remoteState
+            saveGameState()
 
-//                val stateVars = decodeState(Message.decodeMessage(remoteState))
-                // TODO:
-
-                saveGameState()
-                pushStateToClients()
-            }
+            // TODO - this should just be the local Activity.
+            //  A client has no remote clients by definition.
+            pushStateToClients()
         }
 
         if (im.message.type == "Shutdown" || im.message.type == "Abandoned") {
-            remotePlayers.remove(im.responseFunction)
+//            remotePlayers.remove(im.responseFunction)
+            switchToPureLocalMode()
         }
+
     }
 
     // TODO - combine this with the remote and local players lists...
@@ -465,8 +478,10 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     companion object {
         private val TAG = GameEngine::class.java.simpleName
 
+        // For the moment, just permit the Singleton instance.
         private var singletonGameEngine: GameEngine? = null
 
+        // FUTURE: Allocate multiple instances based on a game identifier.
         fun activate(definition: GameplayDefinition, cm: ConnectivityManager, sharedPreferences: SharedPreferences): GameEngine {
             if (singletonGameEngine == null) {
                 Log.d(TAG, "Starting new GameEngine ...")

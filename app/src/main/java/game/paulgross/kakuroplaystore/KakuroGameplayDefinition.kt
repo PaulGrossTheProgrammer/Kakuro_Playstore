@@ -16,7 +16,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private var playerGrid: MutableList<Int> = mutableListOf()
     private var playerHints: MutableList<Hint> = mutableListOf()
 
-    // Possibles are user defined, and coded as 9-digit Strings.
+    // Possibles are user defined, and coded as 9-digit Strings, with each digit position matching the possible value.
     private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
 
     data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int,
