@@ -1,6 +1,7 @@
 package game.paulgross.kakuroplaystore
 
 import android.annotation.SuppressLint
+import android.app.GameState
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -56,7 +57,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private fun displayGrid(gameState: KakuroGameplayDefinition.StateVariables) {
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        playGridView.gameState = gameState
+
+        // TODO - pass in gameState as an arg and only recalculate if required by comparing old to new ...
+//        playGridView.gameState = gameState
+        playGridView.updateState(gameState)
         playGridView.invalidate() // Trigger a redraw
     }
 
@@ -79,7 +83,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var maxDisplayRows = 5  // FIXME - Doesn't work when smaller than puzzle width.
         private var maxDisplayCols = 5
 
-        var gameState: KakuroGameplayDefinition.StateVariables? = null
+        private var gameState: KakuroGameplayDefinition.StateVariables? = null
 
         private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
@@ -131,8 +135,32 @@ class KakuroGameplayActivity : AppCompatActivity() {
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
 
-            // FIXME: This doesn't work for screen rotations !?!?!?
-            Log.d("PlayingGridView", "Width = $measuredWidth, height = $measuredHeight")
+            setRelativeSizes()  // FIXME - why do I need this here as well as updateState() ???
+        }
+
+        fun updateState(newState: KakuroGameplayDefinition.StateVariables) {
+            var updateSizes = false
+            if (gameState == null) {
+                updateSizes = true
+            }
+
+            // Any other conditions??? to force recalc of all relative sizes???
+
+            gameState = newState
+
+            if (updateSizes) {
+                setRelativeSizes()
+            }
+        }
+
+
+        private fun setRelativeSizes() {
+            Log.d("PlayingGridView", "setRelativeSizes(): Width = $measuredWidth, height = $measuredHeight")
+            if (gameState == null) {
+                Log.d("PlayingGridView", "setRelativeSizes() exiting because gameState is null.")
+                return
+            }
+
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
 
@@ -149,10 +177,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
             possiblesTextSize = squareWidth * 0.25f
 
             margin = squareWidth * 0.08f
+
+
         }
 
         private val paint = Paint()
-
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
@@ -320,6 +349,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
     }
 
+    var selectedIndex: Int = -1
+
     private fun touchedGuess(touchedIndex: Int) {
         selectedIndex = touchedIndex
         findViewById<PlayingGridView>(R.id.viewPlayGrid).invalidate() // Trigger a redraw
@@ -354,7 +385,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             message.setKeyString("Index", selectedIndex.toString())
             message.setKeyString("Value", value)
 
-            // replace with engine instance call...
             engine?.queueActivityMessage(message, ::queueMessage)
         }
     }
@@ -392,8 +422,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine?.queueActivityMessage(GameEngine.Message("StopGame"), ::queueMessage)
     }
 
-    var selectedIndex: Int = -1
-
     /**
      * Receive messages from the GameEngine.
      */
@@ -412,10 +440,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
     }
 
-    private var queuedMessageAction: String? = null
+    private var queuedMessageAction: String = "$packageName.$TAG.activity.MESSAGE"
 
     private fun enableQueuedMessages() {
-        queuedMessageAction = packageName + MESSAGE_SUFFIX_NEW
         val intentFilter = IntentFilter()
         intentFilter.addAction(queuedMessageAction)
         registerReceiver(activityMessageReceiver, intentFilter)
@@ -435,6 +462,5 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     companion object {
         private val TAG = KakuroGameplayActivity::class.java.simpleName
-        val MESSAGE_SUFFIX_NEW = ".$TAG.activity.MESSAGE"
    }
 }
