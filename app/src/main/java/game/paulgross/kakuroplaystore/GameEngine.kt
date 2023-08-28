@@ -48,6 +48,9 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     private var remotePlayers: MutableList<(message: String) -> Unit> = mutableListOf()  // Only used in SERVER mode.
     private var localPlayer: MutableList<(message: String) -> Unit> = mutableListOf()  // Only used in SERVER mode.
 
+    // TODO - combine this with the remote and local players lists...
+    private var stateChangeCallbacks: MutableList<(message: String) -> Unit> = mutableListOf()
+
     data class ClientRequest(val requestString: String, val responseQ: Queue<String>)
 
     private val allIpAddresses: MutableList<String> = mutableListOf()
@@ -77,7 +80,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     private var loopDelayMilliseconds = -1L  // -1 means disable looping,
 
     override fun run() {
-        // TODO - register all the reserved system commands
+        // TODO - register all the reserved system messages
         listOfSystemHandlers.add(SystemMessageHandler("Shutdown", ::handleShutdownMessage))
         listOfSystemHandlers.add(SystemMessageHandler("Abandoned", ::handleAbandonedMessage))
         listOfSystemHandlers.add(SystemMessageHandler("Reset", ::handleResetMessage))
@@ -108,16 +111,26 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
                 // TODO - consolidate these three system handler functions...
                 // listOfSystemHandlers
+                listOfSystemHandlers.forEach { handler ->
+                    if (handler.type == im.message.type) {
+                        Log.d(TAG, "Handling SYSTEM message: ${im.message.type}")
+                        val changed = handler.handlerFunction.invoke(im.message, im.source, im.responseFunction)
+                        if (changed) {
+                            stateChanged = true
+                        }
+                    }
+                }
+
                 // Handle system messages instead of these 3 ....
-                if (im.source == InboundMessageSource.APP) {
-                    handleActivityMessage(im)
-                }
-                if (im.source == InboundMessageSource.CLIENT) {
-                    handleClientMessage(im)
-                }
-                if (im.source == InboundMessageSource.CLIENTHANDLER) {
-                    handleClientHandlerMessage(im)
-                }
+//                if (im.source == InboundMessageSource.APP) {
+//                    handleActivityMessage(im)
+//                }
+//                if (im.source == InboundMessageSource.CLIENT) {
+//                    handleClientMessage(im)
+//                }
+//                if (im.source == InboundMessageSource.CLIENTHANDLER) {
+//                    handleClientHandlerMessage(im)
+//                }
 
                 // Handle game messages.
                 listOfGameHandlers.forEach { handler ->
@@ -133,7 +146,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
             if (loopDelayMilliseconds > 0) {
                 // TODO - call the optional periodic game actions
-//                stateChanged = handler.invoke()...
+//                stateChanged = actionFunction.invoke()...
             }
 
             if (stateChanged) {
@@ -337,144 +350,18 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         return false // No change made to the game state
     }
 
-    /*if (im.message.type == "StartServer") {
-        if (gameMode != GameMode.SERVER) {
-            switchToLocalServerMode()
-        }
-    }
-    if (im.message.type == "StartLocal") {
-        if (gameMode != GameMode.LOCAL) {
-            switchToPureLocalMode()
-        }
-    }
-    if (im.message.type == "RemoteServer") {
-        if (gameMode != GameMode.CLIENT) {
-            val ip = im.message.getString("Address")
-            if (ip!= null && ip != "") {
-                switchToRemoteServerMode(ip)
-            }
-        }
-    }
-    if (im.message.type == "StopGame") {
-            stopGame()
-
-    }*/
-
     private fun handleRequestStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
-        if (responseFunction != null) {
+        if (responseFunction != null && gameMode == GameMode.SERVER) {
             remotePlayers.add(responseFunction)
         }
 
+        if (responseFunction != null) {
+            stateChangeCallbacks.add(responseFunction)
+            // Assume that the caller does NOT have the current state.
+            responseFunction?.invoke("MessageType=State,${encodeState()}")
+        }
+
         return false // No change made to the game state
-    }
-
-
-    private fun handleClientHandlerMessage(im: InboundMessage) {
-
-        var validRequest = false
-
-        // TODO - use RequestStateChanges instead.
-        if (im.message.type == "RequestStateChanges") {
-            validRequest = true
-
-            // Add the response function to the list of remote clients
-            im.responseFunction?.let { remotePlayers.add(it) }
-        }
-
-            // Is this even needed???
-//        if (im.message.type == "Status") {
-//            validRequest = true
-//            im.responseQueue!!.add("state,${encodeState()}")
-//        }
-        if (im.message.type == "Shutdown" || im.message.type == "Abandoned") {
-            validRequest = true
-            remotePlayers.remove(im.responseFunction)
-
-            if (im.message.type == "Shutdown") {
-                // Echo the shutdown back to the socket
-                im.responseFunction?.invoke(im.message.type)
-            }
-        }
-
-        if (!validRequest) {
-            Log.d(TAG, "invalid message: [${im.message}]")
-        }
-    }
-
-    private fun handleClientMessage(im: InboundMessage) {
-        // This might be unnecessary... already handled by Gameplay Definition
-        if (im.message.type == "State") {
-            val remoteState = im.message.getString("State")
-
-            Log.d(TAG, "REMOTE Game Server sent state change: [$remoteState]")
-
-            saveGameState()
-
-            // TODO - this should just be the local Activity.
-            //  A client has no remote clients by definition.
-            pushStateToClients()
-        }
-
-        if (im.message.type == "Shutdown" || im.message.type == "Abandoned") {
-//            remotePlayers.remove(im.responseFunction)
-            switchToPureLocalMode()
-        }
-
-    }
-
-    // TODO - combine this with the remote and local players lists...
-    private var stateChangeCallbacks: MutableList<(message: String) -> Unit> = mutableListOf()
-
-    private fun handleActivityMessage(im: InboundMessage) {
-
-        var stateChanged = false
-        if (im.message.type == "RequestStateChanges") {
-            Log.d(TAG, "RequestStateChanges received...")
-            if (im.responseFunction != null) {
-                stateChangeCallbacks.add(im.responseFunction)
-
-                Log.d(TAG, "Invoking the response function....")
-                // Assume that the caller does NOT have the current state.
-                im.responseFunction?.invoke("MessageType=State,${encodeState()}")
-            }
-        }
-
-        // TODO - need a cancel state update requests message too...
-
-        if (im.message.type == "Reset") {
-            resetGame()
-            stateChanged = true
-        }
-//        if (im.message.type == "Status") {
-//            im.responseFunction?.invoke("MessageType=State,${encodeState()}")
-//        }
-
-        if (im.message.type == "StartServer") {
-            if (gameMode != GameMode.SERVER) {
-                switchToLocalServerMode()
-            }
-        }
-        if (im.message.type == "StartLocal") {
-            if (gameMode != GameMode.LOCAL) {
-                switchToPureLocalMode()
-            }
-        }
-        if (im.message.type == "RemoteServer") {
-            if (gameMode != GameMode.CLIENT) {
-                val ip = im.message.getString("Address")
-                if (ip!= null && ip != "") {
-                    switchToRemoteServerMode(ip)
-                }
-            }
-        }
-        if (im.message.type == "StopGame") {
-            stopGame()
-        }
-
-        if (stateChanged) {
-            saveGameState()
-            pushStateToClients()
-        }
     }
 
     private fun pushStateToClients() {
@@ -533,7 +420,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     }
 
     private fun resetGame() {
-        // TODO: Plugin a reset game function here....
+        // TODO: Plugin a reset game function here....???
 
         saveGameState()
         pushStateToClients()
@@ -589,7 +476,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         // For the moment, just permit the Singleton instance.
         private var singletonGameEngine: GameEngine? = null
 
-        // FUTURE: Allocate multiple instances based on a game identifier.
+        // FUTURE: Allocate multiple instances based on a game identifier and definition.
         fun activate(definition: GameplayDefinition, cm: ConnectivityManager, sharedPreferences: SharedPreferences): GameEngine {
             if (singletonGameEngine == null) {
                 Log.d(TAG, "Starting new GameEngine ...")

@@ -174,7 +174,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         return state
     }
 
-    fun decodeState(message: GameEngine.Message): StateVariables {
+    private fun decodeState(message: GameEngine.Message): StateVariables {
         Log.d(TAG, "DecodeState() for [$message]")
 
         if (message.missingString("w") || message.missingString("g") || message.missingString("h") ) {
