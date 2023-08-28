@@ -80,6 +80,12 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         // TODO - register all the reserved system commands
         listOfSystemHandlers.add(SystemMessageHandler("Shutdown", ::handleShutdownMessage))
         listOfSystemHandlers.add(SystemMessageHandler("Abandoned", ::handleAbandonedMessage))
+        listOfSystemHandlers.add(SystemMessageHandler("Reset", ::handleResetMessage))
+        listOfSystemHandlers.add(SystemMessageHandler("StartServer", ::handleStartServerMessage))
+        listOfSystemHandlers.add(SystemMessageHandler("RemoteServer", ::handleRemoteServerMessage))
+        listOfSystemHandlers.add(SystemMessageHandler("StartLocal", ::handleStartLocalMessage))
+        listOfSystemHandlers.add(SystemMessageHandler("StopGame", ::handleStopGameMessage))
+        listOfSystemHandlers.add(SystemMessageHandler("RequestStateChanges", ::handleRequestStateChangesMessage))
 
         definition.setEngine(this)
 
@@ -101,7 +107,8 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
             if (im != null) {
 
                 // TODO - consolidate these three system handler functions...
-                // Handle system messages.
+                // listOfSystemHandlers
+                // Handle system messages instead of these 3 ....
                 if (im.source == InboundMessageSource.APP) {
                     handleActivityMessage(im)
                 }
@@ -126,7 +133,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
             if (loopDelayMilliseconds > 0) {
                 // TODO - call the optional periodic game actions
-
+//                stateChanged = handler.invoke()...
             }
 
             if (stateChanged) {
@@ -267,7 +274,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         }
     }
 
-    fun handleShutdownMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+    private fun handleShutdownMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
         if (source == InboundMessageSource.CLIENTHANDLER) {
             remotePlayers.remove(responseFunction)
 
@@ -281,7 +288,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         return false // No change made to the game state
     }
 
-    fun handleAbandonedMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+    private fun handleAbandonedMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
         if (source == InboundMessageSource.CLIENTHANDLER) {
             remotePlayers.remove(responseFunction)
         }
@@ -289,16 +296,85 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         if (source == InboundMessageSource.CLIENT) {
             switchToPureLocalMode()
         }
+        return false // No change made to the game state
+    }
+
+    private fun handleResetMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+        if (source == InboundMessageSource.APP) {
+            resetGame()
+        }
+        return true // The game state was changed.
+    }
+
+    private fun handleStartServerMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+        if (source == InboundMessageSource.APP && gameMode != GameMode.SERVER) {
+            switchToLocalServerMode()
+        }
+        return false // No change made to the game state
+    }
+
+    private fun handleRemoteServerMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+        if (source == InboundMessageSource.APP && gameMode != GameMode.CLIENT) {
+            val address = message.getString("Address")
+            if (address != null) {
+                switchToRemoteServerMode(address)
+            }
+        }
+        return false // No change made to the game state
+    }
+
+    private fun handleStartLocalMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+        if (source == InboundMessageSource.APP && gameMode != GameMode.LOCAL) {
+            switchToPureLocalMode()
+        }
+        return false // No change made to the game state
+    }
+
+    private fun handleStopGameMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+        if (source == InboundMessageSource.APP) {
+            stopGame()
+        }
+        return false // No change made to the game state
+    }
+
+    /*if (im.message.type == "StartServer") {
+        if (gameMode != GameMode.SERVER) {
+            switchToLocalServerMode()
+        }
+    }
+    if (im.message.type == "StartLocal") {
+        if (gameMode != GameMode.LOCAL) {
+            switchToPureLocalMode()
+        }
+    }
+    if (im.message.type == "RemoteServer") {
+        if (gameMode != GameMode.CLIENT) {
+            val ip = im.message.getString("Address")
+            if (ip!= null && ip != "") {
+                switchToRemoteServerMode(ip)
+            }
+        }
+    }
+    if (im.message.type == "StopGame") {
+            stopGame()
+
+    }*/
+
+    private fun handleRequestStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+        if (responseFunction != null) {
+            remotePlayers.add(responseFunction)
+        }
 
         return false // No change made to the game state
     }
+
 
     private fun handleClientHandlerMessage(im: InboundMessage) {
 
         var validRequest = false
 
         // TODO - use RequestStateChanges instead.
-        if (im.message.type == "Initialise") {
+        if (im.message.type == "RequestStateChanges") {
             validRequest = true
 
             // Add the response function to the list of remote clients
