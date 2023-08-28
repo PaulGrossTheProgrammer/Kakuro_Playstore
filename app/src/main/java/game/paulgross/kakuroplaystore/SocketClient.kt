@@ -30,6 +30,8 @@ class SocketClient(private val server: String, private val port: Int): Thread() 
         Log.i(TAG, "Client connected...")
         val output = PrintWriter(clientSocket.getOutputStream());
 
+        // TODO - make this a GameMessage.
+        // TODO - but make it "RequestStateChanges" instead.
         output.println("Initialise")
         output.flush()
 

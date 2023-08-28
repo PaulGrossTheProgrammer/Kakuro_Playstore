@@ -53,7 +53,9 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     private val allIpAddresses: MutableList<String> = mutableListOf()
 
     private data class MessageHandler(val type: String, val handlerFunction: (message: Message) -> Boolean)
+    private data class SystemMessageHandler(val type: String, val handlerFunction: (message: Message, source: InboundMessageSource, ((message: String) -> Unit)?) -> Boolean)
 
+    private val listOfSystemHandlers: MutableList<SystemMessageHandler> = mutableListOf()
     private val listOfGameHandlers: MutableList<MessageHandler> = mutableListOf()
 
     fun registerHandler(type: String, handlerFunction: (message: Message) -> Boolean) {
@@ -76,6 +78,8 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
     override fun run() {
         // TODO - register all the reserved system commands
+        listOfSystemHandlers.add(SystemMessageHandler("Shutdown", ::handleShutdownMessage))
+        listOfSystemHandlers.add(SystemMessageHandler("Abandoned", ::handleAbandonedMessage))
 
         definition.setEngine(this)
 
@@ -263,9 +267,37 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         }
     }
 
+    fun handleShutdownMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+        if (source == InboundMessageSource.CLIENTHANDLER) {
+            remotePlayers.remove(responseFunction)
+
+            responseFunction?.invoke(message.type)  // Echo back the message type
+        }
+
+        if (source == InboundMessageSource.CLIENT) {
+            switchToPureLocalMode()
+        }
+
+        return false // No change made to the game state
+    }
+
+    fun handleAbandonedMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+        if (source == InboundMessageSource.CLIENTHANDLER) {
+            remotePlayers.remove(responseFunction)
+        }
+
+        if (source == InboundMessageSource.CLIENT) {
+            switchToPureLocalMode()
+        }
+
+        return false // No change made to the game state
+    }
+
     private fun handleClientHandlerMessage(im: InboundMessage) {
 
         var validRequest = false
+
+        // TODO - use RequestStateChanges instead.
         if (im.message.type == "Initialise") {
             validRequest = true
 
@@ -337,9 +369,9 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
             resetGame()
             stateChanged = true
         }
-        if (im.message.type == "Status") {
-            im.responseFunction?.invoke("MessageType=State,${encodeState()}")
-        }
+//        if (im.message.type == "Status") {
+//            im.responseFunction?.invoke("MessageType=State,${encodeState()}")
+//        }
 
         if (im.message.type == "StartServer") {
             if (gameMode != GameMode.SERVER) {
