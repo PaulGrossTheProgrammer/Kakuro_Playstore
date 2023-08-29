@@ -57,8 +57,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
 
-        // TODO - pass in gameState as an arg and only recalculate if required by comparing old to new ...
-//        playGridView.gameState = gameState
         playGridView.updateState(gameState)
         playGridView.invalidate() // Trigger a redraw
     }
