@@ -221,7 +221,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             // TODO: Use x and y offsets to allow the player to move around large puzzles.
             for (col in (1..gameState!!.puzzleWidth + 1)) {
                 for (row in (1..gameState!!.puzzleWidth + 1)) {
-                    Log.d(TAG, "row = $row, col = $col, index = $index")
                     // First row and colum are only used as space for showing hints.
                     val puzzleSquare = (col != 1 && row != 1)
 

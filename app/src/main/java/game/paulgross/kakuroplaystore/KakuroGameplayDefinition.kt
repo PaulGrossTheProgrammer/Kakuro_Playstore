@@ -15,6 +15,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private var puzzleSolution: MutableList<Int> = mutableListOf()
     private var playerGrid: MutableList<Int> = mutableListOf()
     private var playerHints: MutableList<Hint> = mutableListOf()
+    private val playerErrors: MutableList<Int> = mutableListOf()
 
     // Possibles are user defined, and coded as 9-digit Strings, with each digit position matching the possible value.
     private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
@@ -83,6 +84,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         playerGrid[index] = value
         playerPossibles.remove(index)
+
+        markErrors()
         return true
     }
 
@@ -346,6 +349,52 @@ object KakuroGameplayDefinition: GameplayDefinition {
         return newPossibles
     }
 
+    private fun markErrors() {
+        // Compare rows and columns against the hints
+        // and look for duplicate numbers.
+        playerHints.forEach { hint ->
+            val index = hint.index
+            val actualTotal = hint.total
+
+            val squares = allSquares(playerGrid, puzzleWidth, index, hint.direction)
+
+            // FIXME: Figure out how to break the loop.
+            // https://stackoverflow.com/questions/32540947/break-and-continue-in-foreach-in-kotlin
+            var playerSum = 0
+            squares.forEach {square ->
+                val value = playerGrid[square]
+                if (value == 0) {
+                    playerSum = 0
+                    return@forEach
+//                    breaking@
+                }
+
+            }
+            if (playerSum != 0 && playerSum != actualTotal) {
+                Log.d(TAG, "There is a player error compared to $hint")
+            }
+        }
+    }
+
+    private fun allSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): List<Int> {
+        val squares: MutableList<Int> = mutableListOf()
+        var sum = 0
+
+        var stepSize = 1
+        if (direction == Direction.DOWN) {
+            stepSize = width
+        }
+
+        var index = startIndex
+        while (index < grid.size && grid[index] != -1) {
+            squares.add(index)
+            sum += grid[index]
+            index += stepSize
+        }
+
+        return squares
+    }
+
     /**
      * Create the initial grid with no guesses .
      * Create all the ACROSS and DOWN hints based on the structure and solution.
@@ -374,6 +423,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
     }
 
+    /**
+     * Sum the digits in a row or column, ending in a -1 square or the edge of the grid.
+     *
+     * Return: The sum of the row or column, or 0 if any square is zero.
+     */
     private fun sumOfSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): Int {
         var sum = 0
 
@@ -384,6 +438,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         var index = startIndex
         while (index < grid.size && grid[index] != -1) {
+            if (grid[index] == 0) {
+                return 0
+            }
             sum += grid[index]
             index += stepSize
         }
