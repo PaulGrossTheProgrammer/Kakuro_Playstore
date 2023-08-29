@@ -7,7 +7,7 @@ import java.net.Socket
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class SocketServer(): Thread() {
+class SocketServer(private val engine: GameEngine): Thread() {
 
     private lateinit var serverSocket: ServerSocket
     private val working = AtomicBoolean(true)
@@ -25,7 +25,7 @@ class SocketServer(): Thread() {
                 Log.i(TAG, "New client: $clientSocket")
 
                 // Create a new Thread for each client.
-                val t = SocketClientHandler(clientSocket,this)
+                val t = SocketClientHandler(engine, clientSocket,this)
                 t.start()
 
                 // This list allows us to remove each Handler if the client disconnects

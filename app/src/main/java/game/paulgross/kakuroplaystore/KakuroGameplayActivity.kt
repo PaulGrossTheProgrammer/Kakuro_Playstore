@@ -76,11 +76,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var possiblesTextSize = 1f
         private var borderThickness =1f
 
-        // Adjust these for scrolling around large puzzles
-        private var firstDisplayRow = 1
-        private var firstDisplayCol = 1 // FIXME - Doesn't work past 1.
-        private var maxDisplayRows = 5  // FIXME - Doesn't work when smaller than puzzle width.
-        private var maxDisplayCols = 5
+        private var maxDisplayRows = 10
+        private var xOffsetPx = 0f
+        private var yOffsetPx = 0f
+        // TODO - implement a scale factor...
 
         private var gameState: KakuroGameplayDefinition.StateVariables? = null
 
@@ -203,26 +202,28 @@ class KakuroGameplayActivity : AppCompatActivity() {
             // Draw grid
             paint.color = Color.WHITE
 
-            val startX = 0f
+            val startX = xOffsetPx
 
             var currX = startX
-            var currY = 0f
+            var currY = yOffsetPx
 
             var rows = gameState!!.puzzleWidth + 1
             var cols = gameState!!.playerGrid.size.div(gameState!!.puzzleWidth) + 1
 
+            // Assume a square display area.
             if (rows > maxDisplayRows) {
                 rows = maxDisplayRows
             }
-            if (cols > maxDisplayCols) {
-                cols = maxDisplayCols
+            if (cols > maxDisplayRows) {
+                cols = maxDisplayRows
             }
 
             var index = 0
 
             // TODO: Use x and y offsets to allow the player to move around large puzzles.
-            for (col in (firstDisplayCol..firstDisplayCol + maxDisplayCols - 1)) {
-                for (row in (firstDisplayRow..firstDisplayRow + maxDisplayRows - 1)) {
+            for (col in (1..gameState!!.puzzleWidth + 1)) {
+                for (row in (1..gameState!!.puzzleWidth + 1)) {
+                    Log.d(TAG, "row = $row, col = $col, index = $index")
                     // First row and colum are only used as space for showing hints.
                     val puzzleSquare = (col != 1 && row != 1)
 
@@ -262,7 +263,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 }
                 // next index needs to be offset if we are NOT viewing from the 1, 1 position.
                 // FIXME - doesn't work for puzzles larger than max rows
-                index = (col - 1) * gameState!!.puzzleWidth + firstDisplayCol - 1
+                index = (col - 1) * gameState!!.puzzleWidth
                 currX = startX
                 currY += squareWidth
             }

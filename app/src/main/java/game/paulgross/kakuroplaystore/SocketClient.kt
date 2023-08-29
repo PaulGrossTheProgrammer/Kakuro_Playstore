@@ -12,7 +12,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class SocketClient(private val server: String, private val port: Int): Thread() {
+class SocketClient(private val engine: GameEngine, private val server: String, private val port: Int): Thread() {
 
     // FIXME - doesn't handle when the remote server isn't running...
     // Use a "connecting" flag in a delay loop with a limit to the retries
@@ -35,7 +35,7 @@ class SocketClient(private val server: String, private val port: Int): Thread() 
         output.println("Initialise")
         output.flush()
 
-        SocketReaderThread(clientSocket, fromGameEngineQ, listeningToSocket).start()
+        SocketReaderThread(engine, clientSocket, fromGameEngineQ, listeningToSocket).start()
 
         try {
             while (listeningToGameEngine.get()) {
@@ -72,14 +72,6 @@ class SocketClient(private val server: String, private val port: Int): Thread() 
         Log.i(TAG, "The Writer has shut down.")
     }
 
-/*    fun getServer(): String {
-        return server
-    }
-
-    fun messageFromGameServer(message: String) {
-        fromGameServerQ.add(message)
-    }*/
-
     private fun shutdown() {
         listeningToSocket.set(false)
         listeningToGameEngine.set(false)
@@ -90,7 +82,7 @@ class SocketClient(private val server: String, private val port: Int): Thread() 
         fromGameEngineQ.add("Shutdown")
     }
 
-    private class SocketReaderThread(private val socket: Socket, private val fromGameServerQ: BlockingQueue<String>,
+    private class SocketReaderThread(private val engine: GameEngine, private val socket: Socket, private val fromGameServerQ: BlockingQueue<String>,
                                      private var listeningToSocket: AtomicBoolean
     ): Thread() {
 
@@ -103,12 +95,12 @@ class SocketClient(private val server: String, private val port: Int): Thread() 
                     if (data == null) {
                         Log.d(TAG, "ERROR: Remote data from Socket was unexpected NULL - abandoning socket Listener.")
                         listeningToSocket.set(false)
-                        GameEngine.queueClientMessage(GameEngine.Message("Abandoned"), ::queueMessage)
+                        engine.queueClientMessage(GameEngine.Message("Abandoned"), ::queueMessage)
                     }
 
                     if (data != null) {
                         Log.d(TAG, "From REMOTE game server: [$data]")
-                        GameEngine.queueClientMessage(GameEngine.Message.decodeMessage(data), ::queueMessage)
+                        engine.queueClientMessage(GameEngine.Message.decodeMessage(data), ::queueMessage)
                     }
                 }
             } catch (e: SocketException) {

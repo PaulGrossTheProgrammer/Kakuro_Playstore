@@ -15,7 +15,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class SocketClientHandler(private val socket: Socket, private val socketServer: SocketServer): Thread() {
+class SocketClientHandler(private val engine: GameEngine, private val socket: Socket, private val socketServer: SocketServer): Thread() {
 
     private val sendToThisHandlerQ: BlockingQueue<String> = LinkedBlockingQueue()
 
@@ -25,7 +25,7 @@ class SocketClientHandler(private val socket: Socket, private val socketServer: 
     override fun run() {
         val output = BufferedWriter(OutputStreamWriter(DataOutputStream(socket.getOutputStream())))
 
-        SocketReaderThread(socket, sendToThisHandlerQ, listeningToSocket).start()
+        SocketReaderThread(engine, socket, sendToThisHandlerQ, listeningToSocket).start()
 
         Log.d(TAG, "New client connection handler started ...")
 
@@ -86,7 +86,7 @@ class SocketClientHandler(private val socket: Socket, private val socketServer: 
         sendToThisHandlerQ.add("shutdown")
     }
 
-    private class SocketReaderThread(private val socket: Socket, private val sendToThisHandlerQ: BlockingQueue<String>,
+    private class SocketReaderThread(private val engine: GameEngine, private val socket: Socket, private val sendToThisHandlerQ: BlockingQueue<String>,
                                      private var listeningToSocket: AtomicBoolean
     ): Thread() {
 
@@ -98,9 +98,9 @@ class SocketClientHandler(private val socket: Socket, private val socketServer: 
                     if (data == null) {
                         Log.d(TAG, "ERROR: Remote data from Socket was unexpected NULL - abandoning socket Listener.")
                         listeningToSocket.set(false)
-                        GameEngine.queueClientHandlerMessage(GameEngine.Message("Abandoned"), ::queueMessage)
+                        engine.queueClientHandlerMessage(GameEngine.Message("Abandoned"), ::queueMessage)
                     } else {
-                        GameEngine.queueClientHandlerMessage(GameEngine.Message.decodeMessage(data), ::queueMessage)
+                        engine.queueClientHandlerMessage(GameEngine.Message.decodeMessage(data), ::queueMessage)
                     }
                 }
             } catch (e: SocketException) {

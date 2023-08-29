@@ -14,6 +14,11 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     private var socketServer: SocketServer? = null
     private var socketClient: SocketClient? = null
 
+    private var encodeStateFunction: (() -> String)? = null
+    private var decodeStateFunction: ((Message) -> Any)? = null
+    private var saveStateFunction: (() -> Unit)? = null
+    private var restoreStateFunction: (() -> Unit)? = null
+
     private val gameIsRunning = AtomicBoolean(true)  // TODO - this might not need to be Atomic.
 
     // We use a BlockingQueue here to block thread progress if needed.
@@ -174,7 +179,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         }
 
         try {
-            socketClient = SocketClient(address, SocketServer.PORT)
+            socketClient = SocketClient(this, address, SocketServer.PORT)
             socketClient!!.start()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -190,7 +195,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         }
 
         remotePlayers.clear()
-        socketServer = SocketServer()
+        socketServer = SocketServer(this)
         socketServer!!.start()
         determineIpAddresses()
 
@@ -388,9 +393,9 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     }
 
     private fun saveGameState() {
-        if (savePuzzleFunction != null) {
+        if (saveStateFunction != null) {
             Log.d(TAG, "Calling plugin ...")
-            savePuzzleFunction?.invoke()
+            saveStateFunction?.invoke()
         }
     }
 
@@ -440,11 +445,6 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         return null
     }
 
-    private var encodeStateFunction: (() -> String)? = null
-    private var decodeStateFunction: ((Message) -> Any)? = null
-    private var savePuzzleFunction: (() -> Unit)? = null
-    private var restoreStateFunction: (() -> Unit)? = null
-
     fun pluginEncodeState(encodeStateFunction: () -> String) {
         Log.d(TAG, "Plugging in encode state function...")
         this.encodeStateFunction = encodeStateFunction
@@ -457,7 +457,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
     fun pluginSaveState(saveStateFunction: () -> Unit) {
         Log.d(TAG, "Plugging in save puzzle function...")
-        this.savePuzzleFunction = saveStateFunction
+        this.saveStateFunction = saveStateFunction
     }
 
     fun pluginRestoreState(restoreStateFunction: () -> Unit) {
@@ -468,6 +468,16 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     fun queueActivityMessage(message: Message, responseFunction: ((message: String) -> Unit)?) {
         val im = InboundMessage(message, InboundMessageSource.APP, responseFunction)
         inboundMessageQueue.add(im)
+    }
+
+    fun queueClientMessage(message: Message, responseFunction: (message: String) -> Unit) {
+        val im = InboundMessage(message, InboundMessageSource.CLIENT, responseFunction)
+        singletonGameEngine?.inboundMessageQueue?.add(im)
+    }
+
+    fun queueClientHandlerMessage(message: Message, responseFunction: (message: String) -> Unit) {
+        val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseFunction)
+        singletonGameEngine?.inboundMessageQueue?.add(im)
     }
 
     companion object {
@@ -487,19 +497,5 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
             }
             return singletonGameEngine!!
         }
-
-        // TODO - move these to instance functions by passing them to the message sources as arguments.
-
-
-        fun queueClientHandlerMessage(message: Message, responseFunction: (message: String) -> Unit) {
-            val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseFunction)
-            singletonGameEngine?.inboundMessageQueue?.add(im)
-        }
-
-        fun queueClientMessage(message: Message, responseFunction: (message: String) -> Unit) {
-            val im = InboundMessage(message, InboundMessageSource.CLIENT, responseFunction)
-            singletonGameEngine?.inboundMessageQueue?.add(im)
-        }
-
     }
 }
