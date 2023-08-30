@@ -21,7 +21,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
 
     data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int,
-                              var playerHints:MutableList<Hint>, var possibles: MutableMap<Int, String>)
+                              var playerHints:MutableList<Hint>, var possibles: MutableMap<Int, String>,
+                                var playerErrors: MutableSet<Int>)
 
     enum class Direction {ACROSS, DOWN}
     data class Hint(val index: Int, val direction: Direction, var total: Int)
@@ -190,13 +191,13 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         if (message.missingString("w") || message.missingString("g") || message.missingString("h") ) {
             Log.d(TAG, "Missing width, grid and and/or hints.")
-            return StateVariables(mutableListOf(), 0, mutableListOf(), mutableMapOf())
+            return StateVariables(mutableListOf(), 0, mutableListOf(), mutableMapOf(), mutableSetOf())
         }
 
         val width = message.getString("w")?.toInt()
         if (width == null || width < 1) {
             Log.d(TAG, "Invalid width ${message.getString("w")}.")
-            return StateVariables(mutableListOf(), 0, mutableListOf(), mutableMapOf())
+            return StateVariables(mutableListOf(), 0, mutableListOf(), mutableMapOf(), mutableSetOf())
         }
 
         var possibles: MutableMap<Int, String> = mutableMapOf()
@@ -204,8 +205,13 @@ object KakuroGameplayDefinition: GameplayDefinition {
             possibles = decodePossibles(message.getString("p")!!)
         }
 
+        var playerErrors: MutableSet<Int> = mutableSetOf()
+        if (message.hasString("e")) {
+            playerErrors = decodeErrors(message.getString("e")!!)
+        }
+
         return StateVariables(decodeGrid(message.getString("g")!!), width,
-            decodeHints(message.getString("h")!!), possibles)
+            decodeHints(message.getString("h")!!), possibles, playerErrors)
     }
 
     // TODO - create methods for decode guesses, hints and possibles.
@@ -301,6 +307,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         val possiblesString = engine?.restoreData("Possibles", "")
         playerPossibles = decodePossibles(possiblesString!!)
+
+        markErrors()
     }
 
     private fun startPuzzleFromString(puzzleString: String) {
@@ -338,6 +346,16 @@ object KakuroGameplayDefinition: GameplayDefinition {
         return errorString
     }
 
+    private fun decodeErrors(errorString: String): MutableSet<Int> {
+        var output: MutableSet<Int> = mutableSetOf()
+
+        errorString.split(":").forEach { index ->
+            // TODO: Handle invalid strings
+            output.add(index.toInt())
+        }
+        return output
+    }
+
     private fun encodePossibles(): String {
         var possiblesString = ""
         // ampersand separated entries, colon separated index and possibles.
@@ -369,17 +387,14 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun markErrors() {
-        Log.d(TAG, "Running markErrors ...")
         playerErrors.clear()
         // Compare rows and columns against the hints
         // and look for duplicate numbers.
         playerHints.forEach { hint ->
-            Log.d(TAG, "Testing Hint: $hint")
             val index = hint.index
             val actualTotal = hint.total
 
             val squares = allSquares(playerGrid, puzzleWidth, index, hint.direction)
-            Log.d(TAG, "Testing squares: $squares")
 
             var playerSum = 0
             var incomplete = false
@@ -387,7 +402,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
             val duplicatesSet: MutableSet<Int> = mutableSetOf()
             squares.forEach {square ->
                 val value = playerGrid[square]
-                Log.d(TAG, "Found value = $value")
                 if (value == 0) {
                     incomplete = true
                 } else {
@@ -401,12 +415,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
             }
 
             if (!incomplete && playerSum != actualTotal) {
-                Log.d(TAG, "There is a player error compared to $hint")
                 playerErrors.addAll(squares)
             }
 
             if (duplicatesSet.size != 0) {
-                Log.d(TAG, "Player duplicate error")
                 // Determine the indexes with duplicates and mark them as errors.
                 squares.forEach {square ->
                     if (duplicatesSet.contains(playerGrid[square])) {

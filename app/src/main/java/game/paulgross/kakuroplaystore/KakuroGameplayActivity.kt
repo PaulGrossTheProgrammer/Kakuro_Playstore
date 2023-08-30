@@ -235,7 +235,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
                                 possiblesString = null
                             }
 
-                            drawGuessSquare(index, gridValue.toString(), possiblesString, selected, addTouchAreas, currX, currY, canvas, paint)
+                            val error = gameState!!.playerErrors.contains(index)
+
+                            drawGuessSquare(index, gridValue.toString(), possiblesString, selected, error, addTouchAreas, currX, currY, canvas, paint)
                         } else {
                             drawBlankSquare(currX, currY, canvas, paint)
                         }
@@ -266,7 +268,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
         }
 
-        private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean,
+        private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean, error: Boolean,
                                     addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
             paint.color = Color.LTGRAY
             if (selected) {
@@ -277,6 +279,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (content != "0") {
                 // Display the player's guess.
                 paint.color = Color.BLUE
+                if (error) {
+                    paint.color = Color.RED
+                }
                 paint.textSize = squareTextSize
                 canvas.drawText(content, x + squareWidth * 0.31f, y + squareWidth * 0.75f, paint)
             }
