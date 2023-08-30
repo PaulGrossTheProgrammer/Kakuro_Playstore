@@ -15,7 +15,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private var puzzleSolution: MutableList<Int> = mutableListOf()
     private var playerGrid: MutableList<Int> = mutableListOf()
     private var playerHints: MutableList<Hint> = mutableListOf()
-    private val playerErrors: MutableList<Int> = mutableListOf()
+    private val playerErrors: MutableSet<Int> = mutableSetOf()
 
     // Possibles are user defined, and coded as 9-digit Strings, with each digit position matching the possible value.
     private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
@@ -86,6 +86,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
         playerPossibles.remove(index)
 
         markErrors()
+        Log.d(TAG, "player errors: $playerErrors")
+        // TODO - encode errors for display.
+        // TODO - call markErrors() when the puzzle loads.
         return true
     }
 
@@ -350,35 +353,60 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun markErrors() {
+        Log.d(TAG, "Running markErrors ...")
+        playerErrors.clear()
         // Compare rows and columns against the hints
         // and look for duplicate numbers.
         playerHints.forEach { hint ->
+            Log.d(TAG, "Testing Hint: $hint")
             val index = hint.index
             val actualTotal = hint.total
 
             val squares = allSquares(playerGrid, puzzleWidth, index, hint.direction)
+            Log.d(TAG, "Testing squares: $squares")
 
-            // FIXME: Figure out how to break the loop.
-            // https://stackoverflow.com/questions/32540947/break-and-continue-in-foreach-in-kotlin
             var playerSum = 0
+            var incomplete = false
+            val valuesSet: MutableSet<Int> = mutableSetOf()
+            val duplicatesSet: MutableSet<Int> = mutableSetOf()
             squares.forEach {square ->
                 val value = playerGrid[square]
+                Log.d(TAG, "Found value = $value")
                 if (value == 0) {
-                    playerSum = 0
-                    return@forEach
-//                    breaking@
+                    incomplete = true
+                } else {
+                    playerSum += value
+                    if (valuesSet.contains(value)) {
+                        duplicatesSet.add(value)
+                    } else {
+                        valuesSet.add(value)
+                    }
                 }
-
             }
-            if (playerSum != 0 && playerSum != actualTotal) {
+
+            if (!incomplete && playerSum != actualTotal) {
                 Log.d(TAG, "There is a player error compared to $hint")
+                playerErrors.addAll(squares)
+            }
+
+            if (duplicatesSet.size != 0) {
+                Log.d(TAG, "Player duplicate error")
+                // Determine the indexes with duplicates and mark them as errors.
+                squares.forEach {square ->
+                    if (duplicatesSet.contains(playerGrid[square])) {
+                        playerErrors.add(square)
+                    }
+                }
             }
         }
     }
 
+    /**
+     * Makes a list of all squares starting at the index square, going in the specified direction,
+     * ending before the -1 square or the boundary of the grid.
+     */
     private fun allSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): List<Int> {
         val squares: MutableList<Int> = mutableListOf()
-        var sum = 0
 
         var stepSize = 1
         if (direction == Direction.DOWN) {
@@ -388,7 +416,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
         var index = startIndex
         while (index < grid.size && grid[index] != -1) {
             squares.add(index)
-            sum += grid[index]
             index += stepSize
         }
 
@@ -396,8 +423,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     /**
-     * Create the initial grid with no guesses .
-     * Create all the ACROSS and DOWN hints based on the structure and solution.
+     * Create all the ACROSS and DOWN hints based on the puzzleSolution.
      */
     private fun generateHints() {
 
