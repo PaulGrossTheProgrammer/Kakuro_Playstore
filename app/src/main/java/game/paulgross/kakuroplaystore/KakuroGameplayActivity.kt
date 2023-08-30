@@ -258,9 +258,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
                     currX += squareWidth
                 }
-                // next index needs to be offset if we are NOT viewing from the 1, 1 position.
-                // FIXME - doesn't work for puzzles larger than max rows
                 index = (col - 1) * gameState!!.puzzleWidth
+
+                // TODO - these two seem around the wrong way...
                 currX = startX
                 currY += squareWidth
             }

@@ -177,6 +177,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
             state += encodePossibles()
         }
 
+        if (playerErrors.isNotEmpty()) {
+            state += ",e="
+            state += encodeErrors()
+        }
+
         return state
     }
 
@@ -320,6 +325,17 @@ object KakuroGameplayDefinition: GameplayDefinition {
             }
         }
         return guessString
+    }
+
+    private fun encodeErrors(): String {
+        var errorString = ""
+        playerErrors.forEachIndexed {index, squareIndex ->
+            errorString += squareIndex.toString()
+            if (index < playerErrors.size - 1) {
+                errorString += ":"
+            }
+        }
+        return errorString
     }
 
     private fun encodePossibles(): String {
