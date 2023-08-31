@@ -34,6 +34,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine.registerHandler("Guess", ::submitGuess)
         engine.registerHandler("Possible", ::togglePossible)
         engine.registerHandler("RestartPuzzle", ::restartPuzzle)
+        // TODO - implement an undo button...
 
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
         // TODO - BUT decodeState returns StateVariables from this class, which isn't generic.

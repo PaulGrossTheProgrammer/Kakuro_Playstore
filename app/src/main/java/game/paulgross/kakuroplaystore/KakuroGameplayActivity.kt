@@ -50,6 +50,21 @@ class KakuroGameplayActivity : AppCompatActivity() {
         confirmExitApp()
     }
 
+    fun onClickSettings(view: View) {
+        gotoSettings()
+    }
+
+    private fun gotoSettings() {
+        return
+
+        // FIXME - new Activity crashes...
+
+        val intent: Intent = Intent(this, GameEngineSettingsActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        startActivity(intent)
+    }
+
     /**
      * Update the custom playGridView with the state and request a redraw.
      */
