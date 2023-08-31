@@ -2,6 +2,7 @@ package game.paulgross.kakuroplaystore
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
 
@@ -13,10 +14,11 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     var listOfSettings: ListView? = null
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d(TAG, "onCreate ....")
         super.onCreate(savedInstanceState)
-//        setContentView(R.layout.activity_settings)
+        setContentView(R.layout.activity_settings)
 
-//        listOfSettings = findViewById(R.id.settingsListView)
+        listOfSettings = findViewById(R.id.settingsListView)
     }
 
 
@@ -28,4 +30,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
+    companion object {
+        private val TAG = GameEngineSettingsActivity::class.java.simpleName
+    }
 }

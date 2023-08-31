@@ -55,7 +55,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     private fun gotoSettings() {
-        return
+//        return
 
         // FIXME - new Activity crashes...
 
