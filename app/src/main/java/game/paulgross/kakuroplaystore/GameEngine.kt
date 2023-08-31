@@ -399,7 +399,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         }
     }
 
-    fun restoreData(name: String, default: String): String {
+    fun loadDataString(name: String, default: String): String {
         var data = preferences.getString(name, null)
         if (data == null) {
             data = default
@@ -407,7 +407,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         return data
     }
 
-    fun saveData(name: String, value: String) {
+    fun saveDataString(name: String, value: String) {
         val editor = preferences.edit()
         editor.putString(name, value)
         editor.apply()

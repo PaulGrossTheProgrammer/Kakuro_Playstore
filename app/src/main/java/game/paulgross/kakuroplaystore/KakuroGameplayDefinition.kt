@@ -13,8 +13,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private var currPuzzle = ""
     private var puzzleWidth = 1
     private var puzzleSolution: MutableList<Int> = mutableListOf()
-    private var playerGrid: MutableList<Int> = mutableListOf()
-    private var playerHints: MutableList<Hint> = mutableListOf()
+    private var puzzleHints: MutableList<Hint> = mutableListOf()
+    private var playerGuesses: MutableList<Int> = mutableListOf()
     private val playerErrors: MutableSet<Int> = mutableSetOf()
 
     // Possibles are user defined, and coded as 9-digit Strings, with each digit position matching the possible value.
@@ -47,12 +47,13 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun restartPuzzle(message: GameEngine.Message): Boolean {
-        for (i in 0 until playerGrid.size) {
-            if (playerGrid[i] != -1) {
-                playerGrid[i] = 0
+        for (i in 0 until playerGuesses.size) {
+            if (playerGuesses[i] != -1) {
+                playerGuesses[i] = 0
             }
         }
         playerPossibles.clear()
+        playerErrors.clear()
         return true
     }
 
@@ -74,7 +75,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
             return false
         }
 
-        if (index < 0 || index >= playerGrid.size) {
+        if (index < 0 || index >= playerGuesses.size) {
             Log.d(TAG, "Index is outside of grid boundary.")
             return false
         }
@@ -83,13 +84,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
             return false
         }
 
-        playerGrid[index] = value
+        playerGuesses[index] = value
         playerPossibles.remove(index)
 
-        markErrors()
-        Log.d(TAG, "player errors: $playerErrors")
-        // TODO - encode errors for display.
-        // TODO - call markErrors() when the puzzle loads.
+        markPlayerErrors()
         return true
     }
 
@@ -111,7 +109,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
             return false
         }
 
-        if (index < 0 || index >= playerGrid.size) {
+        if (index < 0 || index >= playerGuesses.size) {
             Log.d(TAG, "Index is outside of grid boundary.")
             return false
         }
@@ -121,7 +119,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
 
         // Don't allow possibles if there is currently a guess
-        if (playerGrid[index] > 0) {
+        if (playerGuesses[index] > 0) {
             Log.d(TAG, "Can't set possibles where there is a guess")
             return false
         }
@@ -157,17 +155,17 @@ object KakuroGameplayDefinition: GameplayDefinition {
         var state = ""
 
         state += "w=$puzzleWidth,"
-        state += "g=" + encodeGuesses()
+        state += "g=" + encodePlayerGuesses()
 
         // h=2ACROSS13:2DOWN23 ... etc
         // TODO - call a method to encode
         state += ",h="
-        playerHints.forEachIndexed {index, hint ->
+        puzzleHints.forEachIndexed { index, hint ->
             hint.index
             hint.direction
             hint.total
             state += "${hint.index}${hint.direction}${hint.total}"
-            if (index < playerHints.size - 1) {
+            if (index < puzzleHints.size - 1) {
                 state += ":"
             }
         }
@@ -210,12 +208,22 @@ object KakuroGameplayDefinition: GameplayDefinition {
             playerErrors = decodeErrors(message.getString("e")!!)
         }
 
-        return StateVariables(decodeGrid(message.getString("g")!!), width,
+        return StateVariables(decodePlayerGuesses(message.getString("g")!!), width,
             decodeHints(message.getString("h")!!), possibles, playerErrors)
     }
 
-    // TODO - create methods for decode guesses, hints and possibles.
-    private fun decodeGrid(guessesString: String): MutableList<Int> {
+    private fun encodePlayerGuesses(): String {
+        var guessString = ""
+        playerGuesses.forEachIndexed { index, squareValue ->
+            guessString += squareValue.toString()
+            if (index < playerGuesses.size - 1) {
+                guessString += ":"
+            }
+        }
+        return guessString
+    }
+
+    private fun decodePlayerGuesses(guessesString: String): MutableList<Int> {
         val grid: MutableList<Int> = mutableListOf()
 
         val ints = guessesString.split(":")
@@ -254,14 +262,13 @@ object KakuroGameplayDefinition: GameplayDefinition {
      * Saves the current Game state.
      */
     private fun saveState() {
-        engine?.saveData("CurrPuzzle", currPuzzle)
+        engine?.saveDataString("CurrPuzzle", currPuzzle)
 
-        val guessesToSave = encodeGuesses()
-        engine?.saveData("Guesses", guessesToSave)
+        val guessesToSave = encodePlayerGuesses()
+        engine?.saveDataString("Guesses", guessesToSave)
 
-        // TODO - store possibles.
         val possiblesToSave = encodePossibles()
-        engine?.saveData("Possibles", possiblesToSave)
+        engine?.saveDataString("Possibles", possiblesToSave)
         Log.d(TAG, "Saved game state.")
     }
 
@@ -271,7 +278,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
             return
         }
 
-        val restoredGame = engine?.restoreData("CurrPuzzle", "").toString()
+        val restoredGame = engine?.loadDataString("CurrPuzzle", "").toString()
         currPuzzle = if (restoredGame == "") {
             Log.d(TAG, "USING DEFAULT PUZZLE!!!!")
             DEFAULT_PUZZLE
@@ -281,34 +288,34 @@ object KakuroGameplayDefinition: GameplayDefinition {
         Log.d(TAG, "currPuzzle = $currPuzzle")
 
         startPuzzleFromString(currPuzzle)
-        playerHints.clear()
+        puzzleHints.clear()
         generateHints()
 
-        val guessesString = engine?.restoreData("Guesses", "")
+        val guessesString = engine?.loadDataString("Guesses", "")
 
         Log.d(TAG, "guessesString = $guessesString")
 
-        playerGrid.clear()
+        playerGuesses.clear()
         if (guessesString == "") {
             puzzleSolution.forEach { square ->
                 if (square == -1) {
-                    playerGrid.add(-1)
+                    playerGuesses.add(-1)
                 } else {
-                    playerGrid.add(0)
+                    playerGuesses.add(0)
                 }
             }
         } else {
             val guessList = guessesString?.split(":")
             guessList?.forEach {guessString ->
-                playerGrid.add(guessString.toInt())
+                playerGuesses.add(guessString.toInt())
             }
         }
-        Log.d(TAG, "Size of play grid = ${playerGrid.size}")
+        Log.d(TAG, "Size of play grid = ${playerGuesses.size}")
 
-        val possiblesString = engine?.restoreData("Possibles", "")
+        val possiblesString = engine?.loadDataString("Possibles", "")
         playerPossibles = decodePossibles(possiblesString!!)
 
-        markErrors()
+        markPlayerErrors()
     }
 
     private fun startPuzzleFromString(puzzleString: String) {
@@ -322,17 +329,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 puzzleSolution.add(char.digitToInt())
             }
         }
-    }
-
-    private fun encodeGuesses(): String {
-        var guessString = ""
-        playerGrid.forEachIndexed {index, squareValue ->
-            guessString += squareValue.toString()
-            if (index < playerGrid.size - 1) {
-                guessString += ":"
-            }
-        }
-        return guessString
     }
 
     private fun encodeErrors(): String {
@@ -386,22 +382,22 @@ object KakuroGameplayDefinition: GameplayDefinition {
         return newPossibles
     }
 
-    private fun markErrors() {
+    private fun markPlayerErrors() {
         playerErrors.clear()
-        // Compare rows and columns against the hints
-        // and look for duplicate numbers.
-        playerHints.forEach { hint ->
+
+        // Compare user's guesses against the hints, and look for duplicate numbers in rows and columns.
+        puzzleHints.forEach { hint ->
             val index = hint.index
             val actualTotal = hint.total
 
-            val squares = allSquares(playerGrid, puzzleWidth, index, hint.direction)
+            val squares = allSquares(playerGuesses, puzzleWidth, index, hint.direction)
 
             var playerSum = 0
             var incomplete = false
             val valuesSet: MutableSet<Int> = mutableSetOf()
             val duplicatesSet: MutableSet<Int> = mutableSetOf()
             squares.forEach {square ->
-                val value = playerGrid[square]
+                val value = playerGuesses[square]
                 if (value == 0) {
                     incomplete = true
                 } else {
@@ -414,16 +410,51 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 }
             }
 
+            // Mark any complete row/col if it doesn't match the hint.
             if (!incomplete && playerSum != actualTotal) {
                 playerErrors.addAll(squares)
             }
 
+            // Mark all squares that match found duplicates.
             if (duplicatesSet.size != 0) {
                 // Determine the indexes with duplicates and mark them as errors.
                 squares.forEach {square ->
-                    if (duplicatesSet.contains(playerGrid[square])) {
+                    if (duplicatesSet.contains(playerGuesses[square])) {
                         playerErrors.add(square)
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * Create all the ACROSS and DOWN hints based on the puzzleSolution.
+     */
+    private fun generateHints() {
+
+        // Traverse the solution grid and create hints for any number squares with empty squares to the left and/or above.
+        puzzleSolution.forEachIndexed { index, value ->
+            if (value  != -1) {
+                // Check for ACROSS hints.
+                // First column numbers always need a hint.
+                val isFirstColumn = (index.mod(puzzleWidth) == 0)
+                if (isFirstColumn || puzzleSolution[index - 1] == -1) {
+                    val squares = allSquares(puzzleSolution, puzzleWidth, index, Direction.ACROSS)
+                    Log.d(TAG, "Hint: $index ACROSS squares = $squares")
+                    var sum = 0
+                    squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
+                    puzzleHints.add(Hint(index, Direction.ACROSS, sum))
+                }
+
+                // Check for DOWN hints (don't check last row)
+                // First colum row always need a hint.
+                val isFirstRow = (index < puzzleWidth)
+                if (isFirstRow || puzzleSolution[index - puzzleWidth] == -1) {
+                    val squares = allSquares(puzzleSolution, puzzleWidth, index, Direction.DOWN)
+                    Log.d(TAG, "Hint: $index DOWN squares = $squares")
+                    var sum = 0
+                    squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
+                    puzzleHints.add(Hint(index, Direction.DOWN, sum))
                 }
             }
         }
@@ -448,57 +479,5 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
 
         return squares
-    }
-
-    /**
-     * Create all the ACROSS and DOWN hints based on the puzzleSolution.
-     */
-    private fun generateHints() {
-
-        // Traverse the solution grid and create hints for any number squares with empty squares to the left and/or above.
-        puzzleSolution.forEachIndexed { index, value ->
-            if (value  != -1) {
-                // Check for ACROSS hints.
-                // First column numbers always need a hint.
-                val isFirstColumn = (index.mod(puzzleWidth) == 0)
-                if (isFirstColumn || puzzleSolution[index - 1] == -1) {
-                    val sum = sumOfSquares(puzzleSolution, puzzleWidth, index, Direction.ACROSS)
-                    playerHints.add(Hint(index, Direction.ACROSS, sum))
-                }
-
-                // Check for DOWN hints (don't check last row)
-                // First colum row always need a hint.
-                val isFirstRow = (index < puzzleWidth)
-                if (isFirstRow || puzzleSolution[index - puzzleWidth] == -1) {
-                    val sum = sumOfSquares(puzzleSolution, puzzleWidth, index, Direction.DOWN)
-                    playerHints.add(Hint(index, Direction.DOWN, sum))
-                }
-            }
-        }
-    }
-
-    /**
-     * Sum the digits in a row or column, ending in a -1 square or the edge of the grid.
-     *
-     * Return: The sum of the row or column, or 0 if any square is zero.
-     */
-    private fun sumOfSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): Int {
-        var sum = 0
-
-        var stepSize = 1
-        if (direction == Direction.DOWN) {
-            stepSize = width
-        }
-
-        var index = startIndex
-        while (index < grid.size && grid[index] != -1) {
-            if (grid[index] == 0) {
-                return 0
-            }
-            sum += grid[index]
-            index += stepSize
-        }
-
-        return sum
     }
 }
