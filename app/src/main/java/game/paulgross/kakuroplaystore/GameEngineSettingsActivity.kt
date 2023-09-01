@@ -22,8 +22,15 @@ class GameEngineSettingsActivity : AppCompatActivity() {
     var listOfSettings: ListView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d(TAG, "onCreate ....")
         super.onCreate(savedInstanceState)
+
+        Log.d(TAG, "onCreate ....")
+        val selectedSetting = intent.extras?.getString("SelectedSetting")
+        Log.d(TAG, "Activity Started with [$selectedSetting]")
+
+        // Use selectedSetting to determine layout ...
+
+        // Default layout - no setting was selected to run this Activity.
         setContentView(R.layout.activity_settings)
 
         listOfSettings = findViewById(R.id.settingsListView)
@@ -51,23 +58,26 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         }
 
         override fun getItemId(position: Int): Long {
-            // TODO - determine why this is called twice for a single touch ....
-            Log.d("$TAG.ListAdapter", "Calling getItemId() with $position")
-
-            val settingName = settingsList[position]
-
-            Log.d("$TAG.ListAdapter", "TODO: Handle select for $settingName")
-
-
-            return position.toLong()  // What does this return value even mean? Why not just 0???
+            return 0
         }
 
         override fun getView(index: Int, view: View?, viewGroup: ViewGroup?): View? {
+            Log.d("$TAG.ListAdapter", "getView() for index $index")
+
             val view = inflater?.inflate(R.layout.activity_settings_listitem, null)
             val itemName: TextView? = view?.findViewById(R.id.textViewItemName)
-            itemName?.setText(settingsList[index])
-
+            val settingName = settingsList[index]
+            itemName?.setText(settingName)
+            view?.setOnClickListener { showServerSettings(settingName) }
             return view
+        }
+
+        private fun showServerSettings(settingName: String) {
+            val intent: Intent = Intent(context, GameEngineSettingsActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            intent.putExtra("SelectedSetting", settingName)
+            context.startActivity(intent)
         }
     }
 

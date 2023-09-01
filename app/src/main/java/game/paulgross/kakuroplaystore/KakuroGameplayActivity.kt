@@ -55,13 +55,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     private fun gotoSettings() {
-//        return
-
-        // FIXME - new Activity crashes...
-
         val intent: Intent = Intent(this, GameEngineSettingsActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        intent.putExtra("SelectedSetting", "")
         startActivity(intent)
     }
 
