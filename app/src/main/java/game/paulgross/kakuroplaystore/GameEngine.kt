@@ -357,13 +357,17 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
     private fun handleRequestStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
         if (responseFunction != null && gameMode == GameMode.SERVER) {
-            remotePlayers.add(responseFunction)
+            if (!remotePlayers.contains(responseFunction)) {
+                remotePlayers.add(responseFunction)
+            }
         }
 
         if (responseFunction != null) {
-            stateChangeCallbacks.add(responseFunction)
-            // Assume that the caller does NOT have the current state.
-            responseFunction?.invoke("MessageType=State,${encodeState()}")
+            if (!stateChangeCallbacks.contains(responseFunction)) {
+                stateChangeCallbacks.add(responseFunction)
+                // Assume that the caller does NOT have the current state.
+                responseFunction?.invoke("MessageType=State,${encodeState()}")
+            }
         }
 
         return false // No change made to the game state
