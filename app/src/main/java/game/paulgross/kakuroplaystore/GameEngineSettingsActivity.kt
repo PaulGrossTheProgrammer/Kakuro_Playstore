@@ -17,9 +17,11 @@ class GameEngineSettingsActivity : AppCompatActivity() {
     // TODO - make a list view of all the settings.
     // https://abhiandroid.com/ui/listview
     // Each item in the list is a different activity to modify those settings.
-    val settingsNames: List<String> = listOf<String>("LOCAL", "CLIENT", "SERVER")
+    private val settingsListNames: List<String> = listOf<String>("LOCAL", "CLIENT", "SERVER")
+    private val settingsListIndexViews: List<Int> = listOf(R.id.textViewItemName, R.id.textViewItemName, R.id.textViewItemName)
+    private val settingsTargetViews: List<Int> = listOf(R.id.settingsListView)
 
-    var listOfSettings: ListView? = null
+    private var listOfSettings: ListView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,11 +38,13 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         listOfSettings = findViewById(R.id.settingsListView)
         if (listOfSettings != null) {
             // TODO: Why is the non-null assertion !! required here?
-            listOfSettings!!.adapter = ListAdapter(this, settingsNames)
+            listOfSettings!!.adapter = ListAdapter(this, settingsListNames, settingsListIndexViews)
         }
     }
 
-    class ListAdapter(private val context: Context, private val settingsList: List<String>) : BaseAdapter() {
+    class ListAdapter(private val context: Context,
+                      private val settingsListNames: List<String>,
+                      private val settingsListIndexViews: List<Int>) : BaseAdapter() {
 
         private var inflater: LayoutInflater? = null
 
@@ -49,7 +53,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         }
 
         override fun getCount(): Int {
-            return settingsList.size
+            return settingsListNames.size
         }
 
         override fun getItem(position: Int): Any? {
@@ -65,8 +69,12 @@ class GameEngineSettingsActivity : AppCompatActivity() {
             Log.d("$TAG.ListAdapter", "getView() for index $index")
 
             val view = inflater?.inflate(R.layout.activity_settings_listitem, null)
+
+            // TODO - lookup the index view in settingsListIndexViews
+//            settingsListIndexViews
+
             val itemName: TextView? = view?.findViewById(R.id.textViewItemName)
-            val settingName = settingsList[index]
+            val settingName = settingsListNames[index]
             itemName?.setText(settingName)
             view?.setOnClickListener { showServerSettings(settingName) }
             return view
