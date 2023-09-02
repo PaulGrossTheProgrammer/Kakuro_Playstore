@@ -55,10 +55,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     private fun gotoSettings() {
-        val intent: Intent = Intent(this, GameEngineSettingsActivity::class.java)
+        val intent = Intent(this, GameEngineSettingsActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        intent.putExtra("SelectedSetting", "")
+        intent.putExtra("SelectedSetting", "") // Display the default settings menu
         startActivity(intent)
     }
 

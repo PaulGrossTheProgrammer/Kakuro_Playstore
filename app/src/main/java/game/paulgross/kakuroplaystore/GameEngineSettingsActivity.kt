@@ -1,5 +1,6 @@
 package game.paulgross.kakuroplaystore
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -14,12 +15,15 @@ import androidx.appcompat.app.AppCompatActivity
 
 class GameEngineSettingsActivity : AppCompatActivity() {
 
-    // TODO - make a list view of all the settings.
-    // https://abhiandroid.com/ui/listview
-    // Each item in the list is a different activity to modify those settings.
     private val settingsListNames: List<String> = listOf<String>("LOCAL", "CLIENT", "SERVER")
-    private val settingsListIndexViews: List<Int> = listOf(R.id.textViewItemName, R.id.textViewItemName, R.id.textViewItemName)
-    private val settingsTargetViews: List<Int> = listOf(R.id.settingsListView)
+
+    private val settingsListIndexViewIds: List<Int> = listOf(R.layout.activity_settings_listitem, R.layout.activity_settings_listitem, R.layout.activity_settings_listitem)
+
+    private val settingsTargetViewIds: Map<String, Int> = mapOf(
+        "LOCAL" to R.layout.activity_settings_server,
+        "CLIENT" to R.layout.activity_settings_server,
+        "SERVER" to R.layout.activity_settings_server
+    )
 
     private var listOfSettings: ListView? = null
 
@@ -31,20 +35,24 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         Log.d(TAG, "Activity Started with [$selectedSetting]")
 
         // Use selectedSetting to determine layout ...
+        var lookupViewId: Int? = settingsTargetViewIds[selectedSetting]
+        if (lookupViewId == null) {
+            // Default layout - no setting was selected to run this Activity.
+            lookupViewId = R.layout.activity_settings
+        }
 
-        // Default layout - no setting was selected to run this Activity.
-        setContentView(R.layout.activity_settings)
+        setContentView(lookupViewId)
 
         listOfSettings = findViewById(R.id.settingsListView)
         if (listOfSettings != null) {
             // TODO: Why is the non-null assertion !! required here?
-            listOfSettings!!.adapter = ListAdapter(this, settingsListNames, settingsListIndexViews)
+            listOfSettings!!.adapter = ListAdapter(this, settingsListNames, settingsListIndexViewIds)
         }
     }
 
     class ListAdapter(private val context: Context,
                       private val settingsListNames: List<String>,
-                      private val settingsListIndexViews: List<Int>) : BaseAdapter() {
+                      private val settingsListIndexViewIds: List<Int>) : BaseAdapter() {
 
         private var inflater: LayoutInflater? = null
 
@@ -65,21 +73,34 @@ class GameEngineSettingsActivity : AppCompatActivity() {
             return 0
         }
 
+        private val cachedIndexViews: MutableMap<Int, View> = mutableMapOf()
+
+        @SuppressLint("ViewHolder")
         override fun getView(index: Int, view: View?, viewGroup: ViewGroup?): View? {
-            Log.d("$TAG.ListAdapter", "getView() for index $index")
+            // lookup the index in the View cache ...
+            val cachedView = cachedIndexViews[index]
+            if (cachedView != null) {
+                return cachedView
+            }
 
-            val view = inflater?.inflate(R.layout.activity_settings_listitem, null)
+            // Lookup and inflate the new View ...
+            val viewId = settingsListIndexViewIds[index]
 
-            // TODO - lookup the index view in settingsListIndexViews
-//            settingsListIndexViews
+            val newView: View? = inflater?.inflate(viewId, null)
 
-            val itemName: TextView? = view?.findViewById(R.id.textViewItemName)
+            val itemName: TextView? = newView?.findViewById(R.id.textViewItemName)
             val settingName = settingsListNames[index]
             itemName?.setText(settingName)
-            view?.setOnClickListener { showServerSettings(settingName) }
-            return view
+            newView?.setOnClickListener { showServerSettings(settingName) }
+
+            // Put the new View in the cache
+            if (newView is View) {
+                cachedIndexViews[index] = newView
+            }
+            return newView
         }
 
+        // TODO - make this generic
         private fun showServerSettings(settingName: String) {
             val intent: Intent = Intent(context, GameEngineSettingsActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -90,7 +111,9 @@ class GameEngineSettingsActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        val intent: Intent = Intent(this, KakuroGameplayActivity::class.java)
+
+        // TODO - remove the explicit link to Kakuro game classes ...
+        val intent = Intent(this, KakuroGameplayActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
         startActivity(intent)
