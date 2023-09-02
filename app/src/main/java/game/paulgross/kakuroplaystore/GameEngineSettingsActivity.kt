@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.ListView
 import android.widget.TextView
+import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 
 class GameEngineSettingsActivity : AppCompatActivity() {
@@ -27,12 +28,28 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     private var listOfSettings: ListView? = null
 
+    // FIXME - remove the explicit link to Kakuro game classes ...
+    private var returnClass: Class<*> = KakuroGameplayActivity::class.java
+//    private var returnClass: Class<*>? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Log.d(TAG, "onCreate ....")
         val selectedSetting = intent.extras?.getString("SelectedSetting")
         Log.d(TAG, "Activity Started with [$selectedSetting]")
+
+        // FIXME - can't set the returning class properly ... why???
+        // Comment out this until we know why.
+/*        val returnClassname = intent.extras?.getString("ReturnClassname")
+        if (returnClassname != null) {
+            Log.d(TAG, "The calling component class name is: $returnClassname")
+            // Strip "class " from the front
+            val classnameAsString = returnClassname.split(" ")[1]
+            Log.d(TAG, "classnameAsString: $classnameAsString")
+
+            returnClass = Class.forName(classnameAsString)
+        }*/
 
         // Use selectedSetting to determine layout ...
         var lookupViewId: Int? = settingsTargetViewIds[selectedSetting]
@@ -110,13 +127,11 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         }
     }
 
-    // TODO - remove the explicit link to Kakuro game classes ...
-    private var returnClass: Class<KakuroGameplayActivity>? = null
+
+
 
     override fun onBackPressed() {
-
-        returnClass = KakuroGameplayActivity::class.java
-
+        Log.d(TAG, "onBackPressed with $returnClass")
         val intent = Intent(this, returnClass)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)

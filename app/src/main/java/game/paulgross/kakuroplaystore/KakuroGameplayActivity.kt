@@ -58,7 +58,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val intent = Intent(this, GameEngineSettingsActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        intent.putExtra("SelectedSetting", "") // Display the default settings menu
+        intent.putExtra("ReturnClassname", GameEngineSettingsActivity::class.java.toString())
         startActivity(intent)
     }
 
