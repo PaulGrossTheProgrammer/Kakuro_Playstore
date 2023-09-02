@@ -110,10 +110,14 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         }
     }
 
+    // TODO - remove the explicit link to Kakuro game classes ...
+    private var returnClass: Class<KakuroGameplayActivity>? = null
+
     override fun onBackPressed() {
 
-        // TODO - remove the explicit link to Kakuro game classes ...
-        val intent = Intent(this, KakuroGameplayActivity::class.java)
+        returnClass = KakuroGameplayActivity::class.java
+
+        val intent = Intent(this, returnClass)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
         startActivity(intent)
