@@ -29,25 +29,19 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     private var listOfSettings: ListView? = null
 
-    private var topLevelMenu = true
+    var selectedSetting: String? = null
+    // TODO - replace topLevelMenu with selectedSetting. Null means top level.
+//    private var topLevelMenu = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Log.d(TAG, "onCreate ....")
-        val selectedSetting = intent.extras?.getString("SelectedSetting")
+        selectedSetting = intent.extras?.getString("SelectedSetting")
         Log.d(TAG, "Activity Started with [$selectedSetting]")
-        if (selectedSetting != null) {
-            topLevelMenu = false
-        }
-
-        // Extract the Activity to return to from back press.
-        if (returnIntent == null) {
-            // TODO - handle deprecated method
-            // https://stackoverflow.com/questions/72571804/getserializableextra-and-getparcelableextra-are-deprecated-what-is-the-alternat
-            returnIntent = intent.extras?.getParcelable("ReturnIntent")
-            Log.d(TAG, "Storing returnIntent [$returnIntent]")
-        }
+//        if (selectedSetting != null) {
+//            topLevelMenu = false
+//        }
 
         // Use selectedSetting to determine layout ...
         var lookupViewId: Int? = settingsTargetViewIds[selectedSetting]
@@ -65,7 +59,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         }
     }
 
-    class ListAdapter(private val context: Context,
+    class ListAdapter(private val context: GameEngineSettingsActivity,
                       private val settingsListNames: List<String>,
                       private val settingsListIndexViewIds: List<Int>) : BaseAdapter() {
 
@@ -106,7 +100,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
             val itemName: TextView? = newView?.findViewById(R.id.textViewItemName)
             val settingName = settingsListNames[index]
             itemName?.setText(settingName)
-            newView?.setOnClickListener { showServerSettings(settingName) }
+            newView?.setOnClickListener { context.showServerSettings(settingName) }
 
             // Put the new View in the cache
             if (newView is View) {
@@ -114,24 +108,32 @@ class GameEngineSettingsActivity : AppCompatActivity() {
             }
             return newView
         }
-
-        // TODO - make this generic
-        private fun showServerSettings(settingName: String) {
-            val intent = Intent(context, GameEngineSettingsActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            intent.putExtra("SelectedSetting", settingName)
-            context.startActivity(intent)
-        }
     }
 
+    // TODO - make this generic.
+    // TODO - move this function to the Activity and call that function from here.
+    fun showServerSettings(settingName: String) {
+        val intent = Intent(this, GameEngineSettingsActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        intent.putExtra("SelectedSetting", settingName)
+        startActivity(intent)
+    }
 
     override fun onBackPressed() {
-        if (topLevelMenu) {
+//        if (topLevelMenu) {
+        if (selectedSetting == null) {
             Log.d(TAG, "onBackPressed - TOP LEVEL")
-            startActivity(returnIntent)
+//            startActivity(returnIntent)
+//            finishActivity(0)
+            finishAndRemoveTask()  // This should automatically return to the calling activity.
             return
         }
+
+        // FIXME - don't permit the back button for anything except the top level.
+        //  Use a custom back button instead.
+        // Maybe sut of the head of the dot-separated SelectedSetting, so name1.name2 -> name1
+        // and name1 -> null
 
         Log.d(TAG, "onBackPressed - NOT top level")
         val intent = Intent(this, GameEngineSettingsActivity::class.java)
@@ -142,7 +144,5 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     companion object {
         private val TAG = GameEngineSettingsActivity::class.java.simpleName
-
-        private var returnIntent: Intent? = null
-    }
+   }
 }

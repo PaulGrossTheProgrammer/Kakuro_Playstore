@@ -56,14 +56,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     // TODO - is it possible to put this function into the Engine? engine.gotoSettings()
     private fun gotoSettings() {
-        val returnIntent = Intent(this, KakuroGameplayActivity::class.java)
-        returnIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        returnIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+//        val returnIntent = Intent(this, KakuroGameplayActivity::class.java)
+//        returnIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//        returnIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
 
         val intent = Intent(this, GameEngineSettingsActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        intent.putExtra("ReturnIntent", returnIntent)
+//        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+//        intent.putExtra("ReturnIntent", returnIntent)
         startActivity(intent)
     }
 
