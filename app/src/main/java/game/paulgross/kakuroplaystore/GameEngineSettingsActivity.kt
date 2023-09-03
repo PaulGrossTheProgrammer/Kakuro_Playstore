@@ -20,6 +20,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     private val settingsListIndexViewIds: List<Int> = listOf(R.layout.activity_settings_listitem, R.layout.activity_settings_listitem, R.layout.activity_settings_listitem)
 
+    // TODO - add client and local layouts too ...
     private val settingsTargetViewIds: Map<String, Int> = mapOf(
         "LOCAL" to R.layout.activity_settings_server,
         "CLIENT" to R.layout.activity_settings_server,
@@ -28,9 +29,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     private var listOfSettings: ListView? = null
 
-    // FIXME - remove the explicit link to Kakuro game classes ...
-    private var returnClass: Class<*> = KakuroGameplayActivity::class.java
-//    private var returnClass: Class<*>? = null
+    private var topLevelMenu = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,18 +37,17 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         Log.d(TAG, "onCreate ....")
         val selectedSetting = intent.extras?.getString("SelectedSetting")
         Log.d(TAG, "Activity Started with [$selectedSetting]")
+        if (selectedSetting != null) {
+            topLevelMenu = false
+        }
 
-        // FIXME - can't set the returning class properly ... why???
-        // Comment out this until we know why.
-/*        val returnClassname = intent.extras?.getString("ReturnClassname")
-        if (returnClassname != null) {
-            Log.d(TAG, "The calling component class name is: $returnClassname")
-            // Strip "class " from the front
-            val classnameAsString = returnClassname.split(" ")[1]
-            Log.d(TAG, "classnameAsString: $classnameAsString")
-
-            returnClass = Class.forName(classnameAsString)
-        }*/
+        // Extract the Activity to return to from back press.
+        if (returnIntent == null) {
+            // TODO - handle deprecated method
+            // https://stackoverflow.com/questions/72571804/getserializableextra-and-getparcelableextra-are-deprecated-what-is-the-alternat
+            returnIntent = intent.extras?.getParcelable("ReturnIntent")
+            Log.d(TAG, "Storing returnIntent [$returnIntent]")
+        }
 
         // Use selectedSetting to determine layout ...
         var lookupViewId: Int? = settingsTargetViewIds[selectedSetting]
@@ -119,7 +117,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
         // TODO - make this generic
         private fun showServerSettings(settingName: String) {
-            val intent: Intent = Intent(context, GameEngineSettingsActivity::class.java)
+            val intent = Intent(context, GameEngineSettingsActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
             intent.putExtra("SelectedSetting", settingName)
@@ -128,11 +126,15 @@ class GameEngineSettingsActivity : AppCompatActivity() {
     }
 
 
-
-
     override fun onBackPressed() {
-        Log.d(TAG, "onBackPressed with $returnClass")
-        val intent = Intent(this, returnClass)
+        if (topLevelMenu) {
+            Log.d(TAG, "onBackPressed - TOP LEVEL")
+            startActivity(returnIntent)
+            return
+        }
+
+        Log.d(TAG, "onBackPressed - NOT top level")
+        val intent = Intent(this, GameEngineSettingsActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
         startActivity(intent)
@@ -140,5 +142,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     companion object {
         private val TAG = GameEngineSettingsActivity::class.java.simpleName
+
+        private var returnIntent: Intent? = null
     }
 }
