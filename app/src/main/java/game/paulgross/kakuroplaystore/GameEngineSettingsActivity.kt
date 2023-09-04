@@ -111,7 +111,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
     }
 
     // TODO - make this generic.
-    // TODO - move this function to the Activity and call that function from here.
+    // TODO - move this function to the engine and call that function from here???
     fun showServerSettings(settingName: String) {
         val intent = Intent(this, GameEngineSettingsActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
