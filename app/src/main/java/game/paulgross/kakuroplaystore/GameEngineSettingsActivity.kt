@@ -33,6 +33,8 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     private var selectedSetting: String = ""
 
+    private var engine: GameEngine? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -40,10 +42,13 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         selectedSetting = intent.extras?.getString("SelectedSetting" , "").toString()
         Log.d(TAG, "Activity Started with [$selectedSetting]")
 
-        controlLayout()
+        // TODO - handle lack of engine activation... which is a null return here.
+        engine = GameEngine.get()
+
+        showLayout()
     }
 
-    private fun controlLayout() {
+    private fun showLayout() {
         // Use selectedSetting to determine layout ...
         var lookupViewId: Int? = settingsTargetViewIds[selectedSetting]
         if (lookupViewId == null) {
@@ -128,7 +133,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     fun showServerSettings(settingName: String) {
         selectedSetting = settingName
-        controlLayout()
+        showLayout()
     }
 
     /**

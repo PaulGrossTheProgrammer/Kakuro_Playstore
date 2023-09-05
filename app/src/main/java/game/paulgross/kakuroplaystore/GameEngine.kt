@@ -208,8 +208,6 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         gameMode = GameMode.LOCAL
     }
 
-//    private var previousStateUpdate = ""  // TODO - this should only be in GameplayDefinition.
-
     class Message(val type: String) {
         private var body: MutableMap<String, String>? = null
 
@@ -499,6 +497,14 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
                 Log.d(TAG, "Already created GameEngine.")
             }
             return singletonGameEngine!!
+        }
+
+        fun get(): GameEngine? {
+            if (singletonGameEngine == null) {
+                Log.d(TAG, "GameEngine has not yet been activated.")
+                return null
+            }
+            return singletonGameEngine
         }
     }
 }
