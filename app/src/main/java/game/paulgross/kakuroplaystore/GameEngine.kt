@@ -1,5 +1,7 @@
 package game.paulgross.kakuroplaystore
 
+import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.util.Log
@@ -114,8 +116,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
             if (im != null) {
 
-                // TODO - consolidate these three system handler functions...
-                // listOfSystemHandlers
+                // Check System Handlers
                 listOfSystemHandlers.forEach { handler ->
                     if (handler.type == im.message.type) {
                         Log.d(TAG, "Handling SYSTEM message: ${im.message.type}")
@@ -126,18 +127,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
                     }
                 }
 
-                // Handle system messages instead of these 3 ....
-//                if (im.source == InboundMessageSource.APP) {
-//                    handleActivityMessage(im)
-//                }
-//                if (im.source == InboundMessageSource.CLIENT) {
-//                    handleClientMessage(im)
-//                }
-//                if (im.source == InboundMessageSource.CLIENTHANDLER) {
-//                    handleClientHandlerMessage(im)
-//                }
-
-                // Handle game messages.
+                // Check game messages.
                 listOfGameHandlers.forEach { handler ->
                     if (handler.type == im.message.type) {
                         val changed = handler.handlerFunction.invoke(im.message)
@@ -379,6 +369,15 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
             // TODO - make this a Message for the local client?
             callback("MessageType=State,${encodeState()}")
         }
+    }
+
+    fun gotoSettingsActivity(context: Context) {
+        val intent: Intent = Intent(context, GameEngineSettingsActivity::class.java)
+
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+        intent.putExtra("SelectedSetting", "")
+        context.startActivity(intent)
     }
 
     private fun stopGame() {

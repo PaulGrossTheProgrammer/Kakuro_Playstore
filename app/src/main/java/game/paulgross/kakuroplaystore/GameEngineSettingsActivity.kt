@@ -29,20 +29,19 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     private var listOfSettings: ListView? = null
 
-    var selectedSetting: String? = null
-    // TODO - replace topLevelMenu with selectedSetting. Null means top level.
-//    private var topLevelMenu = true
+    private var selectedSetting: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Log.d(TAG, "onCreate ....")
-        selectedSetting = intent.extras?.getString("SelectedSetting")
+        selectedSetting = intent.extras?.getString("SelectedSetting" , "").toString()
         Log.d(TAG, "Activity Started with [$selectedSetting]")
-//        if (selectedSetting != null) {
-//            topLevelMenu = false
-//        }
 
+        controlLayout()
+    }
+
+    private fun controlLayout() {
         // Use selectedSetting to determine layout ...
         var lookupViewId: Int? = settingsTargetViewIds[selectedSetting]
         if (lookupViewId == null) {
@@ -110,36 +109,37 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         }
     }
 
-    // TODO - make this generic.
-    // TODO - move this function to the engine and call that function from here???
     fun showServerSettings(settingName: String) {
-        val intent = Intent(this, GameEngineSettingsActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        intent.putExtra("SelectedSetting", settingName)
-        startActivity(intent)
+        selectedSetting = settingName
+        controlLayout()
+    }
+
+    /**
+     * Removes the child setting name from the end of the dot-separated setting name.
+     * "Settings.Name1.Name2"
+     *  becomes
+     * "Settings.Name1"
+     *
+     * If there is no dot, the parent is "".
+     */
+    private fun getSettingParent(settingName: String): String {
+        if (!settingName.contains('.')) {
+            return ""
+        }
+
+        val parent = settingName.substring(0, settingName.lastIndexOf('.'))
+        Log.d(TAG, "Returning Parent of [$settingName] as [$parent]")
+        return parent
     }
 
     override fun onBackPressed() {
-//        if (topLevelMenu) {
-        if (selectedSetting == null) {
+        if (selectedSetting == "") {
             Log.d(TAG, "onBackPressed - TOP LEVEL")
-//            startActivity(returnIntent)
-//            finishActivity(0)
             finishAndRemoveTask()  // This should automatically return to the calling activity.
             return
         }
 
-        // FIXME - don't permit the back button for anything except the top level.
-        //  Use a custom back button instead.
-        // Maybe sut of the head of the dot-separated SelectedSetting, so name1.name2 -> name1
-        // and name1 -> null
-
-        Log.d(TAG, "onBackPressed - NOT top level")
-        val intent = Intent(this, GameEngineSettingsActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        startActivity(intent)
+        showServerSettings(getSettingParent(selectedSetting))
     }
 
     companion object {
