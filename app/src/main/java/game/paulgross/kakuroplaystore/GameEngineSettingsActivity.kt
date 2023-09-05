@@ -10,7 +10,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.ListView
+import android.widget.Switch
 import android.widget.TextView
+import android.widget.ToggleButton
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 
@@ -106,6 +108,21 @@ class GameEngineSettingsActivity : AppCompatActivity() {
                 cachedIndexViews[index] = newView
             }
             return newView
+        }
+    }
+
+    fun onClickToggleServer(view: View) {
+        Log.d(TAG, "TODO: Toggle server state.")
+        if (view is Switch) {
+            Log.d(TAG, "We have a Switch!")
+            val state = view.isChecked
+            if (state) {
+                Log.d(TAG, "State is TRUE")
+
+            } else {
+                Log.d(TAG, "State is FALSE")
+
+            }
         }
     }
 
