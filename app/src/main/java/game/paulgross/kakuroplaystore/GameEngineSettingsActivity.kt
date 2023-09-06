@@ -1,8 +1,10 @@
 package game.paulgross.kakuroplaystore
 
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -42,16 +44,23 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         selectedSetting = intent.extras?.getString("SelectedSetting" , "").toString()
         Log.d(TAG, "Activity Started with [$selectedSetting]")
 
+        showLayout()
+
+        enableQueuedMessages()
         // TODO - handle lack of engine activation... which is a null return here.
         engine = GameEngine.get()
-
-        showLayout()
+        engine?.queueActivityMessage(GameEngine.Message("RequestEngineStateChanges"), ::queueMessage)
     }
 
     private fun showLayout() {
         // Use selectedSetting to determine layout ...
         var lookupViewId: Int? = settingsTargetViewIds[selectedSetting]
         if (lookupViewId == null) {
+            // Reset the selectedSetting if required
+            if (selectedSetting != "") {
+                Log.d(TAG, "Invalid setting [$selectedSetting]. Switching to default Layout.")
+                selectedSetting = ""
+            }
             // Default layout - no setting was selected to run this Activity.
             lookupViewId = R.layout.activity_settings
         }
@@ -118,6 +127,10 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     fun onClickToggleServer(view: View) {
         Log.d(TAG, "TODO: Toggle server state.")
+
+
+
+
         if (view is Switch) {
             Log.d(TAG, "We have a Switch!")
             val state = view.isChecked
@@ -162,6 +175,41 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         }
 
         showServerSettings(getSettingParent(selectedSetting))
+    }
+
+    /**
+     * Receive messages from the GameEngine.
+     */
+    private val activityMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+
+            val messageString = intent.getStringExtra("Message") ?: return
+
+            val message = GameEngine.Message.decodeMessage(messageString)
+            // TODO - handle message
+
+        }
+    }
+
+    private var queuedMessageAction: String = "${TAG}.activity.MESSAGE"
+
+    private fun enableQueuedMessages() {
+        val intentFilter = IntentFilter()
+//        TODO - set intentFilter RECEIVER_NOT_EXPORTED flag - BUT HOW???
+        intentFilter.addAction(queuedMessageAction)
+        registerReceiver(activityMessageReceiver, intentFilter)
+        Log.d(TAG, "Enabled message receiver for [${queuedMessageAction}]")
+    }
+
+    /**
+     * This is the CALLBACK function to be used when a message needs to be queued for this Activity.
+     */
+    private fun queueMessage(message: String) {
+        // The UI thread will call activityMessageReceiver() to handle the message.
+        val intent = Intent()
+        intent.action = queuedMessageAction
+        intent.putExtra("Message", message)
+        sendBroadcast(intent)
     }
 
     companion object {

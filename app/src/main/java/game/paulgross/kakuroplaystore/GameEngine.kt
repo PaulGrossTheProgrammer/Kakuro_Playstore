@@ -95,6 +95,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         listOfSystemHandlers.add(SystemMessageHandler("RemoteServer", ::handleRemoteServerMessage))
         listOfSystemHandlers.add(SystemMessageHandler("StartLocal", ::handleStartLocalMessage))
         listOfSystemHandlers.add(SystemMessageHandler("StopGame", ::handleStopGameMessage))
+        listOfSystemHandlers.add(SystemMessageHandler("RequestEngineStateChanges", ::handleRequestEngineStateChangesMessage))
         listOfSystemHandlers.add(SystemMessageHandler("RequestStateChanges", ::handleRequestStateChangesMessage))
 
         definition.setEngine(this)
@@ -359,6 +360,17 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         }
 
         return false // No change made to the game state
+    }
+
+    private fun handleRequestEngineStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+        // TODO
+        Log.d(TAG, "Request for engine state changes received ... TODO")
+
+        // Put the response function on the list for future notifications.
+
+        // Also send the current engine state. This assumes that a new request needs the current state.
+
+        return false  // No state change to broadcast.
     }
 
     private fun pushStateToClients() {
