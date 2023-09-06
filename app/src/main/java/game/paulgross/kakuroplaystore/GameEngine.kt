@@ -98,7 +98,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         listOfSystemHandlers.add(SystemMessageHandler("RequestEngineStateChanges", ::handleRequestEngineStateChangesMessage))
         listOfSystemHandlers.add(SystemMessageHandler("RequestStateChanges", ::handleRequestStateChangesMessage))
 
-        definition.setEngine(this)
+        definition.setEngine(this)  // This is where the Definition plugs in its own message handlers.
 
         restoreGameState()
 
