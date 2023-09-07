@@ -334,17 +334,18 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private fun encodeErrors(): String {
         var errorString = ""
-        playerErrors.forEachIndexed {index, squareIndex ->
-            errorString += squareIndex.toString()
-            if (index < playerErrors.size - 1) {
+        playerErrors.forEach { squareIndex ->
+            if (errorString.isNotEmpty()) {
                 errorString += ":"
             }
+            errorString += squareIndex.toString()
         }
+
         return errorString
     }
 
     private fun decodeErrors(errorString: String): MutableSet<Int> {
-        var output: MutableSet<Int> = mutableSetOf()
+        val output: MutableSet<Int> = mutableSetOf()
 
         errorString.split(":").forEach { index ->
             // TODO: Handle invalid strings
@@ -357,7 +358,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         var possiblesString = ""
         // ampersand separated entries, colon separated index and possibles.
         // 0:1234567&5:100450000
-        // TODO
+        // TODO - eliminate firstEntry using possiblesString.isNotEmpty() instead.
         var firstEntry = true
         playerPossibles.forEach { index, possibles ->
             if (firstEntry) { firstEntry = false } else { possiblesString += "&" }
@@ -463,7 +464,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     /**
      * Makes a list of all squares starting at the index square, going in the specified direction,
-     * ending before the -1 square or the boundary of the grid.
+     * ending before the first -1 square or the boundary of the grid.
      */
     private fun allSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): List<Int> {
         val squares: MutableList<Int> = mutableListOf()

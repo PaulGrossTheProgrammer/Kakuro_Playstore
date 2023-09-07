@@ -210,6 +210,8 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     }
 
     class Message(val type: String) {
+        // TODO - add a standard encoder to convert to a string
+
         private var body: MutableMap<String, String>? = null
 
         fun setKeyString(key: String, value: String) {
@@ -362,13 +364,21 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         return false // No change made to the game state
     }
 
+    private val engineStateChangeListeners: MutableList<(message: String) -> Unit> = mutableListOf()
+
     private fun handleRequestEngineStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
         // TODO
         Log.d(TAG, "Request for engine state changes received ... TODO")
 
         // Put the response function on the list for future notifications.
-
-        // Also send the current engine state. This assumes that a new request needs the current state.
+        if (responseFunction != null) {
+            engineStateChangeListeners.add(responseFunction)
+            // Also send the current engine state. This assumes that a new request needs the current state.
+            val newMessage = Message("EngineState")
+            newMessage.setKeyString("GameMode", gameMode.toString())
+            // TODO - use a standard encoder for messages to string
+//            responseFunction.invoke(newMessage.)
+        }
 
         return false  // No state change to broadcast.
     }

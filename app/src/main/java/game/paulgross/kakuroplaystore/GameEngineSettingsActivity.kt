@@ -17,6 +17,7 @@ import android.widget.TextView
 import android.widget.ToggleButton
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 
 class GameEngineSettingsActivity : AppCompatActivity() {
 
@@ -187,11 +188,14 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
             val message = GameEngine.Message.decodeMessage(messageString)
             // TODO - handle message
-
+            Log.d(TAG, "Got a message: ${message.type}")
+            if (message.type == "EngineState") {
+                Log.d(TAG, "TODO - handle GameMode message ...")
+            }
         }
     }
 
-    private var queuedMessageAction: String = "${TAG}.activity.MESSAGE"
+    private var queuedMessageAction: String = "$TAG.activity.MESSAGE"
 
     private fun enableQueuedMessages() {
         val intentFilter = IntentFilter()
