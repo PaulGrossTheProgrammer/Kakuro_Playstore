@@ -52,18 +52,18 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     private var gameMode: GameMode = GameMode.LOCAL
 
     // TDSO merge this with the state change callbacks???
-    private var remotePlayers: MutableList<(message: String) -> Unit> = mutableListOf()  // Only used in SERVER mode.
-    private var localPlayer: MutableList<(message: String) -> Unit> = mutableListOf()  // Only used in SERVER mode.
+    private var remotePlayers: MutableList<(message: Message) -> Unit> = mutableListOf()  // Only used in SERVER mode.
+    private var localPlayer: MutableList<(message: Message) -> Unit> = mutableListOf()  // Only used in SERVER mode.
 
     // TODO - combine this with the remote and local players lists...
-    private var stateChangeCallbacks: MutableList<(message: String) -> Unit> = mutableListOf()
+    private var stateChangeCallbacks: MutableList<(message: Message) -> Unit> = mutableListOf()
 
     data class ClientRequest(val requestString: String, val responseQ: Queue<String>)
 
     private val allIpAddresses: MutableList<String> = mutableListOf()
 
     private data class MessageHandler(val type: String, val handlerFunction: (message: Message) -> Boolean)
-    private data class SystemMessageHandler(val type: String, val handlerFunction: (message: Message, source: InboundMessageSource, ((message: String) -> Unit)?) -> Boolean)
+    private data class SystemMessageHandler(val type: String, val handlerFunction: (message: Message, source: InboundMessageSource, ((message: Message) -> Unit)?) -> Boolean)
 
     private val listOfSystemHandlers: MutableList<SystemMessageHandler> = mutableListOf()
     private val listOfGameHandlers: MutableList<MessageHandler> = mutableListOf()
@@ -209,8 +209,23 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         gameMode = GameMode.LOCAL
     }
 
+    private data class MessageTypeSpec(val messageType: String, val partName: String)
+    private data class MessageCodec(
+                       val encoderFunc: (Any) -> String,
+                       val decoderFunc: (String) -> Any) {}
+
+    private val messageCodecs: MutableMap<MessageTypeSpec, MessageCodec> = mutableMapOf()
+
+    fun registerMessageCodec(messageType: String, partName: String,
+                             encoderFunc: (Any) -> String, decoderFunc: (String) -> Any) {
+        messageCodecs[MessageTypeSpec(messageType, partName)] = MessageCodec(encoderFunc, decoderFunc)
+    }
+
     class Message(val type: String) {
-        // TODO - add a standard encoder to convert to a string
+        // TODO - add a standard encoders and decoders to convert to and from Strings.
+        // Needs to have plugins to encode special types.
+        // TODO - lookup messageCodecs to encode and decode the body variables
+        // Maybe have the body as both raw data and string data, using the codecs as required.
 
         private var body: MutableMap<String, String>? = null
 
@@ -283,11 +298,11 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         }
     }
 
-    private fun handleShutdownMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+    private fun handleShutdownMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Boolean {
         if (source == InboundMessageSource.CLIENTHANDLER) {
             remotePlayers.remove(responseFunction)
 
-            responseFunction?.invoke(message.type)  // Echo back the message type
+            responseFunction?.invoke(message)  // Echo back the message type
         }
 
         if (source == InboundMessageSource.CLIENT) {
@@ -297,7 +312,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         return false // No change made to the game state
     }
 
-    private fun handleAbandonedMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+    private fun handleAbandonedMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Boolean {
         if (source == InboundMessageSource.CLIENTHANDLER) {
             remotePlayers.remove(responseFunction)
         }
@@ -308,21 +323,21 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         return false // No change made to the game state
     }
 
-    private fun handleResetMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+    private fun handleResetMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Boolean {
         if (source == InboundMessageSource.APP) {
             resetGame()
         }
         return true // The game state was changed.
     }
 
-    private fun handleStartServerMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+    private fun handleStartServerMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Boolean {
         if (source == InboundMessageSource.APP && gameMode != GameMode.SERVER) {
             switchToLocalServerMode()
         }
         return false // No change made to the game state
     }
 
-    private fun handleRemoteServerMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+    private fun handleRemoteServerMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Boolean {
         if (source == InboundMessageSource.APP && gameMode != GameMode.CLIENT) {
             val address = message.getString("Address")
             if (address != null) {
@@ -332,21 +347,21 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         return false // No change made to the game state
     }
 
-    private fun handleStartLocalMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+    private fun handleStartLocalMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Boolean {
         if (source == InboundMessageSource.APP && gameMode != GameMode.LOCAL) {
             switchToPureLocalMode()
         }
         return false // No change made to the game state
     }
 
-    private fun handleStopGameMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+    private fun handleStopGameMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Boolean {
         if (source == InboundMessageSource.APP) {
             stopGame()
         }
         return false // No change made to the game state
     }
 
-    private fun handleRequestStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+    private fun handleRequestStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Boolean {
         if (responseFunction != null && gameMode == GameMode.SERVER) {
             if (!remotePlayers.contains(responseFunction)) {
                 remotePlayers.add(responseFunction)
@@ -357,6 +372,8 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
             if (!stateChangeCallbacks.contains(responseFunction)) {
                 stateChangeCallbacks.add(responseFunction)
                 // Assume that the caller does NOT have the current state.
+                val newMessage = Message("State")
+
                 responseFunction?.invoke("MessageType=State,${encodeState()}")
             }
         }
@@ -366,7 +383,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
     private val engineStateChangeListeners: MutableList<(message: String) -> Unit> = mutableListOf()
 
-    private fun handleRequestEngineStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: String) -> Unit)?): Boolean {
+    private fun handleRequestEngineStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Boolean {
         // TODO
         Log.d(TAG, "Request for engine state changes received ... TODO")
 
