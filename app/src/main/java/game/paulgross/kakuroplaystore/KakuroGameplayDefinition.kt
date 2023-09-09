@@ -39,7 +39,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
         // TODO - BUT decodeState returns StateVariables from this class, which isn't generic.
         // Maybe a Map is generic???
-        engine.pluginEncodeState(::encodeState)
+        engine.pluginEncodeState(::encodeStateMessage)
         engine.pluginDecodeState(::decodeState)
 
         engine.pluginMessageCodec("State", "w", ::encodeInt, ::decodeInt )
@@ -192,6 +192,16 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
 
         return state
+    }
+
+    private fun encodeStateMessage(): GameEngine.Message {
+        val message = GameEngine.Message("State")
+        message.setKeyString("w", puzzleWidth.toString())
+        message.setKeyString("g", encodePlayerGuesses(playerGuesses))
+        message.setKeyString("h", encodeHints(puzzleHints))
+        message.setKeyString("p", encodePossibles(playerPossibles))
+        message.setKeyString("e", encodeErrors(playerErrors))
+        return message
     }
 
     private fun decodeState(message: GameEngine.Message): StateVariables {
