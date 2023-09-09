@@ -216,13 +216,13 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
     private val messageCodecs: MutableMap<MessageTypeSpec, MessageCodec> = mutableMapOf()
 
-    fun registerMessageCodec(messageType: String, partName: String,
+    fun pluginMessageCodec(messageType: String, partName: String,
                              encoderFunc: (Any) -> String, decoderFunc: (String) -> Any) {
         messageCodecs[MessageTypeSpec(messageType, partName)] = MessageCodec(encoderFunc, decoderFunc)
     }
 
     class Message(val type: String) {
-        // TODO - add a standard encoders and decoders to convert to and from Strings.
+        // TODO - add standard encoders and decoders to convert to and from Strings.
         // Needs to have plugins to encode special types.
         // TODO - lookup messageCodecs to encode and decode the body variables
         // Maybe have the body as both raw data and string data, using the codecs as required.

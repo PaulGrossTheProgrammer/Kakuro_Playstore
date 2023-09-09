@@ -42,9 +42,27 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine.pluginEncodeState(::encodeState)
         engine.pluginDecodeState(::decodeState)
 
+        engine.pluginMessageCodec("State", "w", ::encodeInt, ::decodeInt )
+        engine.pluginMessageCodec("State", "g", ::encodePlayerGuesses, ::decodePlayerGuesses )
+        engine.pluginMessageCodec("State", "h", ::encodeHints, ::decodeHints )
+        engine.pluginMessageCodec("State", "p", ::encodePossibles, ::decodePossibles )
+        engine.pluginMessageCodec("State", "e", ::encodeErrors, ::decodeErrors )
+
         // Override the default save and load usage of encode and decode state.
         engine.pluginSaveState(::saveState)
         engine.pluginRestoreState(::restoreState)
+    }
+
+    fun encodeInt(theInt: Any): String {
+        return theInt.toString()
+    }
+
+    fun decodeInt(intString: String): Int {
+        return intString.toInt()
+    }
+
+    fun testOnly(input: Any): String {
+        return ""
     }
 
     private fun restartPuzzle(message: GameEngine.Message): Boolean {
@@ -156,30 +174,21 @@ object KakuroGameplayDefinition: GameplayDefinition {
         var state = ""
 
         state += "w=$puzzleWidth,"
-        state += "g=" + encodePlayerGuesses()
+        state += "g=" + encodePlayerGuesses(playerGuesses)
 
         // h=2ACROSS13:2DOWN23 ... etc
         // TODO - call a method to encode
-        state += ",h="
-        puzzleHints.forEachIndexed { index, hint ->
-            hint.index
-            hint.direction
-            hint.total
-            state += "${hint.index}${hint.direction}${hint.total}"
-            if (index < puzzleHints.size - 1) {
-                state += ":"
-            }
-        }
+        state += ",h=" + encodeHints(puzzleHints)
 
         // p=2:0123000000,8:0000006780
         if (playerPossibles.isNotEmpty()) {
             state += ",p="
-            state += encodePossibles()
+            state += encodePossibles(playerPossibles)
         }
 
         if (playerErrors.isNotEmpty()) {
             state += ",e="
-            state += encodeErrors()
+            state += encodeErrors(playerErrors)
         }
 
         return state
@@ -213,7 +222,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
             decodeHints(message.getString("h")!!), possibles, playerErrors)
     }
 
-    private fun encodePlayerGuesses(): String {
+    private fun encodePlayerGuesses(playerGuesses: Any): String {
+        if (playerGuesses !is MutableList<*>) {
+            return ""
+        }
+
         var guessString = ""
         playerGuesses.forEachIndexed { index, squareValue ->
             guessString += squareValue.toString()
@@ -233,6 +246,27 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
 
         return grid
+    }
+
+    private fun encodeHints(puzzleHints: Any): String {
+        if (puzzleHints !is MutableList<*>) {
+            return ""
+        }
+
+        var hints = ""
+        puzzleHints.forEachIndexed { index, hint ->
+            if (hint is Hint) {
+                hint.index
+                hint.direction
+                hint.total
+                hints += "${hint.index}${hint.direction}${hint.total}"
+                if (index < puzzleHints.size - 1) {
+                    hints += ":"
+                }
+            }
+        }
+
+        return hints
     }
 
     private fun decodeHints(hintsString: String): MutableList<Hint> {
@@ -265,10 +299,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private fun saveState() {
         engine?.saveDataString("CurrPuzzle", currPuzzle)
 
-        val guessesToSave = encodePlayerGuesses()
+        val guessesToSave = encodePlayerGuesses(playerGuesses)
         engine?.saveDataString("Guesses", guessesToSave)
 
-        val possiblesToSave = encodePossibles()
+        val possiblesToSave = encodePossibles(playerPossibles)
         engine?.saveDataString("Possibles", possiblesToSave)
         Log.d(TAG, "Saved game state.")
     }
@@ -332,7 +366,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
     }
 
-    private fun encodeErrors(): String {
+    private fun encodeErrors(playerErrors: Any): String {
+        if (playerErrors !is MutableSet<*>) {
+            return ""
+        }
+
         var errorString = ""
         playerErrors.forEach { squareIndex ->
             if (errorString.isNotEmpty()) {
@@ -354,7 +392,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
         return output
     }
 
-    private fun encodePossibles(): String {
+    private fun encodePossibles(playerPossibles: Any): String {
+        if (playerPossibles !is MutableMap<*, *>) {
+            return ""
+        }
+
         var possiblesString = ""
         // ampersand separated entries, colon separated index and possibles.
         // 0:1234567&5:100450000
