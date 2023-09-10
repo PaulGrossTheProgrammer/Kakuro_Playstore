@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class SocketClientHandler(private val engine: GameEngine, private val socket: Socket, private val socketServer: SocketServer): Thread() {
 
-    private val sendToThisHandlerQ: BlockingQueue<String> = LinkedBlockingQueue()
+    private val sendToThisHandlerQ: BlockingQueue<GameEngine.Message> = LinkedBlockingQueue()
 
     private val listeningToGameServer = AtomicBoolean(true)
     private val listeningToSocket = AtomicBoolean(true)
@@ -36,19 +36,19 @@ class SocketClientHandler(private val engine: GameEngine, private val socket: So
                 val message = sendToThisHandlerQ.take()  // Blocked until we get data.
                 Log.d(TAG, "Got GameEngine message.")
 
-                if (message == "abandoned") {
+                if (message.type == "Abandoned") {
                     // Special case: GameEngine wants to shutdown this Handler.
                     Log.d(TAG, "Remote socket abandoned. Shutting down.")
                     shutdown()
                 } else {
-                    if (message == "shutdown") {
+                    if (message.type == "Shutdown") {
                         // Special case: GameEngine wants to shutdown this Handler.
                         shutdown()
                     }
 
                     // Pass on to the remote SocketClient
                     Log.d(TAG, "Sending remote Client [$message]")
-                    output.write(message)
+                    output.write(message.asString())
                     output.write("\n")  // TODO: Maybe use a PrintWriter??
                     output.flush()
                 }
@@ -83,10 +83,11 @@ class SocketClientHandler(private val engine: GameEngine, private val socket: So
     // This function is only called by the SocketServer Thread.
      */
     fun shutdownRequest() {
-        sendToThisHandlerQ.add("shutdown")
+        sendToThisHandlerQ.add(GameEngine.Message("Shutdown"))
     }
 
-    private class SocketReaderThread(private val engine: GameEngine, private val socket: Socket, private val sendToThisHandlerQ: BlockingQueue<String>,
+    private class SocketReaderThread(private val engine: GameEngine, private val socket: Socket,
+                                     private val sendToThisHandlerQ: BlockingQueue<GameEngine.Message>,
                                      private var listeningToSocket: AtomicBoolean
     ): Thread() {
 
@@ -124,7 +125,7 @@ class SocketClientHandler(private val engine: GameEngine, private val socket: So
         /**
          * This is the callback function to be used when a message needs to be queued for this Socket.
          */
-        fun queueMessage(message: String) {
+        fun queueMessage(message: GameEngine.Message) {
             Log.d(TAG, "Pushing message to Socket client handler queue: [$message]")
             sendToThisHandlerQ.add(message)
         }

@@ -209,7 +209,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         gameMode = GameMode.LOCAL
     }
 
-    private data class MessageTypeSpec(val messageType: String, val partName: String)
+/*    private data class MessageTypeSpec(val messageType: String, val partName: String)
     private data class MessageCodec(
                        val encoderFunc: (Any) -> String,
                        val decoderFunc: (String) -> Any) {}
@@ -219,13 +219,13 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     fun pluginMessageCodec(messageType: String, partName: String,
                              encoderFunc: (Any) -> String, decoderFunc: (String) -> Any) {
         messageCodecs[MessageTypeSpec(messageType, partName)] = MessageCodec(encoderFunc, decoderFunc)
-    }
+    }*/
 
     class Message(val type: String) {
-        // TODO - add standard encoders and decoders to convert to and from Strings.
-        // Needs to have plugins to encode special types.
-        // TODO - lookup messageCodecs to encode and decode the body variables
-        // Maybe have the body as both raw data and string data, using the codecs as required.
+        // TODO - MAYBE add standard encoders and decoders to convert to and from Strings.
+
+        // TODO - add a new method that allows the raw data to be sent as well as the string version
+        // TODO - Only convert the raw to the string version if required
 
         private var body: MutableMap<String, String>? = null
 
@@ -255,8 +255,12 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         }
 
         fun asString(): String {
-            // TODO
-            return ""
+            var theString = "MessageType=$type"
+            body?.forEach { (partName, partValue) ->
+                theString += ",$partName=$partValue"
+            }
+
+            return theString
         }
 
         companion object {
@@ -367,6 +371,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
     }
 
     private fun handleRequestStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Boolean {
+        Log.d(TAG, "handleRequestStateChangesMessage ...")
         if (responseFunction != null && gameMode == GameMode.SERVER) {
             if (!remotePlayers.contains(responseFunction)) {
                 remotePlayers.add(responseFunction)
@@ -375,12 +380,20 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 
         if (responseFunction != null) {
             if (!stateChangeCallbacks.contains(responseFunction)) {
+                Log.d(TAG,"Adding caller to stateChangeCallbacks ...")
                 stateChangeCallbacks.add(responseFunction)
                 // Assume that the caller does NOT have the current state.
-                val newMessage = Message("State")
-                val test = encodeStateFunction?.invoke()
+//                val newMessage = Message("State")
+//                val test = encodeStateFunction?.invoke()
 
 //                responseFunction?.invoke("MessageType=State,${encodeState()}")
+                if (encodeStateFunction != null) {
+                    val newMessage = encodeStateFunction?.invoke()
+                    if (newMessage != null) {
+                        Log.d(TAG, "Sending ${newMessage.asString()}")
+                        responseFunction.invoke(newMessage)
+                    }
+                }
                 encodeStateFunction?.invoke()?.let { responseFunction?.invoke(it) }
             }
         }
@@ -398,13 +411,38 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         if (responseFunction != null) {
             engineStateChangeListeners.add(responseFunction)
             // Also send the current engine state. This assumes that a new request needs the current state.
-            val newMessage = Message("EngineState")
-            newMessage.setKeyString("GameMode", gameMode.toString())
-            // TODO - use a standard encoder for messages to string
-//            responseFunction.invoke(newMessage.)
+
+            responseFunction.invoke(getEngineState())
         }
 
         return false  // No state change to broadcast.
+    }
+
+    private fun getEngineState(): Message {
+        val newMessage = Message("EngineState")
+        newMessage.setKeyString("GameMode", gameMode.toString())
+        newMessage.setKeyString("IPAddress", encodeIpAddresses())
+        newMessage.setKeyString("Clients", remotePlayers.size.toString())
+
+        return newMessage
+    }
+
+    fun encodeIpAddresses(): String {
+        var ips = ""
+        allIpAddresses.forEach { add ->
+            if (ips.isNotEmpty()) {
+                ips += ","
+            }
+            ips += add
+        }
+
+        return ips
+    }
+
+    fun decodeIpAddresses(data: String): List<String> {
+        val theList = data.split(",")
+
+        return theList
     }
 
     private fun pushStateToClients() {

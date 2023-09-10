@@ -22,7 +22,6 @@ import androidx.core.content.ContextCompat
 class GameEngineSettingsActivity : AppCompatActivity() {
 
     private val settingsListNames: List<String> = listOf<String>("LOCAL", "CLIENT", "SERVER")
-
     private val settingsListIndexViewIds: List<Int> = listOf(R.layout.activity_settings_listitem, R.layout.activity_settings_listitem, R.layout.activity_settings_listitem)
 
     // TODO - add client and local layouts too ...
@@ -37,6 +36,10 @@ class GameEngineSettingsActivity : AppCompatActivity() {
     private var selectedSetting: String = ""
 
     private var engine: GameEngine? = null
+
+    private var gameMode: GameEngine.GameMode = GameEngine.GameMode.LOCAL
+    private var remotePlayerCount = 0
+    private val allIpAddresses: MutableList<String> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -191,6 +194,26 @@ class GameEngineSettingsActivity : AppCompatActivity() {
             Log.d(TAG, "Got a message: ${message.type}")
             if (message.type == "EngineState") {
                 Log.d(TAG, "TODO - handle GameMode message ...")
+                val mode = message.getString("GameMode")
+                val ipString = message.getString("IPAddress")
+                val clientCount = message.getString("Clients")
+
+                if (mode != null) {
+                    Log.d(TAG, "mode = $mode")
+                    gameMode = GameEngine.GameMode.valueOf(mode)
+                }
+                if (ipString != null) {
+                    Log.d(TAG, "ipString = $ipString")
+                    allIpAddresses.clear()
+                    val newList = engine?.decodeIpAddresses(ipString)
+                    if (newList != null) {
+                        allIpAddresses.addAll(newList)
+                    }
+                }
+                if (clientCount != null) {
+                    Log.d(TAG, "clientCount = $clientCount")
+                    remotePlayerCount = clientCount.toInt()
+                }
             }
         }
     }
@@ -208,11 +231,11 @@ class GameEngineSettingsActivity : AppCompatActivity() {
     /**
      * This is the CALLBACK function to be used when a message needs to be queued for this Activity.
      */
-    private fun queueMessage(message: String) {
+    private fun queueMessage(message: GameEngine.Message) {
         // The UI thread will call activityMessageReceiver() to handle the message.
         val intent = Intent()
         intent.action = queuedMessageAction
-        intent.putExtra("Message", message)
+        intent.putExtra("Message", message.asString())
         sendBroadcast(intent)
     }
 

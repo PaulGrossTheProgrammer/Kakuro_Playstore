@@ -42,11 +42,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine.pluginEncodeState(::encodeStateMessage)
         engine.pluginDecodeState(::decodeState)
 
-        engine.pluginMessageCodec("State", "w", ::encodeInt, ::decodeInt )
-        engine.pluginMessageCodec("State", "g", ::encodePlayerGuesses, ::decodePlayerGuesses )
-        engine.pluginMessageCodec("State", "h", ::encodeHints, ::decodeHints )
-        engine.pluginMessageCodec("State", "p", ::encodePossibles, ::decodePossibles )
-        engine.pluginMessageCodec("State", "e", ::encodeErrors, ::decodeErrors )
+//        engine.pluginMessageCodec("State", "w", ::encodeInt, ::decodeInt )
+//        engine.pluginMessageCodec("State", "g", ::encodePlayerGuesses, ::decodePlayerGuesses )
+//        engine.pluginMessageCodec("State", "h", ::encodeHints, ::decodeHints )
+//        engine.pluginMessageCodec("State", "p", ::encodePossibles, ::decodePossibles )
+//        engine.pluginMessageCodec("State", "e", ::encodeErrors, ::decodeErrors )
 
         // Override the default save and load usage of encode and decode state.
         engine.pluginSaveState(::saveState)
@@ -199,8 +199,12 @@ object KakuroGameplayDefinition: GameplayDefinition {
         message.setKeyString("w", puzzleWidth.toString())
         message.setKeyString("g", encodePlayerGuesses(playerGuesses))
         message.setKeyString("h", encodeHints(puzzleHints))
-        message.setKeyString("p", encodePossibles(playerPossibles))
-        message.setKeyString("e", encodeErrors(playerErrors))
+        if (playerErrors.isNotEmpty()) {
+            message.setKeyString("p", encodePossibles(playerPossibles))
+        }
+        if (playerErrors.isNotEmpty()) {
+            message.setKeyString("e", encodeErrors(playerErrors))
+        }
         return message
     }
 

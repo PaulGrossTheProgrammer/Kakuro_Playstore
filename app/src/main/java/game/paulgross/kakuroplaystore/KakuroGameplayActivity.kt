@@ -433,8 +433,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
      */
     private val activityMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+            Log.d(TAG, "Received new message ...")
 
             val messageString = intent.getStringExtra("Message") ?: return
+            Log.d(TAG, "Message: $messageString")
 
             val message = GameEngine.Message.decodeMessage(messageString)
             if (message.type == "State") {
@@ -459,11 +461,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
     /**
      * This is the CALLBACK function to be used when a message needs to be queued for this Activity.
      */
-    private fun queueMessage(message: String) {
+    private fun queueMessage(message: GameEngine.Message) {
         // The UI thread will call activityMessageReceiver() to handle the message.
         val intent = Intent()
         intent.action = queuedMessageAction
-        intent.putExtra("Message", message)
+        intent.putExtra("Message", message.asString())
         sendBroadcast(intent)
     }
 

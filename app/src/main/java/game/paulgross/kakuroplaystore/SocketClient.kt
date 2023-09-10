@@ -21,7 +21,7 @@ class SocketClient(private val engine: GameEngine, private val server: String, p
 
     private val clientSocket: Socket = Socket(server, port)
 
-    private val fromGameEngineQ: BlockingQueue<String> = LinkedBlockingQueue()
+    private val fromGameEngineQ: BlockingQueue<GameEngine.Message> = LinkedBlockingQueue()
 
     private val listeningToGameEngine = AtomicBoolean(true)
     private val listeningToSocket = AtomicBoolean(true)
@@ -42,11 +42,11 @@ class SocketClient(private val engine: GameEngine, private val server: String, p
                 val gameMessage = fromGameEngineQ.take()  // Blocked until we get data.
                 Log.d(TAG, "From LOCAL Game Engine: [$gameMessage]")
 
-                if (gameMessage == "Abandoned") {
+                if (gameMessage.type == "Abandoned") {
                     Log.d(TAG, "Remote socket abandoned. Shutting down.")
                     shutdown()
                 } else {
-                    if (gameMessage == "Shutdown") {
+                    if (gameMessage.type == "Shutdown") {
                         shutdown()
                     }
 
@@ -79,10 +79,11 @@ class SocketClient(private val engine: GameEngine, private val server: String, p
     }
 
     fun shutdownRequest() {
-        fromGameEngineQ.add("Shutdown")
+        fromGameEngineQ.add(GameEngine.Message("Shutdown"))
     }
 
-    private class SocketReaderThread(private val engine: GameEngine, private val socket: Socket, private val fromGameServerQ: BlockingQueue<String>,
+    private class SocketReaderThread(private val engine: GameEngine, private val socket: Socket,
+                                     private val fromGameServerQ: BlockingQueue<GameEngine.Message>,
                                      private var listeningToSocket: AtomicBoolean
     ): Thread() {
 
@@ -122,7 +123,7 @@ class SocketClient(private val engine: GameEngine, private val server: String, p
         /**
          * This is the callback function to be used when a message needs to be queued for this Socket Client.
          */
-        fun queueMessage(message: String) {
+        fun queueMessage(message: GameEngine.Message) {
             Log.d(TAG, "Pushing message to Socket Client queue: [$message]")
             fromGameServerQ.add(message)
         }
