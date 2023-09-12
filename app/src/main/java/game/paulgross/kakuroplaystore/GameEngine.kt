@@ -96,6 +96,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         listOfSystemHandlers.add(SystemMessageHandler("StartLocal", ::handleStartLocalMessage))
         listOfSystemHandlers.add(SystemMessageHandler("StopGame", ::handleStopGameMessage))
         listOfSystemHandlers.add(SystemMessageHandler("RequestEngineStateChanges", ::handleRequestEngineStateChangesMessage))
+        listOfSystemHandlers.add(SystemMessageHandler("RequestStopEngineStateChanges", ::handleRequestStopEngineStateChangesMessage))
         listOfSystemHandlers.add(SystemMessageHandler("RequestStateChanges", ::handleRequestStateChangesMessage))
 
         definition.setEngine(this)  // This is where the Definition plugs in its own message handlers.
@@ -113,7 +114,9 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
                 im = inboundMessageQueue.poll()
             }
 
-            var stateChanged = false
+
+            var systemStateChange = false
+            var gameStateChanged = false
 
             if (im != null) {
 
@@ -121,9 +124,10 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
                 listOfSystemHandlers.forEach { handler ->
                     if (handler.type == im.message.type) {
                         Log.d(TAG, "Handling SYSTEM message: ${im.message.type}")
+                        // TODO - system handlers need to pass back 2 flags: System and Game state changed.
                         val changed = handler.handlerFunction.invoke(im.message, im.source, im.responseFunction)
                         if (changed) {
-                            stateChanged = true
+                            gameStateChanged = true
                         }
                     }
                 }
@@ -133,7 +137,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
                     if (handler.type == im.message.type) {
                         val changed = handler.handlerFunction.invoke(im.message)
                         if (changed) {
-                            stateChanged = true
+                            gameStateChanged = true
                         }
                     }
                 }
@@ -145,7 +149,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 //                stateChanged = actionFunction.invoke()...
             }
 
-            if (stateChanged) {
+            if (gameStateChanged) {
                 saveGameState()
                 pushStateToClients()
             }
@@ -401,18 +405,29 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         return false // No change made to the game state
     }
 
-    private val engineStateChangeListeners: MutableList<(message: Message) -> Unit> = mutableListOf()
+    private val engineStateChangeListeners: MutableSet<(message: Message) -> Unit> = mutableSetOf()
 
     private fun handleRequestEngineStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Boolean {
-        // TODO
-        Log.d(TAG, "Request for engine state changes received ... TODO")
+        Log.d(TAG, "Request for engine state changes received")
 
-        // Put the response function on the list for future notifications.
+        // Put the response function in the Set for future notifications.
         if (responseFunction != null) {
             engineStateChangeListeners.add(responseFunction)
             // Also send the current engine state. This assumes that a new request needs the current state.
 
             responseFunction.invoke(getEngineState())
+        }
+
+        return false  // No state change to broadcast.
+    }
+
+    private fun handleRequestStopEngineStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Boolean {
+        // TODO
+        Log.d(TAG, "Request STOP for engine state changes received")
+
+        // Remove the response function from the Set for future notifications.
+        if (responseFunction != null) {
+            engineStateChangeListeners.remove(responseFunction)
         }
 
         return false  // No state change to broadcast.

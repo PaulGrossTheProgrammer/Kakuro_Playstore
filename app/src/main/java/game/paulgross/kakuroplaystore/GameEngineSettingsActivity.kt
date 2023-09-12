@@ -56,6 +56,17 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         engine?.queueActivityMessage(GameEngine.Message("RequestEngineStateChanges"), ::queueMessage)
     }
 
+    override fun onPause() {
+        super.onPause()
+        engine?.queueActivityMessage(GameEngine.Message("RequestStopEngineStateChanges"), ::queueMessage)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        engine = GameEngine.get()
+        engine?.queueActivityMessage(GameEngine.Message("RequestEngineStateChanges"), ::queueMessage)
+    }
+
     private fun showLayout() {
         // Use selectedSetting to determine layout ...
         var lookupViewId: Int? = settingsTargetViewIds[selectedSetting]
