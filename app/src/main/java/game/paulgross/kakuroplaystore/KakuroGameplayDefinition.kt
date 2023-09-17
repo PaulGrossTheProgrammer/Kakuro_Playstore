@@ -39,7 +39,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
         // TODO - BUT decodeState returns StateVariables from this class, which isn't generic.
         // Maybe a Map is generic???
-        engine.pluginEncodeState(::encodeStateMessage)
+        engine.pluginEncodeState(::encodeState)
         engine.pluginDecodeState(::decodeState)
 
 //        engine.pluginMessageCodec("State", "w", ::encodeInt, ::decodeInt )
@@ -170,36 +170,12 @@ object KakuroGameplayDefinition: GameplayDefinition {
         return true
     }
 
-    private fun encodeState(): String {
-        var state = ""
-
-        state += "w=$puzzleWidth,"
-        state += "g=" + encodePlayerGuesses(playerGuesses)
-
-        // h=2ACROSS13:2DOWN23 ... etc
-        // TODO - call a method to encode
-        state += ",h=" + encodeHints(puzzleHints)
-
-        // p=2:0123000000,8:0000006780
-        if (playerPossibles.isNotEmpty()) {
-            state += ",p="
-            state += encodePossibles(playerPossibles)
-        }
-
-        if (playerErrors.isNotEmpty()) {
-            state += ",e="
-            state += encodeErrors(playerErrors)
-        }
-
-        return state
-    }
-
-    private fun encodeStateMessage(): GameEngine.Message {
+    private fun encodeState(): GameEngine.Message {
         val message = GameEngine.Message("State")
         message.setKeyString("w", puzzleWidth.toString())
         message.setKeyString("g", encodePlayerGuesses(playerGuesses))
         message.setKeyString("h", encodeHints(puzzleHints))
-        if (playerErrors.isNotEmpty()) {
+        if (playerPossibles.isNotEmpty()) {
             message.setKeyString("p", encodePossibles(playerPossibles))
         }
         if (playerErrors.isNotEmpty()) {
