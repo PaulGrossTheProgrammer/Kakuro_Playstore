@@ -95,8 +95,8 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         listOfSystemHandlers.add(SystemMessageHandler("Abandoned", ::handleAbandonedMessage))
         listOfSystemHandlers.add(SystemMessageHandler("Reset", ::handleResetMessage))
         listOfSystemHandlers.add(SystemMessageHandler("StartServer", ::handleStartServerMessage))
-        listOfSystemHandlers.add(SystemMessageHandler("RemoteServer", ::handleRemoteServerMessage))
         listOfSystemHandlers.add(SystemMessageHandler("StartLocal", ::handleStartLocalMessage))
+        listOfSystemHandlers.add(SystemMessageHandler("RemoteServer", ::handleRemoteServerMessage))
         listOfSystemHandlers.add(SystemMessageHandler("StopGame", ::handleStopGameMessage))
         listOfSystemHandlers.add(SystemMessageHandler("RequestEngineStateChanges", ::handleRequestEngineStateChangesMessage))
         listOfSystemHandlers.add(SystemMessageHandler("RequestStopEngineStateChanges", ::handleRequestStopEngineStateChangesMessage))
@@ -138,6 +138,7 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
                     }
                 }
 
+
                 // Check game messages.
                 listOfGameHandlers.forEach { handler ->
                     if (handler.type == im.message.type) {
@@ -154,8 +155,10 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
 //                stateChanged = actionFunction.invoke()...
             }
 
+            // TODO - if systemStateChange notify listeners...
+
             if (gameStateChanged) {
-                saveGameState()
+                saveGameState() // Maybe don't do this for fast periodic games
                 pushStateToClients()
             }
 
