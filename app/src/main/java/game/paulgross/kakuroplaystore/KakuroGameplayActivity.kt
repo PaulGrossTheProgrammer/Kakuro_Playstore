@@ -31,7 +31,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         // Attach the custom TouchListener to the custom PlayingGridView
         val viewPlayGrid = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        viewPlayGrid.setActivity(this)
+//        viewPlayGrid.setActivity(this)
         viewPlayGrid.setOnTouchListener(PlayingGridView.CustomListener(this, viewPlayGrid))
 
         enableQueuedMessages()
@@ -54,15 +54,21 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine?.gotoSettingsActivity(this)
     }
 
+    private var gameState: KakuroGameplayDefinition.StateVariables? = null
+
     /**
      * Update the custom playGridView with the state and request a redraw.
      */
-    private fun displayGrid(gameState: KakuroGameplayDefinition.StateVariables) {
+    private fun displayGrid(newGameState: KakuroGameplayDefinition.StateVariables) {
 
+        gameState = newGameState
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).invalidate()
+/*
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
 
         playGridView.updateState(gameState)
         playGridView.invalidate() // Trigger a redraw
+*/
     }
 
     /**
@@ -83,8 +89,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var yOffsetPx = 0f
         // TODO - implement a scale factor...
 
-        private var gameState: KakuroGameplayDefinition.StateVariables? = null
-
         private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
         private val colourNonPlaySquareInside = Color.argb(180, 40, 71, 156)
@@ -92,10 +96,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private val colourGuessSquare = Color.argb(180, 188, 190, 194)
         private val colourGuessSquareSelected = Color.argb(180, 255, 255, 255)
 
-        private var gameplayActivity: KakuroGameplayActivity? = null
-        fun setActivity(gameplayActivity: KakuroGameplayActivity) {
-            this.gameplayActivity = gameplayActivity
+        private lateinit var gameplayActivity: KakuroGameplayActivity
+
+        init {
+            if (context is KakuroGameplayActivity) {
+                gameplayActivity = context
+            }
         }
+
+/*        fun setActivity(gameplayActivity: KakuroGameplayActivity) {
+            this.gameplayActivity = gameplayActivity
+        }*/
+
 
         /**
          * Create a TouchArea lookup to find the index of the guess square that was touched.
@@ -135,10 +147,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
 
-            setRelativeSizes()  // FIXME - why do I need this here as well as updateState() ???
+            // FIXME - THIS IS WEIRD - why does this even work??
+            // FIXME - exactly how does this run after the gameState is first set???
+            // FIXME - I have fundamentally misunderstood something about the initialisation process...
+            setRelativeSizes()
         }
 
-        fun updateState(newState: KakuroGameplayDefinition.StateVariables) {
+/*        fun updateState(newState: KakuroGameplayDefinition.StateVariables) {
             var updateSizes = false
             if (gameState == null) {
                 updateSizes = true
@@ -151,12 +166,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (updateSizes) {
                 setRelativeSizes()
             }
-        }
+        }*/
 
 
         private fun setRelativeSizes() {
             Log.d("PlayingGridView", "setRelativeSizes(): Width = $measuredWidth, height = $measuredHeight")
-            if (gameState == null) {
+            if (gameplayActivity?.gameState == null) {
                 Log.d("PlayingGridView", "setRelativeSizes() exiting because gameState is null.")
                 return
             }
@@ -164,7 +179,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
 
-            var displayRows = gameState!!.puzzleWidth + 1
+            var displayRows = gameplayActivity?.gameState!!.puzzleWidth + 1
             if (displayRows > maxDisplayRows) {
                 displayRows = maxDisplayRows
             }
@@ -177,8 +192,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             possiblesTextSize = squareWidth * 0.25f
 
             margin = squareWidth * 0.08f
-
-
         }
 
         private val paint = Paint()
@@ -186,7 +199,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
             Log.d("PlayingGridView", "onDraw() running")
-            if (gameState == null) {
+            if (gameplayActivity?.gameState == null) {
                 Log.d("PlayingGridView", "onDraw() exiting - No gameState to draw.")
                 return
             }
@@ -209,8 +222,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
             var currX = startX
             var currY = yOffsetPx
 
-            var rows = gameState!!.puzzleWidth + 1
-            var cols = gameState!!.playerGrid.size.div(gameState!!.puzzleWidth) + 1
+            var rows = gameplayActivity?.gameState!!.puzzleWidth + 1
+            var cols = gameplayActivity?.gameState!!.playerGrid.size.div(gameplayActivity?.gameState!!.puzzleWidth) + 1
 
             // Assume a square display area.
             if (rows > maxDisplayRows) {
@@ -223,30 +236,30 @@ class KakuroGameplayActivity : AppCompatActivity() {
             var index = 0
 
             // TODO: Use x and y offsets to allow the player to move around large puzzles.
-            for (col in (1..gameState!!.puzzleWidth + 1)) {
-                for (row in (1..gameState!!.puzzleWidth + 1)) {
+            for (col in (1..gameplayActivity?.gameState!!.puzzleWidth + 1)) {
+                for (row in (1..gameplayActivity?.gameState!!.puzzleWidth + 1)) {
                     // First row and colum are only used as space for showing hints.
                     val puzzleSquare = (col != 1 && row != 1)
 
                     if (puzzleSquare) {
-                        val gridValue = gameState!!.playerGrid[index]
+                        val gridValue = gameplayActivity?.gameState!!.playerGrid[index]
                         // Non-playable grid value is -1, 0 means no guess yet, > 0 means a player guess
                         if (gridValue != -1) {
                             val selected = (index == gameplayActivity?.selectedIndex)
 
-                            var possiblesString = gameState!!.possibles[index]
+                            var possiblesString = gameplayActivity?.gameState!!.possibles[index]
                             if (gridValue != 0) {
                                 possiblesString = null
                             }
 
-                            val error = gameState!!.playerErrors.contains(index)
+                            val error = gameplayActivity?.gameState!!.playerErrors.contains(index)
 
                             drawGuessSquare(index, gridValue.toString(), possiblesString, selected, error, addTouchAreas, currX, currY, canvas, paint)
                         } else {
                             drawBlankSquare(currX, currY, canvas, paint)
                         }
 
-                        gameState!!.playerHints.forEach { hint ->
+                        gameplayActivity?.gameState!!.playerHints.forEach { hint ->
                             if (index == hint.index) {
                                 if (hint.direction == KakuroGameplayDefinition.Direction.DOWN) {
                                     drawDownHint(hint.total.toString(), currX, currY, canvas, paint)
@@ -264,7 +277,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
                     currX += squareWidth
                 }
-                index = (col - 1) * gameState!!.puzzleWidth
+                index = (col - 1) * gameplayActivity?.gameState!!.puzzleWidth
 
                 // TODO - these two seem around the wrong way...
                 currX = startX
