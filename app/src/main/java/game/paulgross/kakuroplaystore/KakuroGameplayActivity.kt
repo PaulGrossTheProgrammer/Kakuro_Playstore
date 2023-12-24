@@ -88,7 +88,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var borderThickness =1f
 
         private var maxDisplayRows = 10
+        private var minDisplayRows = 4
         private var displayRows = maxDisplayRows
+        private var displayZoom = 0
         private var xSquaresOffset = 0
         private var ySquaresOffset = 0
         private var offsetChanged = false
@@ -181,9 +183,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
 
-            displayRows = gameplayActivity.gameState!!.puzzleWidth + 1
+            displayRows = gameplayActivity.gameState!!.puzzleWidth + 1 + displayZoom
             if (displayRows > maxDisplayRows) {
                 displayRows = maxDisplayRows
+            }
+            if (displayRows < minDisplayRows) {
+                displayRows = minDisplayRows
             }
 
             squareWidth = (currViewWidth/displayRows).toFloat()
@@ -401,6 +406,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     fun onClickScrollRight(view: View) {
         scrollGrid(-1,0)
+    }
+
+    fun onClickZoomIn(view: View) {
+        Log.d(TAG, "Clicked zoom in - TODO")
+    }
+
+    fun onClickZoomOut(view: View) {
+        Log.d(TAG, "Clicked zoom out - TODO")
     }
 
     fun onClickDigit(view: View) {
