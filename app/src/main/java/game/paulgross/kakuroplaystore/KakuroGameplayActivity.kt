@@ -31,7 +31,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         // Attach the custom TouchListener to the custom PlayingGridView
         val viewPlayGrid = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-//        viewPlayGrid.setActivity(this)
         viewPlayGrid.setOnTouchListener(PlayingGridView.CustomListener(this, viewPlayGrid))
 
         enableQueuedMessages()
@@ -59,16 +58,20 @@ class KakuroGameplayActivity : AppCompatActivity() {
     /**
      * Update the custom playGridView with the state and request a redraw.
      */
-    private fun displayGrid(newGameState: KakuroGameplayDefinition.StateVariables) {
+    private fun displayGrid(newestGameState: KakuroGameplayDefinition.StateVariables) {
+        gameState = newestGameState
 
-        gameState = newGameState
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).invalidate()
-/*
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        // FIXME - we only want to do setRelativeSizes if the size has changed, not every single time.
+        playGridView.setRelativeSizes()
+        playGridView.invalidate()
+    }
 
-        playGridView.updateState(gameState)
-        playGridView.invalidate() // Trigger a redraw
-*/
+
+    private fun scrollGrid(xSquares: Int, ySquares: Int) {
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        playGridView.scrollGrid(xSquares, ySquares)
+        playGridView.invalidate()
     }
 
     /**
@@ -85,11 +88,15 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var borderThickness =1f
 
         private var maxDisplayRows = 10
-        private var xOffsetPx = 0f
-        private var yOffsetPx = 0f
+        private var displayRows = maxDisplayRows
+        private var xSquaresOffset = 0
+        private var ySquaresOffset = 0
+        private var offsetChanged = false
+
         // TODO - implement a scale factor...
 
         private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
+        // TODO - scale the bitmap...
 
         private val colourNonPlaySquareInside = Color.argb(180, 40, 71, 156)
         private val colourSquareBorder = Color.argb(180, 29, 51, 112)
@@ -103,11 +110,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 gameplayActivity = context
             }
         }
-
-/*        fun setActivity(gameplayActivity: KakuroGameplayActivity) {
-            this.gameplayActivity = gameplayActivity
-        }*/
-
 
         /**
          * Create a TouchArea lookup to find the index of the guess square that was touched.
@@ -144,32 +146,32 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
         }
 
-        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        fun scrollGrid(xSquares: Int, ySquares: Int) {
+            xSquaresOffset += xSquares
+            ySquaresOffset += ySquares
+            offsetChanged = true
 
-            // FIXME - THIS IS WEIRD - why does this even work??
-            // FIXME - exactly how does this run after the gameState is first set???
-            // FIXME - I have fundamentally misunderstood something about the initialisation process...
-            setRelativeSizes()
+            // Limit the upward and left offsets to one row
+            if (xSquaresOffset < -1 ) {
+                xSquaresOffset = -1
+            }
+            if (ySquaresOffset < -1 ) {
+                ySquaresOffset = -1
+            }
+
+            // Limit the downward and right offsets to one row more than the puzzleWidth
+            // Note that display rows includes an extra row for hints
+            val xSize = gameplayActivity.gameState!!.puzzleWidth
+            val ySize = gameplayActivity?.gameState!!.playerGrid.size / xSize
+            if (xSquaresOffset > xSize - displayRows + 2) {
+                xSquaresOffset = xSize - displayRows + 2
+            }
+            if (ySquaresOffset > ySize - displayRows + 2) {
+                ySquaresOffset = ySize - displayRows + 2
+            }
         }
 
-/*        fun updateState(newState: KakuroGameplayDefinition.StateVariables) {
-            var updateSizes = false
-            if (gameState == null) {
-                updateSizes = true
-            }
-
-            // Any other conditions??? to force recalc of all relative sizes???
-
-            gameState = newState
-
-            if (updateSizes) {
-                setRelativeSizes()
-            }
-        }*/
-
-
-        private fun setRelativeSizes() {
+        fun setRelativeSizes() {
             Log.d("PlayingGridView", "setRelativeSizes(): Width = $measuredWidth, height = $measuredHeight")
             if (gameplayActivity?.gameState == null) {
                 Log.d("PlayingGridView", "setRelativeSizes() exiting because gameState is null.")
@@ -179,7 +181,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
 
-            var displayRows = gameplayActivity?.gameState!!.puzzleWidth + 1
+            displayRows = gameplayActivity.gameState!!.puzzleWidth + 1
             if (displayRows > maxDisplayRows) {
                 displayRows = maxDisplayRows
             }
@@ -206,16 +208,22 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
             canvas.drawBitmap(paperTexture, 0f, 0f, paint) // TODO scale this to the final size
 
-            // TODO: Only add new touch areas if the existing ones are missing or outdated.
-            // This will get complicated when the user can scroll around large puzzles
-            // where only part of the whole puzzle is visible at any one time.
+            // Only add new touch areas if the existing ones are missing or invalid due to scrolling.
+            if (offsetChanged) {
+                offsetChanged = false
+                playSquareTouchLookUpId.clear()
+            }
             var addTouchAreas = false
             if (playSquareTouchLookUpId.isEmpty()) {
+                playSquareTouchLookUpId.clear()
                 addTouchAreas = true
             }
 
             // Draw grid
             paint.color = Color.WHITE
+
+            val xOffsetPx = xSquaresOffset * squareWidth
+            val yOffsetPx = ySquaresOffset * squareWidth
 
             val startX = xOffsetPx
 
@@ -235,7 +243,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
             var index = 0
 
-            // TODO: Use x and y offsets to allow the player to move around large puzzles.
             for (col in (1..gameplayActivity?.gameState!!.puzzleWidth + 1)) {
                 for (row in (1..gameplayActivity?.gameState!!.puzzleWidth + 1)) {
                     // First row and colum are only used as space for showing hints.
@@ -279,7 +286,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 }
                 index = (col - 1) * gameplayActivity?.gameState!!.puzzleWidth
 
-                // TODO - these two seem around the wrong way...
+                // TODO - these two seem around the wrong way...???
                 currX = startX
                 currY += squareWidth
             }
@@ -378,6 +385,22 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private fun touchedGuessClear() {
         selectedIndex = -1
         findViewById<PlayingGridView>(R.id.viewPlayGrid).invalidate() // Trigger a redraw
+    }
+
+    fun onClickScrollUp(view: View) {
+        scrollGrid(0,1)
+    }
+
+    fun onClickScrollDown(view: View) {
+        scrollGrid(0,-1)
+    }
+
+    fun onClickScrollLeft(view: View) {
+        scrollGrid(1,0)
+    }
+
+    fun onClickScrollRight(view: View) {
+        scrollGrid(-1,0)
     }
 
     fun onClickDigit(view: View) {
