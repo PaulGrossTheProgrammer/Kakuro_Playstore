@@ -38,7 +38,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine.registerHandler("Guess", ::submitGuess)
         engine.registerHandler("Possible", ::togglePossible)
         engine.registerHandler("RestartPuzzle", ::restartPuzzle)
-        engine.registerHandler("NewPuzzle", ::testPuzzle2)
+
+        engine.registerHandler("NewPuzzle", ::testPuzzle2)  // TODO- test only
         // TODO - implement an undo button...
 
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
@@ -64,10 +65,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     fun decodeInt(intString: String): Int {
         return intString.toInt()
-    }
-
-    fun testOnly(input: Any): String {
-        return ""
     }
 
     private fun restartPuzzle(message: GameEngine.Message): Boolean {
@@ -318,8 +315,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
         Log.d(TAG, "currPuzzle = $currPuzzle")
 
         startPuzzleFromString(currPuzzle)
-//        puzzleHints.clear()
-//        generateHints()
 
         val guessesString = engine?.loadDataString("Guesses", "")
 
@@ -354,6 +349,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun startPuzzleFromString(puzzleString: String) {
+        currPuzzle = puzzleString
         puzzleWidth = puzzleString.substring(0, 2).toInt()
 
         puzzleSolution.clear()
@@ -366,6 +362,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
         puzzleHints.clear()
         generateHints()
+
+        playerGuesses.clear()
+        playerErrors.clear()
+        playerPossibles.clear()
     }
 
     private fun encodeErrors(playerErrors: Any): String {

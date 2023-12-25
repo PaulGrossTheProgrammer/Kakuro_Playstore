@@ -62,7 +62,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         gameState = newestGameState
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        // FIXME - we only want to do setRelativeSizes if the size has changed, not every single time.
+        // FIXME - we only want to do setScreenSizes if the size has changed, not every single time.
         playGridView.setScreenSizes()
         playGridView.invalidate()
     }
@@ -142,7 +142,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         fun setSelectedIndex(index: Int) {
             selectedIndex = index
-            invalidate()
+            invalidate()  // Force the grid to be redrawn
         }
         fun getSelectedIndex(): Int {
             return selectedIndex
