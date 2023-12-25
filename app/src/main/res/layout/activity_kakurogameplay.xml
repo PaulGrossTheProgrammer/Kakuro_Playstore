@@ -407,4 +407,13 @@
         app:layout_constraintTop_toBottomOf="@+id/textViewButton8"
         app:srcCompat="@android:drawable/btn_plus" />
 
+    <Button
+        android:id="@+id/ButtonPuzzle2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="onClickPuzzle2"
+        android:text="Puzzle2"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/textViewSettings" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

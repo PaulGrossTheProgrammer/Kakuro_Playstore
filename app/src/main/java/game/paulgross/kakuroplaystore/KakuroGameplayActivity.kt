@@ -474,6 +474,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         builder.show()
     }
 
+    fun onClickPuzzle2(view: View) {
+        Log.d(TAG, "Clicked Puzzle 2")
+        engine?.queueActivityMessage(GameEngine.Message("NewPuzzle"), ::queueMessage)
+    }
+
     private fun confirmExitApp() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Exit")

@@ -10,7 +10,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private const val DEFAULT_PUZZLE = "043100820006980071"
 
-    //https://www.kakuroconquest.com/6x6/intermediate
+    private val puzzle2 = "06790079879012001328587900690821260073"
+
+    // https://www.kakuroconquest.com/6x6/intermediate
 
     private var currPuzzle = ""
     private var puzzleWidth = 1
@@ -36,6 +38,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine.registerHandler("Guess", ::submitGuess)
         engine.registerHandler("Possible", ::togglePossible)
         engine.registerHandler("RestartPuzzle", ::restartPuzzle)
+        engine.registerHandler("NewPuzzle", ::testPuzzle2)
         // TODO - implement an undo button...
 
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
@@ -343,6 +346,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
         playerPossibles = decodePossibles(possiblesString!!)
 
         markPlayerErrors()
+    }
+
+    private fun testPuzzle2(message: GameEngine.Message): Boolean {
+        startPuzzleFromString(puzzle2)
+        return true
     }
 
     private fun startPuzzleFromString(puzzleString: String) {
