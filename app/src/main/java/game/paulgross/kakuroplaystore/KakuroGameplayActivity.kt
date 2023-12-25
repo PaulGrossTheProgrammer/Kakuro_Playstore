@@ -87,6 +87,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var xSquaresOffset = 0
         private var ySquaresOffset = 0
 
+        private var selectedIndex: Int = -1
+
         private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
         // TODO - scale the bitmap...
 
@@ -138,6 +140,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
         }
 
+        fun setSelectedIndex(index: Int) {
+            selectedIndex = index
+            invalidate()
+        }
+        fun getSelectedIndex(): Int {
+            return selectedIndex
+        }
+
         fun zoomGrid(changeZoom: Int) {
             // TODO - limit the zoom to sensible values
             displayZoom += changeZoom
@@ -179,7 +189,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 Log.d("PlayingGridView", "setRelativeSizes() exiting because gameState is null.")
                 return
             }
-            // TODO: Clear any active touch areas
             playSquareTouchLookUpId.clear()
 
             currViewWidth = measuredWidth
@@ -232,8 +241,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
             var currX = startX
             var currY = yOffsetPx
 
-            var rows = gameplayActivity?.gameState!!.puzzleWidth + 1
-            var cols = gameplayActivity?.gameState!!.playerGrid.size.div(gameplayActivity?.gameState!!.puzzleWidth) + 1
+            var rows = gameplayActivity.gameState!!.puzzleWidth + 1
+            var cols = gameplayActivity.gameState!!.playerGrid.size.div(gameplayActivity.gameState!!.puzzleWidth) + 1
 
             // Assume a square display area.
             if (rows > maxDisplayRows) {
@@ -245,30 +254,30 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
             var index = 0
 
-            for (col in (1..gameplayActivity?.gameState!!.puzzleWidth + 1)) {
-                for (row in (1..gameplayActivity?.gameState!!.puzzleWidth + 1)) {
+            for (col in (1..gameplayActivity.gameState!!.puzzleWidth + 1)) {
+                for (row in (1..gameplayActivity.gameState!!.puzzleWidth + 1)) {
                     // First row and colum are only used as space for showing hints.
                     val puzzleSquare = (col != 1 && row != 1)
 
                     if (puzzleSquare) {
-                        val gridValue = gameplayActivity?.gameState!!.playerGrid[index]
+                        val gridValue = gameplayActivity.gameState!!.playerGrid[index]
                         // Non-playable grid value is -1, 0 means no guess yet, > 0 means a player guess
                         if (gridValue != -1) {
-                            val selected = (index == gameplayActivity?.selectedIndex)
+                            val selected = (index == selectedIndex)
 
-                            var possiblesString = gameplayActivity?.gameState!!.possibles[index]
+                            var possiblesString = gameplayActivity.gameState!!.possibles[index]
                             if (gridValue != 0) {
                                 possiblesString = null
                             }
 
-                            val error = gameplayActivity?.gameState!!.playerErrors.contains(index)
+                            val error = gameplayActivity.gameState!!.playerErrors.contains(index)
 
                             drawGuessSquare(index, gridValue.toString(), possiblesString, selected, error, addTouchAreas, currX, currY, canvas, paint)
                         } else {
                             drawBlankSquare(currX, currY, canvas, paint)
                         }
 
-                        gameplayActivity?.gameState!!.playerHints.forEach { hint ->
+                        gameplayActivity.gameState!!.playerHints.forEach { hint ->
                             if (index == hint.index) {
                                 if (hint.direction == KakuroGameplayDefinition.Direction.DOWN) {
                                     drawDownHint(hint.total.toString(), currX, currY, canvas, paint)
@@ -286,7 +295,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
                     currX += squareWidth
                 }
-                index = (col - 1) * gameplayActivity?.gameState!!.puzzleWidth
+                index = (col - 1) * gameplayActivity.gameState!!.puzzleWidth
 
                 // TODO - these two seem around the wrong way...???
                 currX = startX
@@ -377,16 +386,16 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
     }
 
-    var selectedIndex: Int = -1
+
+    // User interface controls
+
 
     private fun touchedGuess(touchedIndex: Int) {
-        selectedIndex = touchedIndex
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).invalidate() // Trigger a redraw
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).setSelectedIndex(touchedIndex)
     }
 
     private fun touchedGuessClear() {
-        selectedIndex = -1
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).invalidate() // Trigger a redraw
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).setSelectedIndex(-1)
     }
 
     fun onClickScrollUp(view: View) {
@@ -413,32 +422,44 @@ class KakuroGameplayActivity : AppCompatActivity() {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).zoomGrid(1)
     }
 
+
+    // Game commands
+
+
+
     fun onClickDigit(view: View) {
         Log.d(TAG, "Clicked a guess: ${view.tag}")
+
+        val selectedIndex = findViewById<PlayingGridView>(R.id.viewPlayGrid).getSelectedIndex()
+        if (selectedIndex == -1) {
+            return
+        }
+
         val tag = view.tag.toString()
         val value = tag.substringAfter("Guess")
+        val message = GameEngine.Message("Guess")
+        message.setKeyString("Index", selectedIndex.toString())
+        message.setKeyString("Value", value)
 
-        if (selectedIndex != -1) {
-            val message = GameEngine.Message("Guess")
-            message.setKeyString("Index", selectedIndex.toString())
-            message.setKeyString("Value", value)
-
-            engine?.queueActivityMessage(message, ::queueMessage)
-        }
+        engine?.queueActivityMessage(message, ::queueMessage)
     }
 
     fun onClickPossibleDigit(view: View) {
         val tag = view.tag.toString()
+
+        val selectedIndex = findViewById<PlayingGridView>(R.id.viewPlayGrid).getSelectedIndex()
+        if (selectedIndex == -1) {
+            return
+        }
+
         val value = tag.substringAfter("Possible")
         Log.d(TAG, "Possible digit: $value")
 
-        if (selectedIndex != -1) {
-            val message = GameEngine.Message("Possible")
-            message.setKeyString("Index", selectedIndex.toString())
-            message.setKeyString("Value", value)
+        val message = GameEngine.Message("Possible")
+        message.setKeyString("Index", selectedIndex.toString())
+        message.setKeyString("Value", value)
 
-            engine?.queueActivityMessage(message, ::queueMessage)
-        }
+        engine?.queueActivityMessage(message, ::queueMessage)
     }
 
     fun onClickReset(view: View) {
@@ -446,7 +467,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         builder.setTitle("Restart Puzzle")
         builder.setMessage("Are you sure you want to restart?")
         builder.setPositiveButton("Reset") { _, _ ->
-            selectedIndex = -1
+            findViewById<PlayingGridView>(R.id.viewPlayGrid).setSelectedIndex(-1)
             engine?.queueActivityMessage(GameEngine.Message("RestartPuzzle"), ::queueMessage)
         }
         builder.setNegativeButton("Back") { _, _ -> }

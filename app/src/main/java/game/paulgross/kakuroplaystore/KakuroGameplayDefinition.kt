@@ -10,6 +10,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private const val DEFAULT_PUZZLE = "043100820006980071"
 
+    //https://www.kakuroconquest.com/6x6/intermediate
+
     private var currPuzzle = ""
     private var puzzleWidth = 1
     private var puzzleSolution: MutableList<Int> = mutableListOf()
@@ -313,8 +315,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         Log.d(TAG, "currPuzzle = $currPuzzle")
 
         startPuzzleFromString(currPuzzle)
-        puzzleHints.clear()
-        generateHints()
+//        puzzleHints.clear()
+//        generateHints()
 
         val guessesString = engine?.loadDataString("Guesses", "")
 
@@ -354,6 +356,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 puzzleSolution.add(char.digitToInt())
             }
         }
+        puzzleHints.clear()
+        generateHints()
     }
 
     private fun encodeErrors(playerErrors: Any): String {
