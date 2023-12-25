@@ -63,14 +63,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         // FIXME - we only want to do setRelativeSizes if the size has changed, not every single time.
-        playGridView.setRelativeSizes()
-        playGridView.invalidate()
-    }
-
-
-    private fun scrollGrid(xSquares: Int, ySquares: Int) {
-        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        playGridView.scrollGrid(xSquares, ySquares)
+        playGridView.setScreenSizes()
         playGridView.invalidate()
     }
 
@@ -93,9 +86,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var displayZoom = 0
         private var xSquaresOffset = 0
         private var ySquaresOffset = 0
-        private var offsetChanged = false
-
-        // TODO - implement a scale factor...
 
         private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
         // TODO - scale the bitmap...
@@ -148,10 +138,17 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
         }
 
+        fun zoomGrid(changeZoom: Int) {
+            // TODO - limit the zoom to sensible values
+            displayZoom += changeZoom
+            setScreenSizes()
+            invalidate()  // Force the grid to be redrawn
+        }
+
         fun scrollGrid(xSquares: Int, ySquares: Int) {
             xSquaresOffset += xSquares
             ySquaresOffset += ySquares
-            offsetChanged = true
+            playSquareTouchLookUpId.clear()
 
             // Limit the upward and left offsets to one row
             if (xSquaresOffset < -1 ) {
@@ -161,6 +158,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 ySquaresOffset = -1
             }
 
+            // FIXME - the zoom factor breaks this code....
             // Limit the downward and right offsets to one row more than the puzzleWidth
             // Note that display rows includes an extra row for hints
             val xSize = gameplayActivity.gameState!!.puzzleWidth
@@ -171,14 +169,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (ySquaresOffset > ySize - displayRows + 2) {
                 ySquaresOffset = ySize - displayRows + 2
             }
+
+            invalidate()  // Force the grid to be redrawn
         }
 
-        fun setRelativeSizes() {
+        fun setScreenSizes() {
             Log.d("PlayingGridView", "setRelativeSizes(): Width = $measuredWidth, height = $measuredHeight")
             if (gameplayActivity?.gameState == null) {
                 Log.d("PlayingGridView", "setRelativeSizes() exiting because gameState is null.")
                 return
             }
+            // TODO: Clear any active touch areas
+            playSquareTouchLookUpId.clear()
 
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
@@ -213,14 +215,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
             canvas.drawBitmap(paperTexture, 0f, 0f, paint) // TODO scale this to the final size
 
-            // Only add new touch areas if the existing ones are missing or invalid due to scrolling.
-            if (offsetChanged) {
-                offsetChanged = false
-                playSquareTouchLookUpId.clear()
-            }
+            // Add the touch areas if there are none.
             var addTouchAreas = false
             if (playSquareTouchLookUpId.isEmpty()) {
-                playSquareTouchLookUpId.clear()
                 addTouchAreas = true
             }
 
@@ -393,27 +390,27 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     fun onClickScrollUp(view: View) {
-        scrollGrid(0,1)
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).scrollGrid(0, 1)
     }
 
     fun onClickScrollDown(view: View) {
-        scrollGrid(0,-1)
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).scrollGrid(0, -1)
     }
 
     fun onClickScrollLeft(view: View) {
-        scrollGrid(1,0)
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).scrollGrid(1, 0)
     }
 
     fun onClickScrollRight(view: View) {
-        scrollGrid(-1,0)
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).scrollGrid(-1, 0)
     }
 
     fun onClickZoomIn(view: View) {
-        Log.d(TAG, "Clicked zoom in - TODO")
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).zoomGrid(-1)
     }
 
     fun onClickZoomOut(view: View) {
-        Log.d(TAG, "Clicked zoom out - TODO")
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).zoomGrid(1)
     }
 
     fun onClickDigit(view: View) {
@@ -497,7 +494,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
     }
 
-//    private var queuedMessageAction: String = "$packageName.$TAG.activity.MESSAGE"
     private var queuedMessageAction: String = "$TAG.activity.MESSAGE"
 
     private fun enableQueuedMessages() {
