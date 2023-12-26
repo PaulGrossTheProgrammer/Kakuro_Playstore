@@ -450,7 +450,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
             val index = hint.index
             val actualTotal = hint.total
 
-            val squares = allSquares(playerGuesses, puzzleWidth, index, hint.direction)
+            val squares = solutionSquares(playerGuesses, puzzleWidth, index, hint.direction)
 
             var playerSum = 0
             var incomplete = false
@@ -501,7 +501,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 // First column numbers always need a hint.
                 val isFirstColumn = (index.mod(puzzleWidth) == 0)
                 if (isFirstColumn || puzzleSolution[index - 1] == -1) {
-                    val squares = allSquares(puzzleSolution, puzzleWidth, index, Direction.ACROSS)
+                    val squares = solutionSquares(puzzleSolution, puzzleWidth, index, Direction.ACROSS)
                     Log.d(TAG, "Hint: $index ACROSS squares = $squares")
                     var sum = 0
                     squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
@@ -512,7 +512,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 // First colum row always need a hint.
                 val isFirstRow = (index < puzzleWidth)
                 if (isFirstRow || puzzleSolution[index - puzzleWidth] == -1) {
-                    val squares = allSquares(puzzleSolution, puzzleWidth, index, Direction.DOWN)
+                    val squares = solutionSquares(puzzleSolution, puzzleWidth, index, Direction.DOWN)
                     Log.d(TAG, "Hint: $index DOWN squares = $squares")
                     var sum = 0
                     squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
@@ -523,11 +523,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     /**
-     * Makes a list of all squares starting at the index square, going in the specified direction,
-     * ending before the first -1 square or the boundary of the grid.
+     * Makes a list of all sequential  solution squares starting at the index square,
+     * going in the specified direction, ending before the first -1 square or the boundary of the grid.
      */
-    private fun allSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): List<Int> {
-        Log.d(TAG, "allSquares startIndex = $startIndex, direction = $direction")
+    private fun solutionSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): List<Int> {
         val squares: MutableList<Int> = mutableListOf()
 
         var limit  = grid.size
@@ -537,12 +536,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
             stepSize = width
         }
         if (direction == Direction.ACROSS) {
-            // FIXME - only works for first row...
-            val currRow = startIndex.mod(width)
+            val currRow = (startIndex + 1).div(width)
             limit = width * (currRow + 1)
-            limit = 6 // JUST A QUICK HACK.... FIXME
         }
-        Log.d(TAG, "allSquares limit = $limit")
 
         var index = startIndex
         while (index < limit && grid[index] != -1) {
