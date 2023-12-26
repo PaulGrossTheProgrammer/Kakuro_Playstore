@@ -64,7 +64,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         // FIXME - we only want to do setScreenSizes if the size has changed, not every single time.
         playGridView.setScreenSizes()
-        playGridView.invalidate()
+        playGridView.invalidate() // TODO: maybe move invalidate() into setScreenSizes()?
     }
 
     /**
@@ -172,7 +172,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             // Limit the downward and right offsets to one row more than the puzzleWidth
             // Note that display rows includes an extra row for hints
             val xSize = gameplayActivity.gameState!!.puzzleWidth
-            val ySize = gameplayActivity?.gameState!!.playerGrid.size / xSize
+            val ySize = gameplayActivity.gameState!!.playerGrid.size / xSize
             if (xSquaresOffset > xSize - displayRows + 2) {
                 xSquaresOffset = xSize - displayRows + 2
             }
@@ -477,6 +477,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     fun onClickPuzzle2(view: View) {
         Log.d(TAG, "Clicked Puzzle 2")
         engine?.queueActivityMessage(GameEngine.Message("NewPuzzle"), ::queueMessage)
+//        engine?.queueActivityMessage(GameEngine.Message("RestartPuzzle"), ::queueMessage)
     }
 
     private fun confirmExitApp() {

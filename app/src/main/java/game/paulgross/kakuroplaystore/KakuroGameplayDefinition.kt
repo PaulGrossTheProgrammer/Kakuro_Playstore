@@ -18,8 +18,13 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private var puzzleWidth = 1
     private var puzzleSolution: MutableList<Int> = mutableListOf()
     private var puzzleHints: MutableList<Hint> = mutableListOf()
-    private var playerGuesses: MutableList<Int> = mutableListOf()
     private val playerErrors: MutableSet<Int> = mutableSetOf()
+
+    // Same as puzzle string but:
+    // 0 for non-puzzle squares
+    // -1 for not yet guessed
+    // digit for guess
+    private var playerGuesses: MutableList<Int> = mutableListOf()
 
     // Possibles are user defined, and coded as 9-digit Strings, with each digit position matching the possible value.
     private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
@@ -352,18 +357,27 @@ object KakuroGameplayDefinition: GameplayDefinition {
         currPuzzle = puzzleString
         puzzleWidth = puzzleString.substring(0, 2).toInt()
 
+        val solutionSquares = puzzleString.substring(2).chars()
+        // FIXME: Missing blank guesses on setting up new puzzles
+        playerGuesses.clear()  // need to set this up as for the new puzzle case...
+        // TODO: initial playerGuesses array: Same as puzzle string, but -1 for solution digits.
+        // eg: g=0:0:-1:-1:0:0:0:0:0:-1:0:0:-1:-1:0:0:0:0:0:0:0:0:-1:-1:0:0:-1:0:0:0:0:0:-1:-1:0:0
+        // Loop puzzleString from 3rd digit to end, store in guesses
+
         puzzleSolution.clear()
         for (char in puzzleString.substring(2)) {
             if (char == '0') {
                 puzzleSolution.add(-1)
+                playerGuesses.add(-1)
             } else {
                 puzzleSolution.add(char.digitToInt())
+                playerGuesses.add(0)
             }
         }
         puzzleHints.clear()
         generateHints()
 
-        playerGuesses.clear()
+
         playerErrors.clear()
         playerPossibles.clear()
     }
@@ -477,6 +491,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
      * Create all the ACROSS and DOWN hints based on the puzzleSolution.
      */
     private fun generateHints() {
+        Log.d(TAG, "Generating hints...")
+        Log.d(TAG, "puzzleWidth = $puzzleWidth")
 
         // Traverse the solution grid and create hints for any number squares with empty squares to the left and/or above.
         puzzleSolution.forEachIndexed { index, value ->
@@ -511,15 +527,25 @@ object KakuroGameplayDefinition: GameplayDefinition {
      * ending before the first -1 square or the boundary of the grid.
      */
     private fun allSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): List<Int> {
+        Log.d(TAG, "allSquares startIndex = $startIndex, direction = $direction")
         val squares: MutableList<Int> = mutableListOf()
 
+        var limit  = grid.size
         var stepSize = 1
+
         if (direction == Direction.DOWN) {
             stepSize = width
         }
+        if (direction == Direction.ACROSS) {
+            // FIXME - only works for first row...
+            val currRow = startIndex.mod(width)
+            limit = width * (currRow + 1)
+            limit = 6 // JUST A QUICK HACK.... FIXME
+        }
+        Log.d(TAG, "allSquares limit = $limit")
 
         var index = startIndex
-        while (index < grid.size && grid[index] != -1) {
+        while (index < limit && grid[index] != -1) {
             squares.add(index)
             index += stepSize
         }
