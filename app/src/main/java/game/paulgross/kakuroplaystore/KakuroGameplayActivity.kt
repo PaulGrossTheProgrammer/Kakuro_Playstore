@@ -83,11 +83,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var maxDisplayRows = 10
         private var minDisplayRows = 4
         private var displayRows = maxDisplayRows
-        private var displayZoom = 0
+        private var displayZoom = 0  // TODO - reset to zero for new puzzles.
         private var xSquaresOffset = 0
         private var ySquaresOffset = 0
 
         private var selectedIndex: Int = -1
+        // TODO - reset selectedIndex to -1 when the scroll or zoom takes the selection off the visible area.
 
         private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
         // TODO - scale the bitmap...
@@ -212,6 +213,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
             margin = squareWidth * 0.08f
         }
 
+        fun resetOptions() {
+            displayZoom = 0
+            selectedIndex = -1
+        }
+
         private val paint = Paint()
 
         override fun onDraw(canvas: Canvas) {
@@ -297,7 +303,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 }
                 index = (col - 1) * gameplayActivity.gameState!!.puzzleWidth
 
-                // TODO - these two seem around the wrong way...???
                 currX = startX
                 currY += squareWidth
             }
@@ -344,7 +349,21 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 }
             }
 
-            if (addTouchAreas) {
+            // TODO - reset selectedIndex if the square is off the screen.
+            // TODO - don't add touch areas if the square is off the screen.
+            var visible = true
+            if (x < 0 || y < 0) {
+                visible = false
+            }
+            if (x + squareWidth > measuredWidth || y + squareWidth > measuredHeight) {
+                visible = false
+            }
+            Log.d(TAG, "Adding square at $x, $y")
+            if (!visible) {
+                Log.d(TAG, "NOT VISIBLE!!!")
+            }
+
+            if (visible && addTouchAreas) {
                 playSquareTouchLookUpId.put(TouchArea(x, y, x + squareWidth, y + squareWidth), index)
             }
         }
@@ -388,7 +407,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
 
     // User interface controls
-
 
     private fun touchedGuess(touchedIndex: Int) {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).setSelectedIndex(touchedIndex)
@@ -477,7 +495,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     fun onClickPuzzle2(view: View) {
         Log.d(TAG, "Clicked Puzzle 2")
         engine?.queueActivityMessage(GameEngine.Message("NewPuzzle"), ::queueMessage)
-//        engine?.queueActivityMessage(GameEngine.Message("RestartPuzzle"), ::queueMessage)
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
     }
 
     private fun confirmExitApp() {
