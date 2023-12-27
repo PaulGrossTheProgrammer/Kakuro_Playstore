@@ -8,11 +8,17 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private var engine: GameEngine? = null
 
+    private val builtinPuzzlesFilename = "builtin_puzzles.txt"
+
     private const val DEFAULT_PUZZLE = "043100820006980071"
 
     private val puzzle2 = "06790079879012001328587900690821260073"
 
     // https://www.kakuroconquest.com/6x6/intermediate
+    init {
+        // FIXME - cant access resource files from here...
+        Log.d(TAG, "About to load the builtin puzzles file...")
+    }
 
     private var currPuzzle = ""
     private var puzzleWidth = 1
@@ -39,12 +45,21 @@ object KakuroGameplayDefinition: GameplayDefinition {
     override fun setEngine(engine: GameEngine) {
         this.engine = engine
 
+        try {
+            engine.assets.open(builtinPuzzlesFilename).close()
+            Log.d(TAG, "TODO: Read in the builtin puzzles...")
+        } catch (e: Exception) {
+            Log.d(TAG, "FAILED to open puzzles file!!!")
+            e.printStackTrace()
+        }
+
         Log.d(TAG, "Plugin the gameplay functions ...")
         engine.registerHandler("Guess", ::submitGuess)
         engine.registerHandler("Possible", ::togglePossible)
         engine.registerHandler("RestartPuzzle", ::restartPuzzle)
 
-        engine.registerHandler("NewPuzzle", ::testPuzzle2)  // TODO- test only
+        engine.registerHandler("NewPuzzle1", ::testPuzzle1)  // TODO- test only
+        engine.registerHandler("NewPuzzle2", ::testPuzzle2)  // TODO- test only
         // TODO - implement an undo button...
 
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
@@ -62,14 +77,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
         // Override the default save and load usage of encode and decode state.
         engine.pluginSaveState(::saveState)
         engine.pluginRestoreState(::restoreState)
-    }
-
-    fun encodeInt(theInt: Any): String {
-        return theInt.toString()
-    }
-
-    fun decodeInt(intString: String): Int {
-        return intString.toInt()
     }
 
     private fun restartPuzzle(message: GameEngine.Message): Boolean {
@@ -348,6 +355,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
         markPlayerErrors()
     }
 
+    private fun testPuzzle1(message: GameEngine.Message): Boolean {
+        startPuzzleFromString(DEFAULT_PUZZLE)
+        return true
+    }
     private fun testPuzzle2(message: GameEngine.Message): Boolean {
         startPuzzleFromString(puzzle2)
         return true
@@ -357,12 +368,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         currPuzzle = puzzleString
         puzzleWidth = puzzleString.substring(0, 2).toInt()
 
-        val solutionSquares = puzzleString.substring(2).chars()
-        // FIXME: Missing blank guesses on setting up new puzzles
         playerGuesses.clear()  // need to set this up as for the new puzzle case...
-        // TODO: initial playerGuesses array: Same as puzzle string, but -1 for solution digits.
-        // eg: g=0:0:-1:-1:0:0:0:0:0:-1:0:0:-1:-1:0:0:0:0:0:0:0:0:-1:-1:0:0:-1:0:0:0:0:0:-1:-1:0:0
-        // Loop puzzleString from 3rd digit to end, store in guesses
 
         puzzleSolution.clear()
         for (char in puzzleString.substring(2)) {
@@ -376,7 +382,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
         puzzleHints.clear()
         generateHints()
-
 
         playerErrors.clear()
         playerPossibles.clear()
@@ -491,9 +496,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
      * Create all the ACROSS and DOWN hints based on the puzzleSolution.
      */
     private fun generateHints() {
-        Log.d(TAG, "Generating hints...")
-        Log.d(TAG, "puzzleWidth = $puzzleWidth")
-
         // Traverse the solution grid and create hints for any number squares with empty squares to the left and/or above.
         puzzleSolution.forEachIndexed { index, value ->
             if (value  != -1) {
@@ -502,7 +504,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 val isFirstColumn = (index.mod(puzzleWidth) == 0)
                 if (isFirstColumn || puzzleSolution[index - 1] == -1) {
                     val squares = solutionSquares(puzzleSolution, puzzleWidth, index, Direction.ACROSS)
-                    Log.d(TAG, "Hint: $index ACROSS squares = $squares")
                     var sum = 0
                     squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
                     puzzleHints.add(Hint(index, Direction.ACROSS, sum))
@@ -510,10 +511,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
                 // Check for DOWN hints (don't check last row)
                 // First colum row always need a hint.
-                val isFirstRow = (index < puzzleWidth)
-                if (isFirstRow || puzzleSolution[index - puzzleWidth] == -1) {
+                val isLastRow = (index < puzzleWidth)
+                if (isLastRow || puzzleSolution[index - puzzleWidth] == -1) {
                     val squares = solutionSquares(puzzleSolution, puzzleWidth, index, Direction.DOWN)
-                    Log.d(TAG, "Hint: $index DOWN squares = $squares")
                     var sum = 0
                     squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
                     puzzleHints.add(Hint(index, Direction.DOWN, sum))

@@ -3,6 +3,7 @@ package game.paulgross.kakuroplaystore
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.AssetManager
 import android.net.ConnectivityManager
 import android.util.Log
 import java.lang.Exception
@@ -11,7 +12,12 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class GameEngine(private val cm: ConnectivityManager, private val preferences: SharedPreferences, private val definition: GameplayDefinition): Thread() {
+class GameEngine(
+    private val cm: ConnectivityManager,
+    private val preferences: SharedPreferences,
+    private val definition: GameplayDefinition,
+    val assets: AssetManager
+): Thread() {
 
     private var socketServer: SocketServer? = null
     private var socketClient: SocketClient? = null
@@ -598,10 +604,15 @@ class GameEngine(private val cm: ConnectivityManager, private val preferences: S
         private var singletonGameEngine: GameEngine? = null
 
         // FUTURE: Allocate multiple instances based on a game identifier and definition.
-        fun activate(definition: GameplayDefinition, cm: ConnectivityManager, sharedPreferences: SharedPreferences): GameEngine {
+        fun activate(
+            definition: GameplayDefinition,
+            cm: ConnectivityManager,
+            sharedPreferences: SharedPreferences,
+            assets: AssetManager
+        ): GameEngine {
             if (singletonGameEngine == null) {
                 Log.d(TAG, "Starting new GameEngine ...")
-                singletonGameEngine = GameEngine(cm ,sharedPreferences, definition)
+                singletonGameEngine = GameEngine(cm ,sharedPreferences, definition, assets)
                 singletonGameEngine!!.start()
             } else {
                 Log.d(TAG, "Already created GameEngine.")

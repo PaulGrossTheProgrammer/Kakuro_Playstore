@@ -6,6 +6,15 @@
     android:layout_height="match_parent"
     tools:context=".KakuroGameplayActivity">
 
+    <Button
+        android:id="@+id/ButtonPuzzle1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="onClickPuzzle1"
+        android:text="Puzzle1"
+        app:layout_constraintBottom_toTopOf="@+id/ButtonPuzzle2"
+        app:layout_constraintEnd_toStartOf="@+id/textViewSettings" />
+
     <ImageButton
         android:id="@+id/imageButtonScrollRight"
         android:layout_width="32dp"

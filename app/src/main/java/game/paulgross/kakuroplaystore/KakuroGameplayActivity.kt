@@ -24,10 +24,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     var engine: GameEngine? = null
 
+
     @SuppressLint("ClickableViewAccessibility")  // Why do I need this??? Something to do with setOnTouchListener()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_kakurogameplay)
+
 
         // Attach the custom TouchListener to the custom PlayingGridView
         val viewPlayGrid = findViewById<PlayingGridView>(R.id.viewPlayGrid)
@@ -38,7 +40,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine = GameEngine.activate(
             KakuroGameplayDefinition,  // Defines the data and rules for playing the game.
             applicationContext.getSystemService(ConnectivityManager::class.java),  // Used for Internet access.
-            getPreferences(MODE_PRIVATE)  // Use to save and load the game state.
+            getPreferences(MODE_PRIVATE),  // Use to save and load the game state.
+            applicationContext.assets
         )
 
         // Request that the GameEngine call queueMessage() whenever the game state changes.
@@ -310,6 +313,28 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean, error: Boolean,
                                     addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
+            // Determine if this square is within the visible area.
+            var visible = true
+            if (x < 0 || y < 0) {
+                visible = false
+            }
+            if (x + squareWidth > measuredWidth || y + squareWidth > measuredHeight) {
+                visible = false
+            }
+
+            // Clear selectedIndex if the square is not visible.
+            if (selectedIndex == index && !visible) {
+                selectedIndex = -1
+            }
+
+            if (!visible) {
+                return
+            }
+
+            if (addTouchAreas) {
+                playSquareTouchLookUpId.put(TouchArea(x, y, x + squareWidth, y + squareWidth), index)
+            }
+
             paint.color = Color.LTGRAY
             if (selected) {
                 paint.color = Color.WHITE
@@ -347,24 +372,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
                     yPos += squareWidth * 0.30f
                     xPos = xStart
                 }
-            }
-
-            // TODO - reset selectedIndex if the square is off the screen.
-            // TODO - don't add touch areas if the square is off the screen.
-            var visible = true
-            if (x < 0 || y < 0) {
-                visible = false
-            }
-            if (x + squareWidth > measuredWidth || y + squareWidth > measuredHeight) {
-                visible = false
-            }
-            Log.d(TAG, "Adding square at $x, $y")
-            if (!visible) {
-                Log.d(TAG, "NOT VISIBLE!!!")
-            }
-
-            if (visible && addTouchAreas) {
-                playSquareTouchLookUpId.put(TouchArea(x, y, x + squareWidth, y + squareWidth), index)
             }
         }
 
@@ -443,8 +450,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     // Game commands
 
-
-
     fun onClickDigit(view: View) {
         Log.d(TAG, "Clicked a guess: ${view.tag}")
 
@@ -492,9 +497,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
         builder.show()
     }
 
+    fun onClickPuzzle1(view: View) {
+        Log.d(TAG, "Clicked Puzzle 2")
+        engine?.queueActivityMessage(GameEngine.Message("NewPuzzle1"), ::queueMessage)
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
+    }
     fun onClickPuzzle2(view: View) {
         Log.d(TAG, "Clicked Puzzle 2")
-        engine?.queueActivityMessage(GameEngine.Message("NewPuzzle"), ::queueMessage)
+        engine?.queueActivityMessage(GameEngine.Message("NewPuzzle2"), ::queueMessage)
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
     }
 
