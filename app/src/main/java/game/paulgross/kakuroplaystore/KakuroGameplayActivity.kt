@@ -41,7 +41,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             KakuroGameplayDefinition,  // Defines the data and rules for playing the game.
             applicationContext.getSystemService(ConnectivityManager::class.java),  // Used for Internet access.
             getPreferences(MODE_PRIVATE),  // Use to save and load the game state.
-            applicationContext.assets
+            applicationContext.assets // Used to access files in the assets directory
         )
 
         // Request that the GameEngine call queueMessage() whenever the game state changes.
@@ -65,9 +65,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         gameState = newestGameState
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        // FIXME - we only want to do setScreenSizes if the size has changed, not every single time.
         playGridView.setScreenSizes()
-        playGridView.invalidate() // TODO: maybe move invalidate() into setScreenSizes()?
+        playGridView.invalidate()
     }
 
     /**
@@ -86,12 +85,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var maxDisplayRows = 10
         private var minDisplayRows = 4
         private var displayRows = maxDisplayRows
-        private var displayZoom = 0  // TODO - reset to zero for new puzzles.
+        private var displayZoom = 0
         private var xSquaresOffset = 0
         private var ySquaresOffset = 0
 
         private var selectedIndex: Int = -1
-        // TODO - reset selectedIndex to -1 when the scroll or zoom takes the selection off the visible area.
 
         private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
         // TODO - scale the bitmap...
@@ -188,11 +186,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         fun setScreenSizes() {
-            Log.d("PlayingGridView", "setRelativeSizes(): Width = $measuredWidth, height = $measuredHeight")
+            Log.d("PlayingGridView", "setScreenSizes(): Width = $measuredWidth, height = $measuredHeight")
             if (gameplayActivity?.gameState == null) {
-                Log.d("PlayingGridView", "setRelativeSizes() exiting because gameState is null.")
+                Log.d("PlayingGridView", "setScreenSizes() exiting because gameState is null.")
                 return
             }
+
             playSquareTouchLookUpId.clear()
 
             currViewWidth = measuredWidth
@@ -206,7 +205,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 displayRows = minDisplayRows
             }
 
-            squareWidth = (currViewWidth/displayRows).toFloat()
+            squareWidth = (currViewWidth/(displayRows + 1)).toFloat()
             Log.d("PlayingGridView", "squareWidth = $squareWidth")
             borderThickness = squareWidth * 0.06f
 
@@ -214,6 +213,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
             possiblesTextSize = squareWidth * 0.25f
 
             margin = squareWidth * 0.08f
+
+            invalidate()  // Force a redraw
         }
 
         fun resetOptions() {
@@ -226,7 +227,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
             Log.d("PlayingGridView", "onDraw() running")
-            if (gameplayActivity?.gameState == null) {
+            if (gameplayActivity.gameState == null) {
                 Log.d("PlayingGridView", "onDraw() exiting - No gameState to draw.")
                 return
             }
@@ -242,13 +243,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
             // Draw grid
             paint.color = Color.WHITE
 
-            val xOffsetPx = xSquaresOffset * squareWidth
-            val yOffsetPx = ySquaresOffset * squareWidth
+            val xStart = squareWidth/2 + xSquaresOffset * squareWidth
+            val yStart = squareWidth/2 + ySquaresOffset * squareWidth
 
-            val startX = xOffsetPx
-
-            var currX = startX
-            var currY = yOffsetPx
+            var currX = xStart
+            var currY = yStart
 
             var rows = gameplayActivity.gameState!!.puzzleWidth + 1
             var cols = gameplayActivity.gameState!!.playerGrid.size.div(gameplayActivity.gameState!!.puzzleWidth) + 1
@@ -306,7 +305,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 }
                 index = (col - 1) * gameplayActivity.gameState!!.puzzleWidth
 
-                currX = startX
+                currX = xStart
                 currY += squareWidth
             }
         }
@@ -315,10 +314,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
                                     addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
             // Determine if this square is within the visible area.
             var visible = true
-            if (x < 0 || y < 0) {
-                visible = false
-            }
-            if (x + squareWidth > measuredWidth || y + squareWidth > measuredHeight) {
+            if (x < 0 || y < 0 || x > measuredWidth || y > measuredHeight) {
                 visible = false
             }
 
@@ -384,7 +380,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             canvas.drawLine(x + squareWidth, y, x + squareWidth, y + squareWidth, paint )
         }
 
-        //drawBlankSquare
         private fun drawBlankSquare(x: Float, y: Float, canvas: Canvas, paint: Paint) {
             paint.color = colourNonPlaySquareInside
 
