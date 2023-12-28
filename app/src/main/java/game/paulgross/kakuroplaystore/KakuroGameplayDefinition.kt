@@ -9,16 +9,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private var engine: GameEngine? = null
 
     private val builtinPuzzlesFilename = "builtin_puzzles.txt"
-
-    private const val DEFAULT_PUZZLE = "043100820006980071"
-
-    private val puzzle2 = "06790079879012001328587900690821260073"
-
     // https://www.kakuroconquest.com/6x6/intermediate
-    init {
-        // FIXME - cant access resource files from here...
-        Log.d(TAG, "About to load the builtin puzzles file...")
-    }
+
+    private var currPuzzleIndex = 0
+
+    private val builtinPuzzles: MutableList<String> = mutableListOf()
 
     private var currPuzzle = ""
     private var puzzleWidth = 1
@@ -45,13 +40,12 @@ object KakuroGameplayDefinition: GameplayDefinition {
     override fun setEngine(engine: GameEngine) {
         this.engine = engine
 
-        try {
-            engine.assets.open(builtinPuzzlesFilename).close()
-            Log.d(TAG, "TODO: Read in the builtin puzzles...")
-        } catch (e: Exception) {
-            Log.d(TAG, "FAILED to open puzzles file!!!")
-            e.printStackTrace()
+        engine.assets.open(builtinPuzzlesFilename).bufferedReader().forEachLine () {
+            if (!it.startsWith("#")) {
+                builtinPuzzles.add(it)
+            }
         }
+        Log.d(TAG, "Loaded ${builtinPuzzles.size} builtin puzzles.")
 
         Log.d(TAG, "Plugin the gameplay functions ...")
         engine.registerHandler("Guess", ::submitGuess)
@@ -186,6 +180,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private fun encodeState(): GameEngine.Message {
         val message = GameEngine.Message("State")
+        message.setKeyString("i", currPuzzleIndex.toString())
         message.setKeyString("w", puzzleWidth.toString())
         message.setKeyString("g", encodePlayerGuesses(playerGuesses))
         message.setKeyString("h", encodeHints(puzzleHints))
@@ -205,6 +200,12 @@ object KakuroGameplayDefinition: GameplayDefinition {
             Log.d(TAG, "Missing width, grid and and/or hints.")
             return StateVariables(mutableListOf(), 0, mutableListOf(), mutableMapOf(), mutableSetOf())
         }
+
+        var puzzleIndex = message.getString("i")?.toInt()
+        if (puzzleIndex == null) {
+            puzzleIndex = 0
+        }
+        currPuzzleIndex = puzzleIndex
 
         val width = message.getString("w")?.toInt()
         if (width == null || width < 1) {
@@ -320,7 +321,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         val restoredGame = engine?.loadDataString("CurrPuzzle", "").toString()
         currPuzzle = if (restoredGame == "") {
             Log.d(TAG, "USING DEFAULT PUZZLE!!!!")
-            DEFAULT_PUZZLE
+            builtinPuzzles[currPuzzleIndex]
         } else {
             restoredGame
         }
@@ -356,12 +357,20 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun testPuzzle1(message: GameEngine.Message): Boolean {
-        startPuzzleFromString(DEFAULT_PUZZLE)
-        return true
+        if (currPuzzleIndex > 0) {
+            currPuzzleIndex--
+            startPuzzleFromString(builtinPuzzles[currPuzzleIndex])
+            return true
+        }
+        return false
     }
     private fun testPuzzle2(message: GameEngine.Message): Boolean {
-        startPuzzleFromString(puzzle2)
-        return true
+        if (currPuzzleIndex < builtinPuzzles.size - 1) {
+            currPuzzleIndex++
+            startPuzzleFromString(builtinPuzzles[currPuzzleIndex])
+            return true
+        }
+        return false
     }
 
     private fun startPuzzleFromString(puzzleString: String) {

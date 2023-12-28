@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="onClickPuzzle1"
-        android:text="Puzzle1"
+        android:text="Prev Puzzle"
         app:layout_constraintBottom_toTopOf="@+id/ButtonPuzzle2"
         app:layout_constraintEnd_toStartOf="@+id/textViewSettings" />
 
@@ -421,7 +421,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="onClickPuzzle2"
-        android:text="Puzzle2"
+        android:text="Next Puzzle"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/textViewSettings" />
 
