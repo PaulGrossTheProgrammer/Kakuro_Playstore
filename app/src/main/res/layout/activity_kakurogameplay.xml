@@ -425,4 +425,12 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/textViewSettings" />
 
+    <TextView
+        android:id="@+id/textViewDebug"
+        android:layout_width="298dp"
+        android:layout_height="27dp"
+        android:text="TextView"
+        app:layout_constraintBottom_toTopOf="@+id/ButtonPuzzle1"
+        app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

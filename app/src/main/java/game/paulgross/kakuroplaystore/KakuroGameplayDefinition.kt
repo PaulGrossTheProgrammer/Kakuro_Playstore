@@ -357,11 +357,14 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun testPuzzle1(message: GameEngine.Message): Boolean {
+
         if (currPuzzleIndex > 0) {
             currPuzzleIndex--
+            KakuroGameplayActivity.debugMessage("currPuzzleIndex [$currPuzzleIndex]")
             startPuzzleFromString(builtinPuzzles[currPuzzleIndex])
             return true
         }
+        KakuroGameplayActivity.debugMessage("UNCHANGED currPuzzleIndex [$currPuzzleIndex]")
         return false
     }
     private fun testPuzzle2(message: GameEngine.Message): Boolean {

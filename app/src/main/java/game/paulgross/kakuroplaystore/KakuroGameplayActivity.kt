@@ -16,6 +16,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
@@ -28,8 +29,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")  // Why do I need this??? Something to do with setOnTouchListener()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        singleton = this
         setContentView(R.layout.activity_kakurogameplay)
-
 
         // Attach the custom TouchListener to the custom PlayingGridView
         val viewPlayGrid = findViewById<PlayingGridView>(R.id.viewPlayGrid)
@@ -74,16 +75,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
      */
     class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
 
+        private val outsideGridMargin = 0.4f
+        private val maxDisplayRows = 10
+        private val minDisplayRows = 4
+
         private var currViewWidth = 1
         private var currViewHeight = 1
         private var squareWidth = 1f
-        private var margin = 1f
+        private var slashMargin = 1f
         private var squareTextSize = 1f
         private var possiblesTextSize = 1f
         private var borderThickness =1f
 
-        private var maxDisplayRows = 10
-        private var minDisplayRows = 4
         private var displayRows = maxDisplayRows
         private var displayZoom = 0
         private var xSquaresOffset = 0
@@ -120,7 +123,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
                 when(event.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        val touchedIndex = lookupGuessId(x, y)
+                        val touchedIndex = lookupTouchedGuessId(x, y)
                         if (touchedIndex != -1) {
                             Log.d(TAG, "Touched index: $touchedIndex")
                             theActivity.touchedGuess(touchedIndex)
@@ -132,7 +135,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 return true
             }
 
-            private fun lookupGuessId(x: Float, y: Float): Int {
+            private fun lookupTouchedGuessId(x: Float, y: Float): Int {
                 for (entry in view.playSquareTouchLookUpId.entries.iterator()) {
                     if (x >= entry.key.xMin && x <= entry.key.xMax && y >= entry.key.yMin && y <= entry.key.yMax) {
                         return entry.value
@@ -205,14 +208,15 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 displayRows = minDisplayRows
             }
 
-            squareWidth = (currViewWidth/(displayRows + 1)).toFloat()
+
+            squareWidth = (currViewWidth/(displayRows + outsideGridMargin)).toFloat()
             Log.d("PlayingGridView", "squareWidth = $squareWidth")
             borderThickness = squareWidth * 0.06f
 
             squareTextSize = squareWidth * 0.7f
             possiblesTextSize = squareWidth * 0.25f
 
-            margin = squareWidth * 0.08f
+            slashMargin = squareWidth * 0.08f
 
             invalidate()  // Force a redraw
         }
@@ -243,8 +247,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
             // Draw grid
             paint.color = Color.WHITE
 
-            val xStart = squareWidth/2 + xSquaresOffset * squareWidth
-            val yStart = squareWidth/2 + ySquaresOffset * squareWidth
+            val xStart = (squareWidth * outsideGridMargin)/2 + xSquaresOffset * squareWidth
+            val yStart = (squareWidth * outsideGridMargin)/2 + ySquaresOffset * squareWidth
 
             var currX = xStart
             var currY = yStart
@@ -390,7 +394,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             paint.color = Color.LTGRAY
             paint.strokeWidth = squareWidth * 0.02f
 
-            canvas.drawLine(x + margin, y - squareWidth + margin, x + squareWidth - margin, y - margin, paint )
+            canvas.drawLine(x + slashMargin, y - squareWidth + slashMargin, x + squareWidth - slashMargin, y - slashMargin, paint )
 
             paint.textSize = squareTextSize * 0.45f
             canvas.drawText(hintString, x + squareWidth * 0.18f, y + squareWidth * 0.85f - squareWidth, paint)
@@ -400,7 +404,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             paint.color = Color.LTGRAY
             paint.strokeWidth = squareWidth * 0.02f
 
-            canvas.drawLine(x + margin - squareWidth, y + margin, x - margin, y - margin + squareWidth, paint )
+            canvas.drawLine(x + slashMargin - squareWidth, y + slashMargin, x - slashMargin, y - slashMargin + squareWidth, paint )
 
             paint.textSize = squareTextSize * 0.45f
             canvas.drawText(hintString, x + squareWidth * 0.56f  - squareWidth, y + squareWidth * 0.45f, paint)
@@ -539,8 +543,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 val newState = engine?.decodeState(message)
                 if (newState is KakuroGameplayDefinition.StateVariables) {
                     displayGrid(newState)
+
                 }
             }
+//            if (message.type == "Debug") {
+//                Log.d(TAG, "ACTIVITY received a debug message...")
+//                val msg = message.getString("Message")
+//                (findViewById<PlayingGridView>(R.id.textViewDebug) as TextView).text = msg
+//            }
         }
     }
 
@@ -564,7 +574,16 @@ class KakuroGameplayActivity : AppCompatActivity() {
         sendBroadcast(intent)
     }
 
+    fun debugMessageHandler(text: String) {
+        findViewById<TextView>(R.id.textViewDebug).text = text
+    }
+
     companion object {
         private val TAG = KakuroGameplayActivity::class.java.simpleName
+
+        var singleton: KakuroGameplayActivity? = null
+        fun debugMessage(text: String) {
+            singleton?.debugMessageHandler(text)
+        }
    }
 }
