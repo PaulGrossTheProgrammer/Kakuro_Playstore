@@ -52,8 +52,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine.registerHandler("Possible", ::togglePossible)
         engine.registerHandler("RestartPuzzle", ::restartPuzzle)
 
-        engine.registerHandler("NewPuzzle1", ::testPuzzle1)  // TODO- test only
-        engine.registerHandler("NewPuzzle2", ::testPuzzle2)  // TODO- test only
+        engine.registerHandler("NewPuzzle1", ::prevPuzzle)  // TODO- test only
+        engine.registerHandler("NewPuzzle2", ::nextPuzzle)  // TODO- test only
         // TODO - implement an undo button...
 
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
@@ -303,6 +303,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
      */
     private fun saveState() {
         engine?.saveDataString("CurrPuzzle", currPuzzle)
+        engine?.saveDataString("CurrPuzzleIndex", currPuzzleIndex.toString())
 
         val guessesToSave = encodePlayerGuesses(playerGuesses)
         engine?.saveDataString("Guesses", guessesToSave)
@@ -313,9 +314,16 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun restoreState() {
-        if (engine == null) { // TODO - can I avoid this check???
+        if (engine == null) {
             Log.d(TAG, "ERROR - no engine...")
             return
+        }
+
+        val restoredPuzzleIndex = engine?.loadDataString("CurrPuzzleIndex", "").toString()
+        currPuzzleIndex = if (restoredPuzzleIndex == "") {
+            0
+        } else {
+            restoredPuzzleIndex.toInt()
         }
 
         val restoredGame = engine?.loadDataString("CurrPuzzle", "").toString()
@@ -356,23 +364,25 @@ object KakuroGameplayDefinition: GameplayDefinition {
         markPlayerErrors()
     }
 
-    private fun testPuzzle1(message: GameEngine.Message): Boolean {
+    private fun prevPuzzle(message: GameEngine.Message): Boolean {
 
         if (currPuzzleIndex > 0) {
             currPuzzleIndex--
-            KakuroGameplayActivity.debugMessage("currPuzzleIndex [$currPuzzleIndex]")
+            KakuroGameplayActivity.displayDebugMessage("currPuzzleIndex [$currPuzzleIndex]")
             startPuzzleFromString(builtinPuzzles[currPuzzleIndex])
             return true
         }
-        KakuroGameplayActivity.debugMessage("UNCHANGED currPuzzleIndex [$currPuzzleIndex]")
+        KakuroGameplayActivity.displayDebugMessage("UNCHANGED currPuzzleIndex [$currPuzzleIndex]")
         return false
     }
-    private fun testPuzzle2(message: GameEngine.Message): Boolean {
+    private fun nextPuzzle(message: GameEngine.Message): Boolean {
         if (currPuzzleIndex < builtinPuzzles.size - 1) {
             currPuzzleIndex++
+            KakuroGameplayActivity.displayDebugMessage("currPuzzleIndex [$currPuzzleIndex]")
             startPuzzleFromString(builtinPuzzles[currPuzzleIndex])
             return true
         }
+        KakuroGameplayActivity.displayDebugMessage("UNCHANGED currPuzzleIndex [$currPuzzleIndex]")
         return false
     }
 

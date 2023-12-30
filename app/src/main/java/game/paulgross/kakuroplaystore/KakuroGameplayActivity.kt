@@ -77,7 +77,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         private val outsideGridMargin = 0.4f
         private val maxDisplayRows = 10
-        private val minDisplayRows = 4
+        private val minDisplayRows = 5
 
         private var currViewWidth = 1
         private var currViewHeight = 1
@@ -87,7 +87,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var possiblesTextSize = 1f
         private var borderThickness =1f
 
-        private var displayRows = maxDisplayRows
+        private var currDisplayRows = maxDisplayRows
         private var displayZoom = 0
         private var xSquaresOffset = 0
         private var ySquaresOffset = 0
@@ -154,36 +154,33 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         fun zoomGrid(changeZoom: Int) {
-            // TODO - limit the zoom to sensible values
+            if (currDisplayRows + changeZoom < minDisplayRows || currDisplayRows + changeZoom > maxDisplayRows) {
+                return
+            }
             displayZoom += changeZoom
             setScreenSizes()
             invalidate()  // Force the grid to be redrawn
         }
 
-        fun scrollGrid(xSquares: Int, ySquares: Int) {
-            xSquaresOffset += xSquares
-            ySquaresOffset += ySquares
+        fun scrollGrid(xDeltaSquares: Int, yDeltaSquares: Int) {
+            displayDebugMessage("xSO = $xSquaresOffset, xDS = $xDeltaSquares, currDR = $currDisplayRows")
+            if (xSquaresOffset + xDeltaSquares > 0) {
+                return
+            }
+            if (ySquaresOffset + yDeltaSquares > 0) {
+                return
+            }
+            // FIXME - right and bottom limits don't work.
+/*            if (xSquaresOffset + xDeltaSquares < currDisplayRows) {
+                return
+            }
+            if (ySquaresOffset + yDeltaSquares < currDisplayRows) {
+                return
+            }*/
+
+            xSquaresOffset += xDeltaSquares
+            ySquaresOffset += yDeltaSquares
             playSquareTouchLookUpId.clear()
-
-            // Limit the upward and left offsets to one row
-            if (xSquaresOffset < -1 ) {
-                xSquaresOffset = -1
-            }
-            if (ySquaresOffset < -1 ) {
-                ySquaresOffset = -1
-            }
-
-            // FIXME - the zoom factor breaks this code....
-            // Limit the downward and right offsets to one row more than the puzzleWidth
-            // Note that display rows includes an extra row for hints
-            val xSize = gameplayActivity.gameState!!.puzzleWidth
-            val ySize = gameplayActivity.gameState!!.playerGrid.size / xSize
-            if (xSquaresOffset > xSize - displayRows + 2) {
-                xSquaresOffset = xSize - displayRows + 2
-            }
-            if (ySquaresOffset > ySize - displayRows + 2) {
-                ySquaresOffset = ySize - displayRows + 2
-            }
 
             invalidate()  // Force the grid to be redrawn
         }
@@ -200,16 +197,16 @@ class KakuroGameplayActivity : AppCompatActivity() {
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
 
-            displayRows = gameplayActivity.gameState!!.puzzleWidth + 1 + displayZoom
-            if (displayRows > maxDisplayRows) {
-                displayRows = maxDisplayRows
+            currDisplayRows = gameplayActivity.gameState!!.puzzleWidth + 1 + displayZoom
+            if (currDisplayRows > maxDisplayRows) {
+                currDisplayRows = maxDisplayRows
             }
-            if (displayRows < minDisplayRows) {
-                displayRows = minDisplayRows
+            if (currDisplayRows < minDisplayRows) {
+                currDisplayRows = minDisplayRows
             }
 
 
-            squareWidth = (currViewWidth/(displayRows + outsideGridMargin)).toFloat()
+            squareWidth = (currViewWidth/(currDisplayRows + outsideGridMargin)).toFloat()
             Log.d("PlayingGridView", "squareWidth = $squareWidth")
             borderThickness = squareWidth * 0.06f
 
@@ -496,12 +493,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
         builder.show()
     }
 
-    fun onClickPuzzle1(view: View) {
+    fun onClickPrevPuzzle(view: View) {
         Log.d(TAG, "Clicked Puzzle 2")
         engine?.queueActivityMessage(GameEngine.Message("NewPuzzle1"), ::queueMessage)
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
     }
-    fun onClickPuzzle2(view: View) {
+    fun onClickNextPuzzle(view: View) {
         Log.d(TAG, "Clicked Puzzle 2")
         engine?.queueActivityMessage(GameEngine.Message("NewPuzzle2"), ::queueMessage)
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
@@ -574,7 +571,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         sendBroadcast(intent)
     }
 
-    fun debugMessageHandler(text: String) {
+    private fun debugMessageHandler(text: String) {
         findViewById<TextView>(R.id.textViewDebug).text = text
     }
 
@@ -582,7 +579,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private val TAG = KakuroGameplayActivity::class.java.simpleName
 
         var singleton: KakuroGameplayActivity? = null
-        fun debugMessage(text: String) {
+
+        /**
+         * This function is used to display debug messages on the screen.
+         */
+        fun displayDebugMessage(text: String) {
             singleton?.debugMessageHandler(text)
         }
    }

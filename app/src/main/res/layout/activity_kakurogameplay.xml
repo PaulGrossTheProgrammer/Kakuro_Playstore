@@ -10,7 +10,7 @@
         android:id="@+id/ButtonPuzzle1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="onClickPuzzle1"
+        android:onClick="onClickPrevPuzzle"
         android:text="Prev Puzzle"
         app:layout_constraintBottom_toTopOf="@+id/ButtonPuzzle2"
         app:layout_constraintEnd_toStartOf="@+id/textViewSettings" />
@@ -420,14 +420,14 @@
         android:id="@+id/ButtonPuzzle2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="onClickPuzzle2"
+        android:onClick="onClickNextPuzzle"
         android:text="Next Puzzle"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/textViewSettings" />
 
     <TextView
         android:id="@+id/textViewDebug"
-        android:layout_width="298dp"
+        android:layout_width="match_parent"
         android:layout_height="27dp"
         android:text="Debug message"
         app:layout_constraintBottom_toTopOf="@+id/ButtonPuzzle1"
