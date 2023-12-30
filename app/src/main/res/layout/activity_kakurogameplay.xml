@@ -429,7 +429,7 @@
         android:id="@+id/textViewDebug"
         android:layout_width="298dp"
         android:layout_height="27dp"
-        android:text="TextView"
+        android:text="Debug message"
         app:layout_constraintBottom_toTopOf="@+id/ButtonPuzzle1"
         app:layout_constraintStart_toStartOf="parent" />
 
