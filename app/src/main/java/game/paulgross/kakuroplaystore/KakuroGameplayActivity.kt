@@ -10,7 +10,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.net.ConnectivityManager
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
@@ -38,15 +37,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         enableQueuedMessages()
 
-        engine = GameEngine.activate(
-            KakuroGameplayDefinition,  // Defines the data and rules for playing the game.
-            applicationContext.getSystemService(ConnectivityManager::class.java),  // Used for Internet access.
-            getPreferences(MODE_PRIVATE),  // Use to save and load the game state.
-            applicationContext.assets // Used to access files in the assets directory
-        )
+        engine = GameEngine.activate(KakuroGameplayDefinition, applicationContext, this)
 
         // Request that the GameEngine call queueMessage() whenever the game state changes.
-        engine?.queueActivityMessage(GameEngine.Message("RequestStateChanges"), ::queueMessage)
+        engine?.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
     }
 
     override fun onBackPressed() {
@@ -460,7 +454,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         message.setKeyString("Index", selectedIndex.toString())
         message.setKeyString("Value", value)
 
-        engine?.queueActivityMessage(message, ::queueMessage)
+        engine?.queueMessageFromActivity(message, ::queueMessage)
     }
 
     fun onClickPossibleDigit(view: View) {
@@ -478,7 +472,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         message.setKeyString("Index", selectedIndex.toString())
         message.setKeyString("Value", value)
 
-        engine?.queueActivityMessage(message, ::queueMessage)
+        engine?.queueMessageFromActivity(message, ::queueMessage)
     }
 
     fun onClickReset(view: View) {
@@ -487,7 +481,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         builder.setMessage("Are you sure you want to restart?")
         builder.setPositiveButton("Reset") { _, _ ->
             findViewById<PlayingGridView>(R.id.viewPlayGrid).setSelectedIndex(-1)
-            engine?.queueActivityMessage(GameEngine.Message("RestartPuzzle"), ::queueMessage)
+            engine?.queueMessageFromActivity(GameEngine.Message("RestartPuzzle"), ::queueMessage)
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
@@ -495,12 +489,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     fun onClickPrevPuzzle(view: View) {
         Log.d(TAG, "Clicked Puzzle 2")
-        engine?.queueActivityMessage(GameEngine.Message("NewPuzzle1"), ::queueMessage)
+        engine?.queueMessageFromActivity(GameEngine.Message("NewPuzzle1"), ::queueMessage)
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
     }
     fun onClickNextPuzzle(view: View) {
         Log.d(TAG, "Clicked Puzzle 2")
-        engine?.queueActivityMessage(GameEngine.Message("NewPuzzle2"), ::queueMessage)
+        engine?.queueMessageFromActivity(GameEngine.Message("NewPuzzle2"), ::queueMessage)
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
     }
 
@@ -522,7 +516,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private fun stopGameServer() {
         Log.d(TAG, "Stopping the game server ...")
-        engine?.queueActivityMessage(GameEngine.Message("StopGame"), ::queueMessage)
+        engine?.queueMessageFromActivity(GameEngine.Message("StopGame"), ::queueMessage)
     }
 
     /**

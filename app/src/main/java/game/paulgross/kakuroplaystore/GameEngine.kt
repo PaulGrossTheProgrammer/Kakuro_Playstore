@@ -1,23 +1,31 @@
 package game.paulgross.kakuroplaystore
 
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.AssetManager
 import android.net.ConnectivityManager
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import java.lang.Exception
 import java.util.Queue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class GameEngine(
-    private val cm: ConnectivityManager,
-    private val preferences: SharedPreferences,
-    private val definition: GameplayDefinition,
+class GameEngine( private val definition: GameplayDefinition, applicationContext: Context, activity: AppCompatActivity): Thread() {
+
+    private val cm: ConnectivityManager
+    private val preferences: SharedPreferences
     val assets: AssetManager
-): Thread() {
+
+    init {
+        cm = applicationContext.getSystemService(ConnectivityManager::class.java)  // Used for Internet access.
+        preferences = activity.getPreferences(MODE_PRIVATE)  // Use to save and load the game state.
+        assets = applicationContext.assets // Used to access files in the assets directory
+    }
+
 
     private var socketServer: SocketServer? = null
     private var socketClient: SocketClient? = null
@@ -582,17 +590,17 @@ class GameEngine(
         this.restoreStateFunction = restoreStateFunction
     }
 
-    fun queueActivityMessage(message: Message, responseFunction: ((message: Message) -> Unit)?) {
+    fun queueMessageFromActivity(message: Message, responseFunction: ((message: Message) -> Unit)?) {
         val im = InboundMessage(message, InboundMessageSource.APP, responseFunction)
         inboundMessageQueue.add(im)
     }
 
-    fun queueClientMessage(message: Message, responseFunction: (message: Message) -> Unit) {
+    fun queueMessageFromClient(message: Message, responseFunction: (message: Message) -> Unit) {
         val im = InboundMessage(message, InboundMessageSource.CLIENT, responseFunction)
         singletonGameEngine?.inboundMessageQueue?.add(im)
     }
 
-    fun queueClientHandlerMessage(message: Message, responseFunction: (message: Message) -> Unit) {
+    fun queueMessageFromClientHandler(message: Message, responseFunction: (message: Message) -> Unit) {
         val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseFunction)
         singletonGameEngine?.inboundMessageQueue?.add(im)
     }
@@ -604,15 +612,10 @@ class GameEngine(
         private var singletonGameEngine: GameEngine? = null
 
         // FUTURE: Allocate multiple instances based on a game identifier and definition.
-        fun activate(
-            definition: GameplayDefinition,
-            cm: ConnectivityManager,
-            sharedPreferences: SharedPreferences,
-            assets: AssetManager
-        ): GameEngine {
+        fun activate(definition: GameplayDefinition, applicationContext: Context, activity: AppCompatActivity): GameEngine {
             if (singletonGameEngine == null) {
                 Log.d(TAG, "Starting new GameEngine ...")
-                singletonGameEngine = GameEngine(cm ,sharedPreferences, definition, assets)
+                singletonGameEngine = GameEngine(definition, applicationContext, activity)
                 singletonGameEngine!!.start()
             } else {
                 Log.d(TAG, "Already created GameEngine.")

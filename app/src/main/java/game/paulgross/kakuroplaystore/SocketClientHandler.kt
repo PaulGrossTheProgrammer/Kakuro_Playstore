@@ -1,6 +1,5 @@
 package game.paulgross.kakuroplaystore
 
-import android.content.Intent
 import android.util.Log
 import java.io.BufferedReader
 import java.io.BufferedWriter
@@ -99,9 +98,9 @@ class SocketClientHandler(private val engine: GameEngine, private val socket: So
                     if (data == null) {
                         Log.d(TAG, "ERROR: Remote data from Socket was unexpected NULL - abandoning socket Listener.")
                         listeningToSocket.set(false)
-                        engine.queueClientHandlerMessage(GameEngine.Message("Abandoned"), ::queueMessage)
+                        engine.queueMessageFromClientHandler(GameEngine.Message("Abandoned"), ::queueMessage)
                     } else {
-                        engine.queueClientHandlerMessage(GameEngine.Message.decodeMessage(data), ::queueMessage)
+                        engine.queueMessageFromClientHandler(GameEngine.Message.decodeMessage(data), ::queueMessage)
                     }
                 }
             } catch (e: SocketException) {

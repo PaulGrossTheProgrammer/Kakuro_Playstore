@@ -14,10 +14,7 @@ import android.widget.BaseAdapter
 import android.widget.ListView
 import android.widget.Switch
 import android.widget.TextView
-import android.widget.ToggleButton
-import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 
 class GameEngineSettingsActivity : AppCompatActivity() {
 
@@ -53,18 +50,18 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         enableQueuedMessages()
         // TODO - handle lack of engine activation... which is a null return here.
         engine = GameEngine.get()
-        engine?.queueActivityMessage(GameEngine.Message("RequestEngineStateChanges"), ::queueMessage)
+        engine?.queueMessageFromActivity(GameEngine.Message("RequestEngineStateChanges"), ::queueMessage)
     }
 
     override fun onPause() {
         super.onPause()
-        engine?.queueActivityMessage(GameEngine.Message("RequestStopEngineStateChanges"), ::queueMessage)
+        engine?.queueMessageFromActivity(GameEngine.Message("RequestStopEngineStateChanges"), ::queueMessage)
     }
 
     override fun onResume() {
         super.onResume()
         engine = GameEngine.get()
-        engine?.queueActivityMessage(GameEngine.Message("RequestEngineStateChanges"), ::queueMessage)
+        engine?.queueMessageFromActivity(GameEngine.Message("RequestEngineStateChanges"), ::queueMessage)
     }
 
     private fun showLayout() {
