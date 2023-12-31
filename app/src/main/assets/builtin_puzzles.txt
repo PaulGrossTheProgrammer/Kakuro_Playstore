@@ -1,3 +1,5 @@
 # First two digits are the puzzle width, then each square is 0 for non-puzzle, or digit for solution.
+# https://www.kakuros.com/?s=9x8
 043100820006980071
 06790079879012001328587900690821260073
+079700879890895768597000610260004613289310143120021
