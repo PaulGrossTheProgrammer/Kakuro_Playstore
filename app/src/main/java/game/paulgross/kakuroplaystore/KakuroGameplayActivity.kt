@@ -151,27 +151,36 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (currDisplayRows + changeZoom < minDisplayRows || currDisplayRows + changeZoom > maxDisplayRows) {
                 return
             }
+            if (currDisplayRows + displayZoom + changeZoom > gameplayActivity.gameState!!.puzzleWidth + 1 ) {
+                return
+            }
             displayZoom += changeZoom
+
+            // Make sure the bottom right does not move to high or left.
+            if (xSquaresOffset < 0) {
+                xSquaresOffset++
+            }
+            if (ySquaresOffset < 0) {
+                ySquaresOffset++
+            }
+
             setScreenSizes()
             invalidate()  // Force the grid to be redrawn
         }
 
         fun scrollGrid(xDeltaSquares: Int, yDeltaSquares: Int) {
-            displayDebugMessage("xSO = $xSquaresOffset, xDS = $xDeltaSquares, currDR = $currDisplayRows")
             if (xSquaresOffset + xDeltaSquares > 0) {
                 return
             }
             if (ySquaresOffset + yDeltaSquares > 0) {
                 return
             }
-            // FIXME - right and bottom limits don't work.
-/*            if (xSquaresOffset + xDeltaSquares < currDisplayRows) {
+            if (xSquaresOffset + xDeltaSquares < currDisplayRows - gameplayActivity.gameState!!.puzzleWidth -1) {
                 return
             }
-            if (ySquaresOffset + yDeltaSquares < currDisplayRows) {
+            if (ySquaresOffset + yDeltaSquares < currDisplayRows - gameplayActivity.gameState!!.puzzleWidth -1) {
                 return
-            }*/
-
+            }
             xSquaresOffset += xDeltaSquares
             ySquaresOffset += yDeltaSquares
             playSquareTouchLookUpId.clear()
@@ -280,6 +289,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
                             drawBlankSquare(currX, currY, canvas, paint)
                         }
 
+                        // TODO: add scroll touch areas for boundary squares.
+                        // Any square that is partially on the visible area can be used to scroll.
+
                         gameplayActivity.gameState!!.playerHints.forEach { hint ->
                             if (index == hint.index) {
                                 if (hint.direction == KakuroGameplayDefinition.Direction.DOWN) {
@@ -309,7 +321,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
                                     addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
             // Determine if this square is within the visible area.
             var visible = true
-            if (x < 0 || y < 0 || x > measuredWidth || y > measuredHeight) {
+            if (x + squareWidth < 0 || y + squareWidth < 0 || x > measuredWidth || y > measuredHeight) {
                 visible = false
             }
 

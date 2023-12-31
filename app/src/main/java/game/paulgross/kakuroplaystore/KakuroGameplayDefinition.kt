@@ -368,21 +368,17 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         if (currPuzzleIndex > 0) {
             currPuzzleIndex--
-            KakuroGameplayActivity.displayDebugMessage("currPuzzleIndex [$currPuzzleIndex]")
             startPuzzleFromString(builtinPuzzles[currPuzzleIndex])
             return true
         }
-        KakuroGameplayActivity.displayDebugMessage("UNCHANGED currPuzzleIndex [$currPuzzleIndex]")
         return false
     }
     private fun nextPuzzle(message: GameEngine.Message): Boolean {
         if (currPuzzleIndex < builtinPuzzles.size - 1) {
             currPuzzleIndex++
-            KakuroGameplayActivity.displayDebugMessage("currPuzzleIndex [$currPuzzleIndex]")
             startPuzzleFromString(builtinPuzzles[currPuzzleIndex])
             return true
         }
-        KakuroGameplayActivity.displayDebugMessage("UNCHANGED currPuzzleIndex [$currPuzzleIndex]")
         return false
     }
 
