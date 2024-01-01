@@ -156,7 +156,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
             displayZoom += changeZoom
 
-            // Make sure the bottom right does not move to high or left.
+            // Make sure the bottom right does not move too high or too far left.
             if (xSquaresOffset < 0) {
                 xSquaresOffset++
             }
@@ -178,7 +178,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (xSquaresOffset + xDeltaSquares < currDisplayRows - gameplayActivity.gameState!!.puzzleWidth -1) {
                 return
             }
-            if (ySquaresOffset + yDeltaSquares < currDisplayRows - gameplayActivity.gameState!!.puzzleWidth -1) {
+            if (ySquaresOffset + yDeltaSquares < currDisplayRows - gameplayActivity.gameState!!.puzzleHeight -1) {
                 return
             }
             xSquaresOffset += xDeltaSquares
@@ -200,14 +200,16 @@ class KakuroGameplayActivity : AppCompatActivity() {
             currViewWidth = measuredWidth
             currViewHeight = measuredHeight
 
-            currDisplayRows = gameplayActivity.gameState!!.puzzleWidth + 1 + displayZoom
+            val maxGridDimension = if (gameplayActivity.gameState!!.puzzleWidth > gameplayActivity.gameState!!.puzzleHeight) {
+                gameplayActivity.gameState!!.puzzleWidth } else {gameplayActivity.gameState!!.puzzleHeight}
+
+            currDisplayRows = maxGridDimension + 1 + displayZoom
             if (currDisplayRows > maxDisplayRows) {
                 currDisplayRows = maxDisplayRows
             }
             if (currDisplayRows < minDisplayRows) {
                 currDisplayRows = minDisplayRows
             }
-
 
             squareWidth = (currViewWidth/(currDisplayRows + outsideGridMargin)).toFloat()
             Log.d("PlayingGridView", "squareWidth = $squareWidth")
@@ -266,10 +268,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
             var index = 0
 
-            for (col in (1..gameplayActivity.gameState!!.puzzleWidth + 1)) {
-                for (row in (1..gameplayActivity.gameState!!.puzzleWidth + 1)) {
+            for (row in (1..gameplayActivity.gameState!!.puzzleHeight + 1)) {
+                for (col in (1..gameplayActivity.gameState!!.puzzleWidth + 1)) {
                     // First row and colum are only used as space for showing hints.
-                    val puzzleSquare = (col != 1 && row != 1)
+                    val puzzleSquare = (row != 1 && col != 1)
 
                     if (puzzleSquare) {
                         val gridValue = gameplayActivity.gameState!!.playerGrid[index]
@@ -310,7 +312,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
                     currX += squareWidth
                 }
-                index = (col - 1) * gameplayActivity.gameState!!.puzzleWidth
+                index = (row - 1) * gameplayActivity.gameState!!.puzzleWidth
 
                 currX = xStart
                 currY += squareWidth
@@ -546,14 +548,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 val newState = engine?.decodeState(message)
                 if (newState is KakuroGameplayDefinition.StateVariables) {
                     displayGrid(newState)
-
                 }
             }
-//            if (message.type == "Debug") {
-//                Log.d(TAG, "ACTIVITY received a debug message...")
-//                val msg = message.getString("Message")
-//                (findViewById<PlayingGridView>(R.id.textViewDebug) as TextView).text = msg
-//            }
         }
     }
 

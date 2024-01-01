@@ -8,8 +8,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private var engine: GameEngine? = null
 
-    private val builtinPuzzlesFilename = "builtin_puzzles.txt"
-    // https://www.kakuroconquest.com/6x6/intermediate
+    private const val builtinPuzzlesFilename = "builtin_puzzles.txt"
 
     private var currPuzzleIndex = 0
 
@@ -17,6 +16,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private var currPuzzle = ""
     private var puzzleWidth = 1
+    private var puzzleHeight = 1
     private var puzzleSolution: MutableList<Int> = mutableListOf()
     private var puzzleHints: MutableList<Hint> = mutableListOf()
     private val playerErrors: MutableSet<Int> = mutableSetOf()
@@ -30,7 +30,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     // Possibles are user defined, and coded as 9-digit Strings, with each digit position matching the possible value.
     private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
 
-    data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int,
+    data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int, var puzzleHeight:Int,
                               var playerHints:MutableList<Hint>, var possibles: MutableMap<Int, String>,
                                 var playerErrors: MutableSet<Int>)
 
@@ -40,12 +40,16 @@ object KakuroGameplayDefinition: GameplayDefinition {
     override fun setEngine(engine: GameEngine) {
         this.engine = engine
 
+        // Load the built-in puzzles.
         engine.assets.open(builtinPuzzlesFilename).bufferedReader().forEachLine () {
             if (!it.startsWith("#")) {
-                builtinPuzzles.add(it)
+                val currPuzzleString = it.replace("\\s".toRegex(), "")
+                if (currPuzzleString.isNotEmpty()) {
+                    builtinPuzzles.add(currPuzzleString)
+                }
             }
         }
-        Log.d(TAG, "Loaded ${builtinPuzzles.size} builtin puzzles.")
+        Log.d(TAG, "Loaded ${builtinPuzzles.size} built-in puzzles.")
 
         Log.d(TAG, "Plugin the gameplay functions ...")
         engine.registerHandler("Guess", ::submitGuess)
@@ -198,7 +202,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         if (message.missingString("w") || message.missingString("g") || message.missingString("h") ) {
             Log.d(TAG, "Missing width, grid and and/or hints.")
-            return StateVariables(mutableListOf(), 0, mutableListOf(), mutableMapOf(), mutableSetOf())
+            return StateVariables(mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf())
         }
 
         var puzzleIndex = message.getString("i")?.toInt()
@@ -210,7 +214,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         val width = message.getString("w")?.toInt()
         if (width == null || width < 1) {
             Log.d(TAG, "Invalid width ${message.getString("w")}.")
-            return StateVariables(mutableListOf(), 0, mutableListOf(), mutableMapOf(), mutableSetOf())
+            return StateVariables(mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf())
         }
 
         var possibles: MutableMap<Int, String> = mutableMapOf()
@@ -223,7 +227,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
             playerErrors = decodeErrors(message.getString("e")!!)
         }
 
-        return StateVariables(decodePlayerGuesses(message.getString("g")!!), width,
+        val guesses = decodePlayerGuesses(message.getString("g")!!)
+        val height = guesses.size / width
+
+        return StateVariables(guesses, width, height,
             decodeHints(message.getString("h")!!), possibles, playerErrors)
     }
 
@@ -398,6 +405,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 playerGuesses.add(0)
             }
         }
+        puzzleHeight = puzzleSolution.size / puzzleWidth
+        Log.d(TAG, "Puzzle height = $puzzleHeight")
         puzzleHints.clear()
         generateHints()
 
