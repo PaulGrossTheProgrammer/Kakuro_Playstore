@@ -32,7 +32,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int, var puzzleHeight:Int,
                               var playerHints:MutableList<Hint>, var possibles: MutableMap<Int, String>,
-                                var playerErrors: MutableSet<Int>)
+                                var playerErrors: MutableSet<Int> ,var solved: Boolean)
 
     enum class Direction {ACROSS, DOWN}
     data class Hint(val index: Int, val direction: Direction, var total: Int)
@@ -195,6 +195,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
         if (playerErrors.isNotEmpty()) {
             message.setKeyString("e", encodeErrors(playerErrors))
         }
+        if (isSolved()) {
+            message.setKeyString("s", "1")
+        }
         return message
     }
 
@@ -203,7 +206,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         if (message.missingString("w") || message.missingString("g") || message.missingString("h") ) {
             Log.d(TAG, "Missing width, grid and and/or hints.")
-            return StateVariables(mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf())
+            return StateVariables(mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf(), false)
         }
 
         var puzzleIndex = message.getString("i")?.toInt()
@@ -215,7 +218,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         val width = message.getString("w")?.toInt()
         if (width == null || width < 1) {
             Log.d(TAG, "Invalid width ${message.getString("w")}.")
-            return StateVariables(mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf())
+            return StateVariables(mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf(), false)
         }
 
         var possibles: MutableMap<Int, String> = mutableMapOf()
@@ -231,8 +234,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
         val guesses = decodePlayerGuesses(message.getString("g")!!)
         val height = guesses.size / width
 
+        val solved = message.getString("s") != null
+
         return StateVariables(guesses, width, height,
-            decodeHints(message.getString("h")!!), possibles, playerErrors)
+            decodeHints(message.getString("h")!!), possibles, playerErrors, solved)
     }
 
     private fun encodePlayerGuesses(playerGuesses: Any): String {
@@ -473,6 +478,21 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
 
         return newPossibles
+    }
+
+    private fun isSolved(): Boolean {
+        if (playerErrors.isNotEmpty()) {
+            return false
+        }
+
+        // Look for any blank guesses
+        this.playerGuesses.forEach {
+            if (it == 0) {
+                return false
+            }
+        }
+
+        return true
     }
 
     private fun markPlayerErrors() {

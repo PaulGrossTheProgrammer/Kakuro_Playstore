@@ -16,6 +16,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
@@ -58,6 +59,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
      */
     private fun displayGrid(newestGameState: KakuroGameplayDefinition.StateVariables) {
         gameState = newestGameState
+
+        if (checkForSolved) {
+            checkForSolved = false
+            if (gameState!!.solved) {
+                Toast.makeText(this, "SOLVED!", Toast.LENGTH_LONG).show()
+            }
+        }
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.setScreenSizes()
@@ -286,7 +294,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
                             val error = gameplayActivity.gameState!!.playerErrors.contains(index)
 
-                            drawGuessSquare(index, gridValue.toString(), possiblesString, selected, error, addTouchAreas, currX, currY, canvas, paint)
+                            drawGuessSquare(index, gridValue.toString(), possiblesString, selected, error,
+                                gameplayActivity.gameState!!.solved, addTouchAreas, currX, currY, canvas, paint)
                         } else {
                             drawBlankSquare(currX, currY, canvas, paint)
                         }
@@ -320,6 +329,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean, error: Boolean,
+                                    solved: Boolean,
                                     addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint) {
             // Determine if this square is within the visible area.
             var visible = true
@@ -341,8 +351,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
 
             paint.color = Color.LTGRAY
-            if (selected) {
-                paint.color = Color.WHITE
+            if (solved) {
+                paint.color = Color.GRAY
+            } else {
+                if (selected) {
+                    paint.color = Color.WHITE
+                }
             }
             canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )
 
@@ -454,6 +468,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     // Game commands
 
+    private var checkForSolved = false
+
     fun onClickDigit(view: View) {
         Log.d(TAG, "Clicked a guess: ${view.tag}")
 
@@ -462,12 +478,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
             return
         }
 
+        checkForSolved = true  // This flag is used by the message receiver to react to the change if required
+
         val tag = view.tag.toString()
         val value = tag.substringAfter("Guess")
         val message = GameEngine.Message("Guess")
         message.setKeyString("Index", selectedIndex.toString())
         message.setKeyString("Value", value)
-
         engine?.queueMessageFromActivity(message, ::queueMessage)
     }
 
@@ -485,7 +502,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val message = GameEngine.Message("Possible")
         message.setKeyString("Index", selectedIndex.toString())
         message.setKeyString("Value", value)
-
         engine?.queueMessageFromActivity(message, ::queueMessage)
     }
 
