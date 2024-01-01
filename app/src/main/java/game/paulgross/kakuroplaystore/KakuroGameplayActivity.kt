@@ -502,14 +502,60 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     fun onClickPrevPuzzle(view: View) {
-        Log.d(TAG, "Clicked Puzzle 2")
-        engine?.queueMessageFromActivity(GameEngine.Message("NewPuzzle1"), ::queueMessage)
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
+        // Determine if there are user guesses.
+        var guesses = false
+        gameState?.playerGrid?.forEach {
+            if (it > 0) {
+                guesses = true
+            }
+        }
+        if (guesses == false) {
+            prevPuzzle()
+            return
+        }
+
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Change Puzzle")
+        builder.setMessage("Are you sure you want to change puzzle?")
+        builder.setPositiveButton("Change") { _, _ ->
+            prevPuzzle()
+        }
+        builder.setNegativeButton("Back") { _, _ -> }
+        builder.show()
     }
-    fun onClickNextPuzzle(view: View) {
-        Log.d(TAG, "Clicked Puzzle 2")
-        engine?.queueMessageFromActivity(GameEngine.Message("NewPuzzle2"), ::queueMessage)
+
+    private fun prevPuzzle() {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
+        engine?.queueMessageFromActivity(GameEngine.Message("PrevPuzzle"), ::queueMessage)
+    }
+
+    fun onClickNextPuzzle(view: View) {
+        Log.d(TAG, "Clicked Puzzle Next")
+        // Determine if there are user guesses.
+        var guesses = false
+        gameState?.playerGrid?.forEach {
+            if (it > 0) {
+                guesses = true
+            }
+        }
+        if (guesses == false) {
+            nextPuzzle()
+            return
+        }
+
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Change Puzzle")
+        builder.setMessage("Are you sure you want to change puzzle?")
+        builder.setPositiveButton("Change") { _, _ ->
+            nextPuzzle()
+        }
+        builder.setNegativeButton("Back") { _, _ -> }
+        builder.show()
+    }
+
+    private fun nextPuzzle() {
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
+        engine?.queueMessageFromActivity(GameEngine.Message("NextPuzzle"), ::queueMessage)
     }
 
     private fun confirmExitApp() {

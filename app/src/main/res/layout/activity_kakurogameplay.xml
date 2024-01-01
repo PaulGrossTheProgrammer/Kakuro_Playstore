@@ -6,14 +6,48 @@
     android:layout_height="match_parent"
     tools:context=".KakuroGameplayActivity">
 
-    <Button
-        android:id="@+id/ButtonPuzzle1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <TextView
+        android:id="@+id/textViewSettings"
+        android:layout_width="96dp"
+        android:layout_height="42dp"
+        android:layout_marginEnd="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickSettings"
+        android:text="Settings"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewButton10"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/textPrevPuzzle"
+        android:layout_width="62dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="8dp"
+        android:background="@android:color/holo_blue_bright"
         android:onClick="onClickPrevPuzzle"
         android:text="Prev Puzzle"
-        app:layout_constraintBottom_toTopOf="@+id/ButtonPuzzle2"
-        app:layout_constraintEnd_toStartOf="@+id/textViewSettings" />
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewButton10"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton10" />
+
+    <TextView
+        android:id="@+id/textNextPuzzle"
+        android:layout_width="62dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickNextPuzzle"
+        android:text="Next Puzzle"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textPrevPuzzle"
+        app:layout_constraintStart_toEndOf="@+id/textPrevPuzzle" />
 
     <ImageButton
         android:id="@+id/imageButtonScrollRight"
@@ -47,32 +81,19 @@
         app:layout_constraintTop_toBottomOf="@+id/viewPlayGrid"
         app:srcCompat="@android:drawable/arrow_up_float" />
 
-    <TextView
-        android:id="@+id/textViewSettings"
-        android:layout_width="96dp"
-        android:layout_height="42dp"
-        android:layout_marginEnd="8dp"
-        android:background="@android:color/holo_blue_bright"
-        android:onClick="onClickSettings"
-        android:text="Settings"
-        android:textAlignment="center"
-        android:textColor="@color/black"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="@+id/textViewButton10"
-        app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
         android:id="@+id/textViewButton17"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginEnd="2dp"
-        android:background="@android:color/holo_blue_bright"
+        android:background="?attr/colorPrimaryVariant"
         android:onClick="onClickPossibleDigit"
         android:paddingTop="2dp"
         android:tag="Possible1"
         android:text="1"
         android:textAlignment="textStart"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textSize="14sp"
         app:layout_constraintEnd_toStartOf="@+id/textViewButton14"
         app:layout_constraintTop_toTopOf="@+id/textViewButton11" />
@@ -82,13 +103,13 @@
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
-        android:background="@android:color/holo_blue_bright"
+        android:background="?attr/colorPrimaryVariant"
         android:onClick="onClickPossibleDigit"
         android:paddingTop="20dp"
         android:tag="Possible7"
         android:text="7"
         android:textAlignment="textStart"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="@+id/textViewButton18"
         app:layout_constraintTop_toBottomOf="@+id/textViewButton18" />
@@ -98,13 +119,13 @@
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
-        android:background="@android:color/holo_blue_bright"
+        android:background="?attr/colorPrimaryVariant"
         android:onClick="onClickPossibleDigit"
         android:paddingTop="10dp"
         android:tag="Possible4"
         android:text="4"
         android:textAlignment="textStart"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="@+id/textViewButton17"
         app:layout_constraintTop_toBottomOf="@+id/textViewButton17" />
@@ -114,13 +135,13 @@
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
-        android:background="@android:color/holo_blue_bright"
+        android:background="?attr/colorPrimaryVariant"
         android:onClick="onClickPossibleDigit"
         android:paddingTop="20dp"
         android:tag="Possible8"
         android:text="8"
         android:textAlignment="center"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="@+id/textViewButton15"
         app:layout_constraintTop_toBottomOf="@+id/textViewButton15" />
@@ -130,13 +151,13 @@
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
-        android:background="@android:color/holo_blue_bright"
+        android:background="?attr/colorPrimaryVariant"
         android:onClick="onClickPossibleDigit"
         android:paddingTop="10dp"
         android:tag="Possible5"
         android:text="5"
         android:textAlignment="center"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="@+id/textViewButton14"
         app:layout_constraintTop_toBottomOf="@+id/textViewButton14" />
@@ -146,13 +167,13 @@
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
-        android:background="@android:color/holo_blue_bright"
+        android:background="?attr/colorPrimaryVariant"
         android:onClick="onClickPossibleDigit"
         android:paddingTop="20dp"
         android:tag="Possible9"
         android:text="9"
         android:textAlignment="textEnd"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="@+id/textViewButton11"
         app:layout_constraintTop_toBottomOf="@+id/textViewButton12" />
@@ -162,13 +183,13 @@
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
-        android:background="@android:color/holo_blue_bright"
+        android:background="?attr/colorPrimaryVariant"
         android:onClick="onClickPossibleDigit"
         android:paddingTop="10dp"
         android:tag="Possible6"
         android:text="6"
         android:textAlignment="textEnd"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="@+id/textViewButton11"
         app:layout_constraintTop_toBottomOf="@+id/textViewButton11" />
@@ -179,13 +200,13 @@
         android:layout_height="42dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:background="@android:color/holo_blue_bright"
+        android:background="?attr/colorPrimaryVariant"
         android:onClick="onClickPossibleDigit"
         android:paddingTop="2dp"
         android:tag="Possible3"
         android:text="3"
         android:textAlignment="textEnd"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/viewPlayGrid" />
@@ -195,13 +216,13 @@
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginEnd="2dp"
-        android:background="@android:color/holo_blue_bright"
+        android:background="?attr/colorPrimaryVariant"
         android:onClick="onClickPossibleDigit"
         android:paddingTop="2dp"
         android:tag="Possible2"
         android:text="2"
         android:textAlignment="center"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textSize="14sp"
         app:layout_constraintEnd_toStartOf="@+id/textViewButton11"
         app:layout_constraintTop_toTopOf="@+id/textViewButton11" />
@@ -416,21 +437,11 @@
         app:layout_constraintTop_toBottomOf="@+id/textViewButton8"
         app:srcCompat="@android:drawable/btn_plus" />
 
-    <Button
-        android:id="@+id/ButtonPuzzle2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="onClickNextPuzzle"
-        android:text="Next Puzzle"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/textViewSettings" />
-
     <TextView
         android:id="@+id/textViewDebug"
         android:layout_width="match_parent"
         android:layout_height="27dp"
-        android:text="Debug message"
-        app:layout_constraintBottom_toTopOf="@+id/ButtonPuzzle1"
+        app:layout_constraintBottom_toTopOf="@+id/textViewButton10"
         app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

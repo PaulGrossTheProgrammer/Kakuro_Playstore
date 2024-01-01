@@ -56,8 +56,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine.registerHandler("Possible", ::togglePossible)
         engine.registerHandler("RestartPuzzle", ::restartPuzzle)
 
-        engine.registerHandler("NewPuzzle1", ::prevPuzzle)  // TODO- test only
-        engine.registerHandler("NewPuzzle2", ::nextPuzzle)  // TODO- test only
+        engine.registerHandler("PrevPuzzle", ::prevPuzzle)
+        engine.registerHandler("NextPuzzle", ::nextPuzzle)
+
         // TODO - implement an undo button...
 
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
