@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -30,7 +31,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         singleton = this
-        setContentView(R.layout.activity_kakurogameplay)
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            setContentView(R.layout.activity_kakurogameplay)
+        } else {
+            // TODO - make a landscape layout
+            setContentView(R.layout.activity_kakurogameplay_landscape)
+        }
 
         // Attach the custom TouchListener to the custom PlayingGridView
         val viewPlayGrid = findViewById<PlayingGridView>(R.id.viewPlayGrid)

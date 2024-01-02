@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".KakuroGameplayActivity">
+
+    <TextView
+        android:id="@+id/textViewSettings"
+        android:layout_width="96dp"
+        android:layout_height="42dp"
+        android:layout_marginEnd="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickSettings"
+        android:text="Settings"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewButton10"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/textPrevPuzzle"
+        android:layout_width="62dp"
+        android:layout_height="42dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickPrevPuzzle"
+        android:text="Prev Puzzle"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewButton10"
+        app:layout_constraintEnd_toStartOf="@+id/textNextPuzzle" />
+
+    <TextView
+        android:id="@+id/textNextPuzzle"
+        android:layout_width="62dp"
+        android:layout_height="42dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickNextPuzzle"
+        android:text="Next Puzzle"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textPrevPuzzle"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ImageButton
+        android:id="@+id/imageButtonScrollRight"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="16dp"
+        android:onClick="onClickScrollRight"
+        android:rotation="-90"
+        app:layout_constraintStart_toEndOf="@+id/imageButtonScrollUp"
+        app:layout_constraintTop_toTopOf="@+id/imageButtonScrollUp"
+        app:srcCompat="@android:drawable/arrow_down_float" />
+
+    <ImageButton
+        android:id="@+id/imageButtonScrollDown"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:onClick="onClickScrollDown"
+        app:layout_constraintEnd_toEndOf="@+id/imageButtonScrollUp"
+        app:layout_constraintStart_toStartOf="@+id/imageButtonScrollUp"
+        app:layout_constraintTop_toBottomOf="@+id/imageButtonScrollUp"
+        app:srcCompat="@android:drawable/arrow_down_float" />
+
+    <ImageButton
+        android:id="@+id/imageButtonScrollUp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="-16dp"
+        android:onClick="onClickScrollUp"
+        app:layout_constraintStart_toEndOf="@+id/imageButtonScrollLeft"
+        app:layout_constraintTop_toTopOf="@+id/imageButtonScrollLeft"
+        app:srcCompat="@android:drawable/arrow_up_float" />
+
+
+    <TextView
+        android:id="@+id/textViewButton17"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginEnd="2dp"
+        android:background="?attr/colorPrimaryVariant"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="2dp"
+        android:tag="Possible1"
+        android:text="1"
+        android:textAlignment="textStart"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@+id/textViewButton14"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton11" />
+
+    <TextView
+        android:id="@+id/textViewButton19"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="2dp"
+        android:background="?attr/colorPrimaryVariant"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="20dp"
+        android:tag="Possible7"
+        android:text="7"
+        android:textAlignment="textStart"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton18"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton18" />
+
+    <TextView
+        android:id="@+id/textViewButton18"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="2dp"
+        android:background="?attr/colorPrimaryVariant"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="10dp"
+        android:tag="Possible4"
+        android:text="4"
+        android:textAlignment="textStart"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton17"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton17" />
+
+    <TextView
+        android:id="@+id/textViewButton16"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="2dp"
+        android:background="?attr/colorPrimaryVariant"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="20dp"
+        android:tag="Possible8"
+        android:text="8"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton15"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton15" />
+
+    <TextView
+        android:id="@+id/textViewButton15"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="2dp"
+        android:background="?attr/colorPrimaryVariant"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="10dp"
+        android:tag="Possible5"
+        android:text="5"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton14"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton14" />
+
+    <TextView
+        android:id="@+id/textViewButton13"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="2dp"
+        android:background="?attr/colorPrimaryVariant"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="20dp"
+        android:tag="Possible9"
+        android:text="9"
+        android:textAlignment="textEnd"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton11"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton12" />
+
+    <TextView
+        android:id="@+id/textViewButton12"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="2dp"
+        android:background="?attr/colorPrimaryVariant"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="10dp"
+        android:tag="Possible6"
+        android:text="6"
+        android:textAlignment="textEnd"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton11"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton11" />
+
+    <TextView
+        android:id="@+id/textViewButton11"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:background="?attr/colorPrimaryVariant"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="2dp"
+        android:tag="Possible3"
+        android:text="3"
+        android:textAlignment="textEnd"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textViewButton14"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginEnd="2dp"
+        android:background="?attr/colorPrimaryVariant"
+        android:onClick="onClickPossibleDigit"
+        android:paddingTop="2dp"
+        android:tag="Possible2"
+        android:text="2"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@+id/textViewButton11"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton11" />
+
+    <TextView
+        android:id="@+id/textViewButton9"
+        android:layout_width="76dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:tag="Guess0"
+        android:text="Clear"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="@+id/textViewButton8"
+        app:layout_constraintStart_toStartOf="@+id/textViewButton7"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton6" />
+
+    <TextView
+        android:id="@+id/textViewButton10"
+        android:layout_width="76dp"
+        android:layout_height="42dp"
+        android:layout_marginBottom="8dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickReset"
+        android:text="Reset"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/textPrevPuzzle" />
+
+    <TextView
+        android:id="@+id/textViewButton6"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="2dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:tag="Guess8"
+        android:text="8"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton7"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton7" />
+
+    <TextView
+        android:id="@+id/textViewButton8"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="2dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:tag="Guess9"
+        android:text="9"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton6"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton6" />
+
+    <TextView
+        android:id="@+id/textViewButton7"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="2dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:tag="Guess7"
+        android:text="7"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="@+id/textViewButton3"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton3" />
+
+    <TextView
+        android:id="@+id/textViewButton4"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="2dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:tag="Guess5"
+        android:text="5"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton3"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton3" />
+
+    <TextView
+        android:id="@+id/textViewButton5"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="2dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:tag="Guess6"
+        android:text="6"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton4"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton4" />
+
+    <TextView
+        android:id="@+id/textViewButton2"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="2dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:tag="Guess3"
+        android:text="3"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton" />
+
+    <TextView
+        android:id="@+id/textViewButton3"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="2dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:tag="Guess4"
+        android:text="4"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="@+id/textViewButton1"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton1" />
+
+    <view
+        android:id="@+id/viewPlayGrid"
+        class="game.paulgross.kakuroplaystore.KakuroGameplayActivity$PlayingGridView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textViewButton1"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:tag="Guess1"
+        android:text="1"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/viewPlayGrid"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textViewButton"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="2dp"
+        android:background="@android:color/holo_blue_bright"
+        android:onClick="onClickDigit"
+        android:tag="Guess2"
+        android:text="2"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/textViewButton1"
+        app:layout_constraintTop_toTopOf="@+id/textViewButton1" />
+
+    <ImageButton
+        android:id="@+id/imageButtonScrollLeft"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginTop="16dp"
+        android:onClick="onClickScrollLeft"
+        android:rotation="90"
+        app:layout_constraintStart_toEndOf="@+id/viewPlayGrid"
+        app:layout_constraintTop_toBottomOf="@+id/textViewButton9"
+        app:srcCompat="@android:drawable/arrow_down_float" />
+
+    <ImageButton
+        android:id="@+id/imageButton3"
+        android:layout_width="78dp"
+        android:layout_height="46dp"
+        android:onClick="onClickZoomOut"
+        app:layout_constraintStart_toEndOf="@+id/imageButton4"
+        app:layout_constraintTop_toBottomOf="@+id/imageButtonScrollDown"
+        app:srcCompat="@android:drawable/btn_minus" />
+
+    <ImageButton
+        android:id="@+id/imageButton4"
+        android:layout_width="78dp"
+        android:layout_height="46dp"
+        android:onClick="onClickZoomIn"
+        app:layout_constraintStart_toEndOf="@+id/viewPlayGrid"
+        app:layout_constraintTop_toBottomOf="@+id/imageButtonScrollDown"
+        app:srcCompat="@android:drawable/btn_plus" />
+
+    <TextView
+        android:id="@+id/textViewDebug"
+        android:layout_width="417dp"
+        android:layout_height="38dp"
+        app:layout_constraintStart_toEndOf="@+id/viewPlayGrid"
+        app:layout_constraintTop_toBottomOf="@+id/viewPlayGrid" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
