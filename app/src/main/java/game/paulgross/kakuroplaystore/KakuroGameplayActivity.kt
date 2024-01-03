@@ -10,6 +10,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.os.Bundle
 import android.util.AttributeSet
@@ -21,10 +22,27 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
+fun getResizedBitmap(bm: Bitmap , newWidth: Int , newHeight: Int ): Bitmap {
+//    val width = bm.getWidth()
+//    val height = bm.getHeight()
+    val scaleWidth = newWidth.toFloat() / bm.width
+    val scaleHeight = newHeight.toFloat() / bm.height
+
+    // CREATE A MATRIX FOR THE MANIPULATION
+    val matrix: Matrix = Matrix()
+    matrix.postScale(scaleWidth, scaleHeight)
+
+    // "RECREATE" THE NEW BITMAP
+    val resizedBitmap = Bitmap.createBitmap(
+            bm, 0, 0, bm.width, bm.height, matrix, false)
+    bm.recycle()
+    return resizedBitmap
+}
 
 class KakuroGameplayActivity : AppCompatActivity() {
 
     var engine: GameEngine? = null
+
 
 
     @SuppressLint("ClickableViewAccessibility")  // Why do I need this??? Something to do with setOnTouchListener()
@@ -102,7 +120,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         private var selectedIndex: Int = -1
 
-        private val paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
+        private var paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
         // TODO - scale the bitmap...
 
         private val colourNonPlaySquareInside = Color.argb(180, 40, 71, 156)
@@ -234,6 +252,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
             slashMargin = squareWidth * 0.08f
 
+            // scale the paperTexture
+            paperTexture = getResizedBitmap(paperTexture, measuredWidth, measuredHeight)
+
             invalidate()  // Force a redraw
         }
 
@@ -252,7 +273,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 return
             }
 
-            canvas.drawBitmap(paperTexture, 0f, 0f, paint) // TODO scale this to the final size
+            canvas.drawBitmap(paperTexture, 0f, 0f, paint)
 
             // Add the touch areas if there are none.
             var addTouchAreas = false
