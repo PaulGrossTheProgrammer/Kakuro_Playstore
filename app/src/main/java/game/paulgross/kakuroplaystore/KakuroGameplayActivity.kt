@@ -22,9 +22,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
+// TODO: Link or otherwise show the Privacy Policy:
+// https://docs.google.com/document/d/e/2PACX-1vS6enuOilpSfUxDtBnDxLg_AQhUB3iAlPsS3-VFZOH_jt798KfHb3Qd6259oAZ6I9YUUQ9C2K223st4/pub
+
 fun getResizedBitmap(bm: Bitmap , newWidth: Int , newHeight: Int ): Bitmap {
-//    val width = bm.getWidth()
-//    val height = bm.getHeight()
+
     val scaleWidth = newWidth.toFloat() / bm.width
     val scaleHeight = newHeight.toFloat() / bm.height
 
