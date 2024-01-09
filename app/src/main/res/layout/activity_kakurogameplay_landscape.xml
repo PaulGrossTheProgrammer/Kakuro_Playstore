@@ -6,6 +6,15 @@
     android:layout_height="match_parent"
     tools:context=".KakuroGameplayActivity">
 
+    <ImageButton
+        android:id="@+id/imageButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="onClickGotoSettings"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/viewPlayGrid"
+        app:srcCompat="@android:drawable/ic_menu_manage" />
+
     <TextView
         android:id="@+id/textViewSettings"
         android:layout_width="96dp"
