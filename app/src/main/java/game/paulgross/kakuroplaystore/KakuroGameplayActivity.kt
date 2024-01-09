@@ -624,6 +624,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine?.queueMessageFromActivity(GameEngine.Message("StopGame"), ::queueMessage)
     }
 
+    fun onClickGotoSettings(view: View) {
+        Log.d(TAG, "onClickGotoSettings")
+        engine?.gotoSettingsActivity(this)
+    }
+
     /**
      * Receive messages from the GameEngine.
      */

@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -16,16 +17,19 @@ import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
+
 class GameEngineSettingsActivity : AppCompatActivity() {
 
-    private val settingsListNames: List<String> = listOf<String>("LOCAL", "CLIENT", "SERVER")
+//    private val settingsListNames: List<String> = listOf<String>("LOCAL", "CLIENT", "SERVER")
+    private val settingsListNames: List<String> = listOf<String>("PRIVACY POLICY")
     private val settingsListIndexViewIds: List<Int> = listOf(R.layout.activity_settings_listitem, R.layout.activity_settings_listitem, R.layout.activity_settings_listitem)
 
     // TODO - add client and local layouts too ...
     private val settingsTargetViewIds: Map<String, Int> = mapOf(
-        "LOCAL" to R.layout.activity_settings_server,
-        "CLIENT" to R.layout.activity_settings_server,
-        "SERVER" to R.layout.activity_settings_server
+        "PRIVACY POLICY" to R.layout.activity_settings_privacypolicy,
+//        "LOCAL" to R.layout.activity_settings_server,
+//        "CLIENT" to R.layout.activity_settings_server,
+//        "SERVER" to R.layout.activity_settings_server
     )
 
     private var listOfSettings: ListView? = null
@@ -140,9 +144,6 @@ class GameEngineSettingsActivity : AppCompatActivity() {
     fun onClickToggleServer(view: View) {
         Log.d(TAG, "TODO: Toggle server state.")
 
-
-
-
         if (view is Switch) {
             Log.d(TAG, "We have a Switch!")
             val state = view.isChecked
@@ -154,6 +155,13 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
             }
         }
+    }
+
+    val privacyPolicyLink = "https://docs.google.com/document/d/e/2PACX-1vS6enuOilpSfUxDtBnDxLg_AQhUB3iAlPsS3-VFZOH_jt798KfHb3Qd6259oAZ6I9YUUQ9C2K223st4/pub"
+
+    fun onClickPrivacyPolicy(view: View) {
+        val myIntent = Intent(Intent.ACTION_VIEW, Uri.parse(privacyPolicyLink))
+        startActivity(myIntent)
     }
 
     fun showServerSettings(settingName: String) {

@@ -499,7 +499,7 @@ class GameEngine( private val definition: GameplayDefinition, applicationContext
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-        intent.putExtra("SelectedSetting", "")
+        intent.putExtra("SelectedSetting", "PRIVACYPOLICY")
         context.startActivity(intent)
     }
 
