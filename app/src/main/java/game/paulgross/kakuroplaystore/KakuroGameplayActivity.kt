@@ -229,6 +229,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 return
             }
 
+            if (measuredWidth == 0 || measuredHeight == 0) {
+                Log.d("PlayingGridView", "setScreenSizes() exiting because of invalid width or height.")
+                return
+            }
+
             playSquareTouchLookUpId.clear()
 
             currViewWidth = measuredWidth
