@@ -157,6 +157,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         }
     }
 
+    // TODO: Move this out of the engine to the Kakuro-specific code.
     val privacyPolicyLink = "https://docs.google.com/document/d/e/2PACX-1vS6enuOilpSfUxDtBnDxLg_AQhUB3iAlPsS3-VFZOH_jt798KfHb3Qd6259oAZ6I9YUUQ9C2K223st4/pub"
 
     fun onClickPrivacyPolicy(view: View) {
