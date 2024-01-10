@@ -22,30 +22,23 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
-// TODO: Link or otherwise show the Privacy Policy:
-// https://docs.google.com/document/d/e/2PACX-1vS6enuOilpSfUxDtBnDxLg_AQhUB3iAlPsS3-VFZOH_jt798KfHb3Qd6259oAZ6I9YUUQ9C2K223st4/pub
+fun getResizedBitmap(bitmap: Bitmap , newWidth: Int , newHeight: Int ): Bitmap {
 
-fun getResizedBitmap(bm: Bitmap , newWidth: Int , newHeight: Int ): Bitmap {
+    val scaleWidth = newWidth.toFloat() / bitmap.width
+    val scaleHeight = newHeight.toFloat() / bitmap.height
 
-    val scaleWidth = newWidth.toFloat() / bm.width
-    val scaleHeight = newHeight.toFloat() / bm.height
-
-    // CREATE A MATRIX FOR THE MANIPULATION
-    val matrix: Matrix = Matrix()
+    val matrix = Matrix()
     matrix.postScale(scaleWidth, scaleHeight)
 
-    // "RECREATE" THE NEW BITMAP
     val resizedBitmap = Bitmap.createBitmap(
-            bm, 0, 0, bm.width, bm.height, matrix, false)
-    bm.recycle()
+        bitmap, 0, 0, bitmap.width, bitmap.height, matrix, false)
+    bitmap.recycle()
     return resizedBitmap
 }
 
 class KakuroGameplayActivity : AppCompatActivity() {
 
     var engine: GameEngine? = null
-
-
 
     @SuppressLint("ClickableViewAccessibility")  // Why do I need this??? Something to do with setOnTouchListener()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,19 +47,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
             setContentView(R.layout.activity_kakurogameplay)
         } else {
-            // TODO - make a landscape layout
             setContentView(R.layout.activity_kakurogameplay_landscape)
         }
 
         // Attach the custom TouchListener to the custom PlayingGridView
         val viewPlayGrid = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        viewPlayGrid.setOnTouchListener(PlayingGridView.CustomListener(this, viewPlayGrid))
-
-        enableQueuedMessages()
+        viewPlayGrid.setOnTouchListener(PlayingGridView.CustomListener(viewPlayGrid))
 
         engine = GameEngine.activate(KakuroGameplayDefinition, applicationContext, this)
 
-        // Request that the GameEngine call queueMessage() whenever the game state changes.
+
+        // Request that the GameEngine send a state message to queueMessage() whenever the game state changes.
+        enableQueuedMessages()
         engine?.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
     }
 
@@ -81,21 +73,21 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private var gameState: KakuroGameplayDefinition.StateVariables? = null
 
     /**
-     * Update the custom playGridView with the state and request a redraw.
+     * Update the custom playGridView with the new state and request a redraw.
      */
     private fun displayGrid(newestGameState: KakuroGameplayDefinition.StateVariables) {
         gameState = newestGameState
 
-        if (checkForSolved) {
-            checkForSolved = false
+        if (checkForSolved == true) {
             if (gameState!!.solved) {
                 Toast.makeText(this, "SOLVED!", Toast.LENGTH_LONG).show()
             }
+            checkForSolved = false
         }
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        playGridView.setScreenSizes()
-        playGridView.invalidate()
+        playGridView.setScreenSizes()  // TODO: Is there a way to avoid redundant calls to setScreenSizes()???
+        // NOTE: setScreenSizes() also forces a redraw.
     }
 
     /**
@@ -123,12 +115,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var selectedIndex: Int = -1
 
         private var paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
-        // TODO - scale the bitmap...
 
         private val colourNonPlaySquareInside = Color.argb(180, 40, 71, 156)
         private val colourSquareBorder = Color.argb(180, 29, 51, 112)
-        private val colourGuessSquare = Color.argb(180, 188, 190, 194)
-        private val colourGuessSquareSelected = Color.argb(180, 255, 255, 255)
 
         private lateinit var gameplayActivity: KakuroGameplayActivity
 
@@ -144,27 +133,26 @@ class KakuroGameplayActivity : AppCompatActivity() {
         data class TouchArea(val xMin: Float, val yMin: Float, val xMax: Float, val yMax: Float)
         var playSquareTouchLookUpId: MutableMap<TouchArea, Int> = mutableMapOf()
 
-        class CustomListener(private val theActivity: KakuroGameplayActivity, private val view: PlayingGridView): View.OnTouchListener {
+        /**
+         * This CustomListener uses areas defined in the playSquareTouchLookUpId: Map to determine the Id for user screen touches.
+         */
+        class CustomListener(private val gridView: PlayingGridView): OnTouchListener {
             override fun onTouch(view: View, event: MotionEvent): Boolean {
-                val x = event.x
-                val y = event.y
-
                 when(event.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        val touchedIndex = lookupTouchedGuessId(x, y)
-                        if (touchedIndex != -1) {
-                            Log.d(TAG, "Touched index: $touchedIndex")
-                            theActivity.touchedGuess(touchedIndex)
-                        } else {
-                            theActivity.touchedGuessClear()
-                        }
+                        gridView.selectedIndex = lookupTouchedGuessId(event.x, event.y)
+                        gridView.invalidate()  // Force the grid to be redrawn
                     }
                 }
                 return true
             }
 
+            /**
+             * Search through all the TouchArea entries in the playSquareTouchLookUpId: Map to find the Id located at x, y.
+             * Return -1 if the touch isn't inside any of the defined TouchArea entries.
+             */
             private fun lookupTouchedGuessId(x: Float, y: Float): Int {
-                for (entry in view.playSquareTouchLookUpId.entries.iterator()) {
+                for (entry in gridView.playSquareTouchLookUpId.entries.iterator()) {
                     if (x >= entry.key.xMin && x <= entry.key.xMax && y >= entry.key.yMin && y <= entry.key.yMax) {
                         return entry.value
                     }
@@ -173,8 +161,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
         }
 
-        fun setSelectedIndex(index: Int) {
-            selectedIndex = index
+        fun clearSelectedIndex() {
+            selectedIndex = -1
             invalidate()  // Force the grid to be redrawn
         }
         fun getSelectedIndex(): Int {
@@ -198,8 +186,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 ySquaresOffset++
             }
 
-            setScreenSizes()
-            invalidate()  // Force the grid to be redrawn
+            setScreenSizes()  // This alo forces a redraw
         }
 
         fun scrollGrid(xDeltaSquares: Int, yDeltaSquares: Int) {
@@ -215,8 +202,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (ySquaresOffset + yDeltaSquares < currDisplayRows - gameplayActivity.gameState!!.puzzleHeight -1) {
                 return
             }
+
             xSquaresOffset += xDeltaSquares
             ySquaresOffset += yDeltaSquares
+
+            // The current touch areas are invalid after scrolling
             playSquareTouchLookUpId.clear()
 
             invalidate()  // Force the grid to be redrawn
@@ -225,7 +215,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         fun setScreenSizes() {
             Log.d("PlayingGridView", "setScreenSizes(): Width = $measuredWidth, height = $measuredHeight")
             if (gameplayActivity?.gameState == null) {
-                Log.d("PlayingGridView", "setScreenSizes() exiting because gameState is null.")
+                Log.d("PlayingGridView", "setScreenSizes() exiting because there is not yet a gameState.")
                 return
             }
 
@@ -464,16 +454,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
     }
 
-
+    //
     // User interface controls
-
-    private fun touchedGuess(touchedIndex: Int) {
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).setSelectedIndex(touchedIndex)
-    }
-
-    private fun touchedGuessClear() {
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).setSelectedIndex(-1)
-    }
+    //
 
     fun onClickScrollUp(view: View) {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).scrollGrid(0, 1)
@@ -498,9 +481,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
     fun onClickZoomOut(view: View) {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).zoomGrid(1)
     }
-
-
-    // Game commands
 
     private var checkForSolved = false
 
@@ -544,7 +524,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         builder.setTitle("Restart Puzzle")
         builder.setMessage("Are you sure you want to restart?")
         builder.setPositiveButton("Reset") { _, _ ->
-            findViewById<PlayingGridView>(R.id.viewPlayGrid).setSelectedIndex(-1)
+            findViewById<PlayingGridView>(R.id.viewPlayGrid).clearSelectedIndex()
             engine?.queueMessageFromActivity(GameEngine.Message("RestartPuzzle"), ::queueMessage)
         }
         builder.setNegativeButton("Back") { _, _ -> }
@@ -574,11 +554,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         builder.show()
     }
 
-    private fun prevPuzzle() {
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
-        engine?.queueMessageFromActivity(GameEngine.Message("PrevPuzzle"), ::queueMessage)
-    }
-
     fun onClickNextPuzzle(view: View) {
         Log.d(TAG, "Clicked Puzzle Next")
         // Determine if there are user guesses.
@@ -601,6 +576,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
+    }
+
+    private fun prevPuzzle() {
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
+        engine?.queueMessageFromActivity(GameEngine.Message("PrevPuzzle"), ::queueMessage)
     }
 
     private fun nextPuzzle() {

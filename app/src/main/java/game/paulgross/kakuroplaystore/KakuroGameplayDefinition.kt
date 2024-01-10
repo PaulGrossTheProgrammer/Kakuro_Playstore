@@ -8,6 +8,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private var engine: GameEngine? = null
 
+    // TODO: Document the text file format
     private const val builtinPuzzlesFilename = "builtin_puzzles.txt"
 
     private var currPuzzleIndex = 0
@@ -66,12 +67,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
         // Maybe a Map is generic???
         engine.pluginEncodeState(::encodeState)
         engine.pluginDecodeState(::decodeState)
-
-//        engine.pluginMessageCodec("State", "w", ::encodeInt, ::decodeInt )
-//        engine.pluginMessageCodec("State", "g", ::encodePlayerGuesses, ::decodePlayerGuesses )
-//        engine.pluginMessageCodec("State", "h", ::encodeHints, ::decodeHints )
-//        engine.pluginMessageCodec("State", "p", ::encodePossibles, ::decodePossibles )
-//        engine.pluginMessageCodec("State", "e", ::encodeErrors, ::decodeErrors )
 
         // Override the default save and load usage of encode and decode state.
         engine.pluginSaveState(::saveState)
@@ -454,7 +449,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         var possiblesString = ""
         // ampersand separated entries, colon separated index and possibles.
         // 0:1234567&5:100450000
-        // TODO - eliminate firstEntry using possiblesString.isNotEmpty() instead.
+        // TODO - eliminate firstEntry variable by using possiblesString.isNotEmpty() instead.
         var firstEntry = true
         playerPossibles.forEach { index, possibles ->
             if (firstEntry) { firstEntry = false } else { possiblesString += "&" }
@@ -503,7 +498,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
             val index = hint.index
             val actualTotal = hint.total
 
-            val squares = solutionSquares(playerGuesses, puzzleWidth, index, hint.direction)
+            val squares = findSolutionSquares(playerGuesses, puzzleWidth, index, hint.direction)
 
             var playerSum = 0
             var incomplete = false
@@ -544,6 +539,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
      * Create all the ACROSS and DOWN hints based on the puzzleSolution.
      */
     private fun generateHints() {
+        // TODO: Cache the solution squares found from findSolutionSquares() to avoid redundant calls.
+        // TODO: Create a Map lookup keyed on index + direction.
+
         // Traverse the solution grid and create hints for any number squares with empty squares to the left and/or above.
         puzzleSolution.forEachIndexed { index, value ->
             if (value  != -1) {
@@ -551,7 +549,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 // First column numbers always need a hint.
                 val isFirstColumn = (index.mod(puzzleWidth) == 0)
                 if (isFirstColumn || puzzleSolution[index - 1] == -1) {
-                    val squares = solutionSquares(puzzleSolution, puzzleWidth, index, Direction.ACROSS)
+                    val squares = findSolutionSquares(puzzleSolution, puzzleWidth, index, Direction.ACROSS)
                     var sum = 0
                     squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
                     puzzleHints.add(Hint(index, Direction.ACROSS, sum))
@@ -561,7 +559,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 // First colum row always need a hint.
                 val isLastRow = (index < puzzleWidth)
                 if (isLastRow || puzzleSolution[index - puzzleWidth] == -1) {
-                    val squares = solutionSquares(puzzleSolution, puzzleWidth, index, Direction.DOWN)
+                    val squares = findSolutionSquares(puzzleSolution, puzzleWidth, index, Direction.DOWN)
                     var sum = 0
                     squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
                     puzzleHints.add(Hint(index, Direction.DOWN, sum))
@@ -571,10 +569,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     /**
-     * Makes a list of all sequential  solution squares starting at the index square,
+     * Makes a list of all sequential solution squares starting at the index square,
      * going in the specified direction, ending before the first -1 square or the boundary of the grid.
      */
-    private fun solutionSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): List<Int> {
+    private fun findSolutionSquares(grid: MutableList<Int>, width: Int, startIndex: Int, direction: Direction): List<Int> {
         val squares: MutableList<Int> = mutableListOf()
 
         var limit  = grid.size
