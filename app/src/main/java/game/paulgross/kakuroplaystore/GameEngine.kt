@@ -14,16 +14,17 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class GameEngine( private val definition: GameplayDefinition, applicationContext: Context, activity: AppCompatActivity): Thread() {
+class GameEngine( private val definition: GameplayDefinition, activity: AppCompatActivity): Thread() {
 
     private val cm: ConnectivityManager
     private val preferences: SharedPreferences
     val assets: AssetManager
 
     init {
-        cm = applicationContext.getSystemService(ConnectivityManager::class.java)  // Used for Internet access.
+        cm = activity.applicationContext.getSystemService(ConnectivityManager::class.java)  // Used for Internet access.
         preferences = activity.getPreferences(MODE_PRIVATE)  // Use to save and load the game state.
-        assets = applicationContext.assets // Used to access files in the assets directory
+
+        assets = activity.applicationContext.assets // Used to access files in the assets directory
     }
 
 
@@ -41,15 +42,13 @@ class GameEngine( private val definition: GameplayDefinition, applicationContext
     // https://developer.android.com/reference/java/util/concurrent/BlockingQueue
     private val inboundMessageQueue: BlockingQueue<InboundMessage> = LinkedBlockingQueue()
 
-    //  TODO: Remove static use of this class by passing a function to each source
-    //   so that the function automatically identifies the source.
-    enum class InboundMessageSource {
+    private enum class InboundMessageSource {
         APP, CLIENT, CLIENTHANDLER
     }
 
     data class Changes(val system: Boolean, val game: Boolean)
 
-    data class InboundMessage(
+    private data class InboundMessage(
         val message: Message,
         val source: InboundMessageSource,
         val responseFunction: ((message: Message) -> Unit)?
@@ -612,10 +611,10 @@ class GameEngine( private val definition: GameplayDefinition, applicationContext
         private var singletonGameEngine: GameEngine? = null
 
         // FUTURE: Allocate multiple instances based on a game identifier and definition.
-        fun activate(definition: GameplayDefinition, applicationContext: Context, activity: AppCompatActivity): GameEngine {
+        fun activate(definition: GameplayDefinition, activity: AppCompatActivity): GameEngine {
             if (singletonGameEngine == null) {
                 Log.d(TAG, "Starting new GameEngine ...")
-                singletonGameEngine = GameEngine(definition, applicationContext, activity)
+                singletonGameEngine = GameEngine(definition, activity)
                 singletonGameEngine!!.start()
             } else {
                 Log.d(TAG, "Already created GameEngine.")

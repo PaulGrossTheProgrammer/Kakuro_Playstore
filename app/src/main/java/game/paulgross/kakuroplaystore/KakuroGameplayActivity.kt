@@ -54,8 +54,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val viewPlayGrid = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         viewPlayGrid.setOnTouchListener(PlayingGridView.CustomListener(viewPlayGrid))
 
-        engine = GameEngine.activate(KakuroGameplayDefinition, applicationContext, this)
-
+        engine = GameEngine.activate(KakuroGameplayDefinition, this)
 
         // Request that the GameEngine send a state message to queueMessage() whenever the game state changes.
         enableQueuedMessages()
