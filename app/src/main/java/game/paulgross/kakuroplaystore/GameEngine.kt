@@ -143,7 +143,6 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                 listOfSystemHandlers.forEach { handler ->
                     if (handler.type == im.message.type) {
                         Log.d(TAG, "Handling SYSTEM message: ${im.message.type}")
-                        // TODO - system handlers need to pass back 2 flags: System and Game state changed.
                         val changes = handler.handlerFunction.invoke(im.message, im.source, im.responseFunction)
                         if (changes.system) {
                             systemStateChange = true
@@ -153,7 +152,6 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                         }
                     }
                 }
-
 
                 // Check game messages.
                 listOfGameHandlers.forEach { handler ->
@@ -534,12 +532,15 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
         if (restoreStateFunction != null) {
             restoreStateFunction?.invoke()
+
+            // TODO: Is this needed for multiplayer mode
+            // pushStateToClients(encodeState()) ??? Might make a redundant calls to Activity???
         } else {
             // TODO: If there is no specified restoreStateFunction() function,
             // restoredGameMessage = loadDataString("SavedState", null)
             // Do we push this message just to the Activity?
             // Or use a special pushStateToClients() with the new state??
-            // pushStateToClients(restoredGameMessage)
+            // pushStateToClients(restoredGameMessage) - this should update the activity.
         }
     }
 
