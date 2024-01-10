@@ -33,6 +33,9 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
     private var encodeStateFunction: (() -> Message)? = null
     private var decodeStateFunction: ((Message) -> Any)? = null
+
+    // By default the save/restore state functions will use the messages from endcode/decode state
+    // But the engine user can optionally specify arbitrary functions instead of the default.
     private var saveStateFunction: (() -> Unit)? = null
     private var restoreStateFunction: (() -> Unit)? = null
 
@@ -46,7 +49,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         APP, CLIENT, CLIENTHANDLER
     }
 
-    data class Changes(val system: Boolean, val game: Boolean)
+    private data class Changes(val system: Boolean, val game: Boolean)
 
     private data class InboundMessage(
         val message: Message,
@@ -66,7 +69,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
     }
     private var gameMode: GameMode = GameMode.LOCAL
 
-    // TDSO merge this with the state change callbacks???
+    // TODO merge this with the state change callbacks???
     private var remotePlayers: MutableList<(message: Message) -> Unit> = mutableListOf()  // Only used in SERVER mode.
     private var localPlayer: MutableList<(message: Message) -> Unit> = mutableListOf()  // Only used in SERVER mode.
 
@@ -484,18 +487,13 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
     private fun pushStateToClients() {
         Log.d(TAG, "Pushing State to clients...")
         stateChangeCallbacks.forEach { callback ->
-            // TODO - make this a Message for the local client?
-            val newMessage = Message("State")
-
-
-//            callback("MessageType=State,${encodeState()}")
+            // TODO - figure out what the hell this syntax actually means???!!!!
             encodeState()?.let { callback(it) }
         }
     }
 
     fun gotoSettingsActivity(context: Context) {
-        val intent: Intent = Intent(context, GameEngineSettingsActivity::class.java)
-
+        val intent = Intent(context, GameEngineSettingsActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
         intent.putExtra("SelectedSetting", "PRIVACYPOLICY")
@@ -520,6 +518,28 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
     private fun saveGameState() {
         if (saveStateFunction != null) {
             saveStateFunction?.invoke()
+        } else {
+            // TODO: If there is no specified saveStateFunction() function,
+            // call the encode state function and write to permanent storage instead.
+            // The save key is "SavedState".
+            // saveDataString("SavedState", encodeState())
+        }
+    }
+
+    /**
+     * Restores the Game state from the last time it was saved.
+     */
+    private fun restoreGameState() {
+        Log.d(TAG, "Restoring previous game state...")
+
+        if (restoreStateFunction != null) {
+            restoreStateFunction?.invoke()
+        } else {
+            // TODO: If there is no specified restoreStateFunction() function,
+            // restoredGameMessage = loadDataString("SavedState", null)
+            // Do we push this message just to the Activity?
+            // Or use a special pushStateToClients() with the new state??
+            // pushStateToClients(restoredGameMessage)
         }
     }
 
@@ -535,17 +555,6 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         val editor = preferences.edit()
         editor.putString(name, value)
         editor.apply()
-    }
-
-    /**
-     * Restores the Game state from the last time it was saved.
-     */
-    private fun restoreGameState() {
-        Log.d(TAG, "Restoring previous game state...")
-
-        if (restoreStateFunction != null) {
-            restoreStateFunction?.invoke()
-        }
     }
 
     private fun resetGame() {
