@@ -13,10 +13,10 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:banner="@mipmap/ic_banner_foreground"
         android:supportsRtl="true"
         android:theme="@style/Theme.KakuroPlaystore"
-        tools:targetApi="31"
-        android:banner="@mipmap/ic_launcher_foreground"> <!-- FIXME - setup 320 x 180px banner in mipmap -->
+        tools:targetApi="31">
         <activity
             android:name=".KakuroGameplayActivity"
             android:exported="true">
