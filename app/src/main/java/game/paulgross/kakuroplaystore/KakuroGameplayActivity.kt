@@ -148,7 +148,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
             /**
              * Search through all the TouchArea entries in the playSquareTouchLookUpId: Map to find the Id located at x, y.
-             * Return -1 if the touch isn't inside any of the defined TouchArea entries.
+             * Returns -1 if the touch isn't inside any of the defined TouchArea entries.
              */
             private fun lookupTouchedGuessId(x: Float, y: Float): Int {
                 for (entry in gridView.playSquareTouchLookUpId.entries.iterator()) {
@@ -164,6 +164,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             selectedIndex = -1
             invalidate()  // Force the grid to be redrawn
         }
+
         fun getSelectedIndex(): Int {
             return selectedIndex
         }
@@ -257,6 +258,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         fun resetOptions() {
             displayZoom = 0
             selectedIndex = -1
+            xSquaresOffset = 0
+            ySquaresOffset = 0
         }
 
         private val paint = Paint()

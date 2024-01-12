@@ -539,14 +539,12 @@ object KakuroGameplayDefinition: GameplayDefinition {
      * Create all the ACROSS and DOWN hints based on the puzzleSolution.
      */
     private fun generateHints() {
-        // TODO: Cache the solution squares found from findSolutionSquares() to avoid redundant calls.
-        // TODO: Create a Map lookup keyed on index + direction.
-
         // Traverse the solution grid and create hints for any number squares with empty squares to the left and/or above.
         puzzleSolution.forEachIndexed { index, value ->
             if (value  != -1) {
                 // Check for ACROSS hints.
                 // First column numbers always need a hint.
+                // Numbers in the first column always need a hint.
                 val isFirstColumn = (index.mod(puzzleWidth) == 0)
                 if (isFirstColumn || puzzleSolution[index - 1] == -1) {
                     val squares = findSolutionSquares(puzzleSolution, puzzleWidth, index, Direction.ACROSS)
@@ -556,9 +554,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 }
 
                 // Check for DOWN hints (don't check last row)
-                // First colum row always need a hint.
-                val isLastRow = (index < puzzleWidth)
-                if (isLastRow || puzzleSolution[index - puzzleWidth] == -1) {
+                // Numbers in the first row always need a hint.
+                val isFirstRow = (index < puzzleWidth)
+                if (isFirstRow || puzzleSolution[index - puzzleWidth] == -1) {
                     val squares = findSolutionSquares(puzzleSolution, puzzleWidth, index, Direction.DOWN)
                     var sum = 0
                     squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
