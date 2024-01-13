@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Kakuro: Multiplay</string>
+    <string name="title_activity_kakuro_gameplay_tv">KakuroGameplayActivity_Tv</string>
 </resources>
