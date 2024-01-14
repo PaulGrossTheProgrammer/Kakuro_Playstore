@@ -5,11 +5,26 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+
+fun getResizedBitmap(bitmap: Bitmap , newWidth: Int , newHeight: Int ): Bitmap {
+
+    val scaleWidth = newWidth.toFloat() / bitmap.width
+    val scaleHeight = newHeight.toFloat() / bitmap.height
+
+    val matrix = Matrix()
+    matrix.postScale(scaleWidth, scaleHeight)
+
+    val resizedBitmap = Bitmap.createBitmap(
+        bitmap, 0, 0, bitmap.width, bitmap.height, matrix, false)
+    bitmap.recycle()
+    return resizedBitmap
+}
 
 /**
  * The custom View to draw the playing grid.

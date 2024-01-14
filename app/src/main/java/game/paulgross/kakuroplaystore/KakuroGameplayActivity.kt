@@ -22,20 +22,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
-fun getResizedBitmap(bitmap: Bitmap , newWidth: Int , newHeight: Int ): Bitmap {
-
-    val scaleWidth = newWidth.toFloat() / bitmap.width
-    val scaleHeight = newHeight.toFloat() / bitmap.height
-
-    val matrix = Matrix()
-    matrix.postScale(scaleWidth, scaleHeight)
-
-    val resizedBitmap = Bitmap.createBitmap(
-        bitmap, 0, 0, bitmap.width, bitmap.height, matrix, false)
-    bitmap.recycle()
-    return resizedBitmap
-}
-
 class KakuroGameplayActivity : AppCompatActivity() {
 
     var engine: GameEngine? = null

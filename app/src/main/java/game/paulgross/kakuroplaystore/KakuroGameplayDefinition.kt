@@ -8,8 +8,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private var engine: GameEngine? = null
 
-    // 0 is for non-playable squares
-    // digit from 1..9 is for solution squares.
+    // First 2 digits is the puzzle width.
+    // From there, 0 is for non-playable squares, and any digit from 1..9 is for solution squares.
     private const val builtinPuzzlesFilename = "builtin_puzzles.txt"
 
     private var currPuzzleIndex = 0
@@ -165,7 +165,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         // Insert the replacement at the digit value position.
         possible = possible.substring(0, value - 1) + replacement + possible.substring(value)
 
-        // Remove ir update the range of possibles.
+        // Remove or update the range of possibles.
         if (possible == "000000000") {
             playerPossibles.remove(index)
         } else {
