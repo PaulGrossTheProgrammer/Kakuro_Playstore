@@ -8,7 +8,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private var engine: GameEngine? = null
 
-    // TODO: Document the text file format
+    // 0 is for non-playable squares
+    // digit from 1..9 is for solution squares.
     private const val builtinPuzzlesFilename = "builtin_puzzles.txt"
 
     private var currPuzzleIndex = 0
@@ -137,17 +138,14 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
 
         if (index < 0 || index >= playerGuesses.size) {
-            Log.d(TAG, "Index is outside of grid boundary.")
             return false
         }
         if (value < 1 || value > 9) {
-            Log.d(TAG, "Digit must be from 1 to 9.")
             return false
         }
 
         // Don't allow possibles if there is currently a guess
         if (playerGuesses[index] > 0) {
-            Log.d(TAG, "Can't set possibles where there is a guess")
             return false
         }
 
@@ -169,7 +167,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         // Remove ir update the range of possibles.
         if (possible == "000000000") {
-            Log.d(TAG, "Removing index ...")
             playerPossibles.remove(index)
         } else {
             playerPossibles[index] = possible
