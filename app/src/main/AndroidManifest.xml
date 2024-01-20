@@ -33,7 +33,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".KakuroGameplayActivity_Tv"
+            android:name=".KakuroGameplayActivityTv"
             android:exported="true"
             android:label="@string/title_activity_kakuro_gameplay_tv"
             android:theme="@style/Theme.KakuroPlaystore">

@@ -13,11 +13,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 
-class KakuroGameplayActivity_Tv : AppCompatActivity() {
+class KakuroGameplayActivityTv : AppCompatActivity() {
     var engine: GameEngine? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         singleton = this
 
         setContentView(R.layout.activity_kakurogameplay)
@@ -264,9 +265,9 @@ class KakuroGameplayActivity_Tv : AppCompatActivity() {
     }
 
     companion object {
-        private val TAG = KakuroGameplayActivity_Tv::class.java.simpleName
+        private val TAG = KakuroGameplayActivityTv::class.java.simpleName
 
-        var singleton: KakuroGameplayActivity_Tv? = null
+        var singleton: KakuroGameplayActivityTv? = null
 
         /**
          * This function is used to display debug messages on the screen.
