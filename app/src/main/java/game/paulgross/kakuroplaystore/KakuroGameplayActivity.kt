@@ -29,6 +29,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")  // Why do I need this??? Something to do with setOnTouchListener()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        Log.d(TAG, "onCreate() starting...")
+
         singleton = this
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
             setContentView(R.layout.activity_kakurogameplay)

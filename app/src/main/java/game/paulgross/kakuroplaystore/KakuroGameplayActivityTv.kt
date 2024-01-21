@@ -19,9 +19,11 @@ class KakuroGameplayActivityTv : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        Log.d(TAG, "onCreate() starting...")
+
         singleton = this
 
-        setContentView(R.layout.activity_kakurogameplay)
+        setContentView(R.layout.activity_kakurogameplay_landscape)
 
         engine = GameEngine.activate(KakuroGameplayDefinition, this)
 
