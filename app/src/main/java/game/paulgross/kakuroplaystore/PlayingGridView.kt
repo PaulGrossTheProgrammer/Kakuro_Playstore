@@ -70,6 +70,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     fun setGameState(newestGameState: KakuroGameplayDefinition.StateVariables) {
         this.gameState = newestGameState
+
+        // TODO: Can I detect the need to call setScreenSizes() here
+        // TODO: So that the caller doesn't need to ALWAYS call setScreenSizes()???
+        // TODO: Maybe look for changes in width, by storing the last measuredWidth ???
     }
 
     /**

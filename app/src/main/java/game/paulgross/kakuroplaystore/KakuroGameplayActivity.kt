@@ -31,13 +31,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // FIXME - the Google TV version calls this Activity initially on launch ... BUT WHY?
-        //  But relaunching from the emulated TV calls the -ActivityTv class, which is correct. WHY???
         val packageInfo = applicationContext.packageManager.getPackageInfo(packageName, 0)
         Log.d(TAG, "onCreate() starting version: " + packageInfo.versionName)
 
         singleton = this
 
+        // Test code to see what available features there are for each system:
 //        applicationContext.packageManager.systemAvailableFeatures.forEach {
 //            Log.d(TAG, "Feature: ${it}")
 //        }
@@ -283,7 +282,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
      * This is the CALLBACK function to be used when a message needs to be queued for this Activity.
      */
     private fun queueMessage(message: GameEngine.Message) {
-        // The UI thread will call activityMessageReceiver() to handle the message.
+        // For this CALLBACK to be used, enableQueuedMessages() must be executed at startup.
+        // The UI thread will then call activityMessageReceiver() to handle each message.
         val intent = Intent()
         intent.action = queuedMessageAction
         intent.putExtra("Message", message.asString())
