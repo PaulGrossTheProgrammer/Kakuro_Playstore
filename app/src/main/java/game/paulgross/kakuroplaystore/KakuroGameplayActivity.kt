@@ -37,10 +37,21 @@ class KakuroGameplayActivity : AppCompatActivity() {
         Log.d(TAG, "onCreate() starting version: " + packageInfo.versionName)
 
         singleton = this
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            setContentView(R.layout.activity_kakurogameplay)
-        } else {
+
+//        applicationContext.packageManager.systemAvailableFeatures.forEach {
+//            Log.d(TAG, "Feature: ${it}")
+//        }
+
+        if (applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")) {
+            Log.d(TAG, "THIS AN ANDROID TV")
             setContentView(R.layout.activity_kakurogameplay_landscape)
+        } else {
+            Log.d(TAG, "THIS NOT AN ANDROID TV")
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setContentView(R.layout.activity_kakurogameplay)
+            } else {
+                setContentView(R.layout.activity_kakurogameplay_landscape)
+            }
         }
 
         engine = GameEngine.activate(KakuroGameplayDefinition, this)
