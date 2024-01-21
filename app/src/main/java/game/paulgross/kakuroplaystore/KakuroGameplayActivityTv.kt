@@ -19,7 +19,8 @@ class KakuroGameplayActivityTv : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Log.d(TAG, "onCreate() starting...")
+        val packageInfo = applicationContext.packageManager.getPackageInfo(packageName, 0)
+        Log.d(TAG, "onCreate() starting version: " + packageInfo.versionName)
 
         singleton = this
 

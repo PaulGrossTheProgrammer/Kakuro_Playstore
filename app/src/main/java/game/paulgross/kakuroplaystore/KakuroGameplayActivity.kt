@@ -21,6 +21,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.rememberCompositionContext
 
 class KakuroGameplayActivity : AppCompatActivity() {
 
@@ -30,7 +31,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Log.d(TAG, "onCreate() starting...")
+        // FIXME - the Google TV version calls this Activity initially on launch ... BUT WHY?
+        //  But relaunching from the emulated TV calls the -ActivityTv class, which is correct. WHY???
+        val packageInfo = applicationContext.packageManager.getPackageInfo(packageName, 0)
+        Log.d(TAG, "onCreate() starting version: " + packageInfo.versionName)
 
         singleton = this
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
