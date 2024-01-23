@@ -15,6 +15,8 @@ import android.graphics.Paint
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
+import android.view.KeyEvent.ACTION_DOWN
+import android.view.KeyEvent.KEYCODE_DPAD_CENTER
 import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
@@ -90,7 +92,34 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     //
-    // User interface controls
+    // Controller handling
+    //
+
+//    https://developer.android.com/training/game-controllers/controller-input
+//    https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
+
+
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        Log.d(TAG, "KeyEvent: $event")
+        val grid =  findViewById<PlayingGridView>(R.id.viewPlayGrid)
+
+        // Rules: Cursoring or selecting without a selectedID will set the selected ID to the top left visible play square
+        val selectedIndex = grid.getSelectedIndex()
+        Log.d(TAG, "selectedIndex: $selectedIndex")
+        if (selectedIndex == -1) {
+            // FIXME - Motionevents also have an ACTION_DOWN ...
+            if (event.keyCode == KEYCODE_DPAD_CENTER && event.action == ACTION_DOWN) {
+                // TODO - ask the grid to setthe default index
+                Log.d(TAG, "Setting default selectedIndex...")
+                grid.setIndexToDefault()
+            }
+        }
+
+        return false
+    }
+
+    //
+    // User touch controls
     //
 
     fun onClickScrollUp(view: View) {

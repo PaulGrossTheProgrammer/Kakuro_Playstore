@@ -51,6 +51,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var ySquaresOffset = 0
 
     private var selectedIndex: Int = -1
+    private var defaultIndex = -1
 
     private var paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
@@ -118,6 +119,13 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     fun getSelectedIndex(): Int {
         return selectedIndex
+    }
+
+    fun setIndexToDefault() {
+//        TODO("Not yet implemented")
+        Log.d(TAG, "Setting selectedIndex to $defaultIndex")
+        selectedIndex = defaultIndex
+        invalidate()
     }
 
     fun zoomGrid(changeZoom: Int) {
@@ -252,6 +260,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         var index = 0
+        var defaultIndex = -1
 
         for (row in (1..gameState!!.puzzleHeight + 1)) {
             for (col in (1..gameState!!.puzzleWidth + 1)) {
@@ -262,6 +271,17 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                     val gridValue = gameState!!.playerGrid[index]
                     // Non-playable grid value is -1, 0 means no guess yet, > 0 means a player guess
                     if (gridValue != -1) {
+                        // Determine if this square is within the visible area.
+                        var visible = true
+                        if (x + squareWidth < 0 || y + squareWidth < 0 || x > measuredWidth || y > measuredHeight) {
+                            visible = false
+                        }
+
+                        // FIXME - only do this for visible squares
+                        if (defaultIndex == -1 && visible) {
+                            defaultIndex = index
+                            Log.d(TAG, "Setting default index to $defaultIndex")
+                        }
                         val selected = (index == selectedIndex)
 
                         var possiblesString = gameState!!.possibles[index]
@@ -271,7 +291,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                         val error = gameState!!.playerErrors.contains(index)
 
-                        drawGuessSquare(index, gridValue.toString(), possiblesString, selected, error,
+                        drawGuessSquare(index, gridValue.toString(), possiblesString, selected, visible, error,
                             gameState!!.solved, addTouchAreas, currX, currY, canvas, paint)
                     } else {
                         drawBlankSquare(currX, currY, canvas, paint)
@@ -305,16 +325,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
     }
 
-    private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean, error: Boolean,
+    private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean, visible: Boolean,error: Boolean,
                                 solved: Boolean,
                                 addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint
     ) {
-        // Determine if this square is within the visible area.
-        var visible = true
-        if (x + squareWidth < 0 || y + squareWidth < 0 || x > measuredWidth || y > measuredHeight) {
-            visible = false
-        }
-
         // Clear selectedIndex if the square is not visible.
         if (selectedIndex == index && !visible) {
             selectedIndex = -1
@@ -405,5 +419,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         paint.textSize = squareTextSize * 0.45f
         canvas.drawText(hintString, x + squareWidth * 0.56f  - squareWidth, y + squareWidth * 0.45f, paint)
+    }
+
+    companion object {
+        private val TAG = PlayingGridView::class.java.simpleName
     }
 }
