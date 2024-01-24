@@ -15,15 +15,14 @@ import android.graphics.Paint
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
-import android.view.KeyEvent.ACTION_DOWN
-import android.view.KeyEvent.KEYCODE_DPAD_CENTER
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.rememberCompositionContext
+
 
 class KakuroGameplayActivity : AppCompatActivity() {
 
@@ -99,21 +98,24 @@ class KakuroGameplayActivity : AppCompatActivity() {
 //    https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
 
 
-    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         Log.d(TAG, "KeyEvent: $event")
         val grid =  findViewById<PlayingGridView>(R.id.viewPlayGrid)
 
         // Rules: Cursoring or selecting without a selectedID will set the selected ID to the top left visible play square
+        // TODO: Need a flag for mode for cursoring in the Controls Area.
+        // controlCursorActiveView - a pointer to the active view
+        // If controlCursorActiveView is not null, then select will put the cursor into playing grid.\
+        // TODO: User needs a visible indication that the cursor is active in the Controls Area.
         val selectedIndex = grid.getSelectedIndex()
-        Log.d(TAG, "selectedIndex: $selectedIndex")
+        Log.d(TAG, "selectedIndex BEFORE: $selectedIndex")
         if (selectedIndex == -1) {
-            // FIXME - Motionevents also have an ACTION_DOWN ...
-            if (event.keyCode == KEYCODE_DPAD_CENTER && event.action == ACTION_DOWN) {
-                // TODO - ask the grid to setthe default index
+            if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
                 Log.d(TAG, "Setting default selectedIndex...")
                 grid.setIndexToDefault()
             }
         }
+        Log.d(TAG, "selectedIndex AFTER: ${grid.getSelectedIndex()}")
 
         return false
     }

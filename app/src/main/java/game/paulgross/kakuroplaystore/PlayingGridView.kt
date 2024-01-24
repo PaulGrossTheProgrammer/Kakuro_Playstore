@@ -122,8 +122,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     fun setIndexToDefault() {
-//        TODO("Not yet implemented")
-        Log.d(TAG, "Setting selectedIndex to $defaultIndex")
+        // FIXME: Can't see why this doesn't work...
+        // defaultIndex should NOT be -1 here!!!
+        Log.d(TAG, "setIndexToDefault(): Setting selectedIndex to the default of $defaultIndex")
         selectedIndex = defaultIndex
         invalidate()
     }
@@ -217,6 +218,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     fun resetOptions() {
         displayZoom = 0
         selectedIndex = -1
+        defaultIndex = -1
         xSquaresOffset = 0
         ySquaresOffset = 0
     }
@@ -230,6 +232,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             Log.d("PlayingGridView", "onDraw() exiting - No gameState to draw.")
             return
         }
+
+        Log.d(TAG, "Start of onDraw(), now defaultIndex = $defaultIndex")
 
         canvas.drawBitmap(paperTexture, 0f, 0f, paint)
 
@@ -260,7 +264,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         var index = 0
-        var defaultIndex = -1
+//        var defaultIndex = -1
 
         for (row in (1..gameState!!.puzzleHeight + 1)) {
             for (col in (1..gameState!!.puzzleWidth + 1)) {
@@ -323,6 +327,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             currX = xStart
             currY += squareWidth
         }
+        Log.d(TAG, "End of onDraw(), now defaultIndex = $defaultIndex")
     }
 
     private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean, visible: Boolean,error: Boolean,
