@@ -33,10 +33,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private var gameState: KakuroGameplayDefinition.StateVariables? = null // TODO: Get a copy of the latest gamestate
 
-    private val outsideGridMargin = 0.4f
     private val maxDisplayRows = 10
     private val minDisplayRows = 5
 
+    private val outsideGridMargin = 0.6f
     private var currViewWidth = 1
     private var currViewHeight = 1
     private var squareWidth = 1f
@@ -122,8 +122,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     fun setIndexToDefault() {
-        // FIXME: Can't see why this doesn't work...
-        // defaultIndex should NOT be -1 here!!!
         Log.d(TAG, "setIndexToDefault(): Setting selectedIndex to the default of $defaultIndex")
         selectedIndex = defaultIndex
         invalidate()

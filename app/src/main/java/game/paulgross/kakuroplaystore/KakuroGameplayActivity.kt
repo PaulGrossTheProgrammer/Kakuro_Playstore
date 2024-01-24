@@ -61,9 +61,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine?.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
     }
 
-    override fun onBackPressed() {
-        confirmExitApp()
-    }
+//    override fun onBackPressed() {
+//        confirmExitApp()
+//    }  // Note: Replaced by code in override fun dispatchKeyEvent()
 
     fun onClickSettings(view: View) {
         engine?.gotoSettingsActivity(this)
@@ -97,9 +97,29 @@ class KakuroGameplayActivity : AppCompatActivity() {
 //    https://developer.android.com/training/game-controllers/controller-input
 //    https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
 
+    /*
+    Possible way to show the currently selected View:
+    https://stackoverflow.com/questions/3496269/how-to-put-a-border-around-an-android-textview
+    you can programmatically apply a MaterialShapeDrawable:
+
+    TextView textView = findViewById(R.id.textview);
+    MaterialShapeDrawable shapeDrawable = new MaterialShapeDrawable();
+    shapeDrawable.setFillColor(ContextCompat.getColorStateList(this,android.R.color.transparent));
+    shapeDrawable.setStroke(1.0f, ContextCompat.getColor(this,R.color....));
+    ViewCompat.setBackground(textView,shapeDrawable);
+
+     */
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         Log.d(TAG, "KeyEvent: $event")
+
+        // Handle back button...
+        //confirmExitApp()
+        if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
+            confirmExitApp()
+            return true
+        }
+
         val grid =  findViewById<PlayingGridView>(R.id.viewPlayGrid)
 
         // Rules: Cursoring or selecting without a selectedID will set the selected ID to the top left visible play square
@@ -117,7 +137,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
         Log.d(TAG, "selectedIndex AFTER: ${grid.getSelectedIndex()}")
 
-        return false
+        return true
     }
 
     //
