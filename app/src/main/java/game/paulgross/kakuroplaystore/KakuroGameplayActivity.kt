@@ -22,6 +22,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import com.google.android.material.shape.MaterialShapeDrawable
 
 
 class KakuroGameplayActivity : AppCompatActivity() {
@@ -133,7 +135,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
                 Log.d(TAG, "Setting default selectedIndex...")
                 grid.setIndexToDefault()
+
+                // THIS IS ONLY A TEST - DELETEME
+                // Try to indicate a  TextView is selected here:
+
+                val textView: TextView = findViewById(R.id.textViewButton1)
+                val shapeDrawable: MaterialShapeDrawable = MaterialShapeDrawable()
+                shapeDrawable.fillColor = ContextCompat.getColorStateList(this, android.R.color.transparent)
+                shapeDrawable.setStroke(1.0f, ContextCompat.getColor(this, R.color.white))
+//                ViewCompat.setBackground(textView,shapeDrawable);
+                textView.background = shapeDrawable
             }
+
         }
         Log.d(TAG, "selectedIndex AFTER: ${grid.getSelectedIndex()}")
 
