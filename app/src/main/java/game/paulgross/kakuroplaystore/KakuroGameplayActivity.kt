@@ -12,6 +12,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
@@ -56,6 +57,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
         }
 
+        // Setup the D-pad cursoring visuals
+        digitBackground_NotSelected = findViewById<TextView>(R.id.textViewButton1).background
+        currSelectedView = findViewById<TextView>(R.id.textViewButton1)
+
         engine = GameEngine.activate(KakuroGameplayDefinition, this)
 
         // Request that the GameEngine send a state message to queueMessage() whenever the game state changes.
@@ -93,8 +98,22 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     //
-    // Controller handling
+    // Controller handling: D-pad used by Google TV
     //
+
+
+    // The current control selected by the D-pad
+    var currSelectedView: View? = null
+
+    // Backgrounds used to show where the D-pad cursor is located.
+    var digitBackground_Selected: Drawable? = null
+    var digitBackground_NotSelected: Drawable? = null
+//    init {
+//        digitBackground_Selected = MaterialShapeDrawable()
+//        (digitBackground_Selected as MaterialShapeDrawable).fillColor =
+//            ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
+//        (digitBackground_Selected as MaterialShapeDrawable).setStroke(10.0f, ContextCompat.getColor(this, R.color.white))
+//    }
 
 //    https://developer.android.com/training/game-controllers/controller-input
 //    https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
@@ -115,8 +134,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         Log.d(TAG, "KeyEvent: $event")
 
-        // Handle back button...
-        //confirmExitApp()
         if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
             confirmExitApp()
             return true
@@ -129,22 +146,19 @@ class KakuroGameplayActivity : AppCompatActivity() {
         // controlCursorActiveView - a pointer to the active view
         // If controlCursorActiveView is not null, then select will put the cursor into playing grid.\
         // TODO: User needs a visible indication that the cursor is active in the Controls Area.
+
+        // FIXME: This doesn't work
         val selectedIndex = grid.getSelectedIndex()
         Log.d(TAG, "selectedIndex BEFORE: $selectedIndex")
-        if (selectedIndex == -1) {
-            if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
+        if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
+            if (currSelectedView == null) {
                 Log.d(TAG, "Setting default selectedIndex...")
                 grid.setIndexToDefault()
 
-                // THIS IS ONLY A TEST - DELETEME
-                // Try to indicate a  TextView is selected here:
-
-                val textView: TextView = findViewById(R.id.textViewButton1)
-                val shapeDrawable: MaterialShapeDrawable = MaterialShapeDrawable()
-                shapeDrawable.fillColor = ContextCompat.getColorStateList(this, android.R.color.transparent)
-                shapeDrawable.setStroke(1.0f, ContextCompat.getColor(this, R.color.white))
-//                ViewCompat.setBackground(textView,shapeDrawable);
-                textView.background = shapeDrawable
+                findViewById<TextView>(R.id.textViewButton1).background = digitBackground_NotSelected
+            } else {
+                currSelectedView = findViewById<PlayingGridView>(R.id.textViewButton1)
+                findViewById<TextView>(R.id.textViewButton1).background = digitBackground_Selected
             }
 
         }
@@ -183,8 +197,38 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private var checkForSolved = false
 
+
     fun onClickDigit(view: View) {
         Log.d(TAG, "Clicked a guess: ${view.tag}")
+
+        // TODO: TEST ONLY
+        // Try to indicate a  TextView is selected here:
+
+/*        Log.d(TAG, "View background: ${view.background}")
+
+        if (digitBackground_NotSelected == null) {
+            digitBackground_NotSelected = view.background
+        }
+
+        if (view.background == digitBackground_NotSelected) {
+            val shapeDrawable: MaterialShapeDrawable = MaterialShapeDrawable()
+            shapeDrawable.fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
+            shapeDrawable.setStroke(10.0f, ContextCompat.getColor(this, R.color.white))
+            view.background = shapeDrawable
+        } else {
+            view.background = digitBackground_NotSelected
+        }*/
+
+//        val textView: TextView = findViewById(R.id.textViewButton1)
+//        val shapeDrawable: MaterialShapeDrawable = MaterialShapeDrawable()
+//        shapeDrawable.fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
+//        shapeDrawable.fillColor = android.R.color.transparent
+        // make strokeWidth relative
+//        shapeDrawable.setStroke(10.0f, ContextCompat.getColor(this, R.color.white))
+//        view.background = shapeDrawable
+//        view.isSelected = true
+//        val newBg = ContextCompat.getColorStateList(this, android.R.color.holo_blue_bright)
+//        view.background = newBg
 
         val selectedIndex = findViewById<PlayingGridView>(R.id.viewPlayGrid).getSelectedIndex()
         if (selectedIndex == -1) {
