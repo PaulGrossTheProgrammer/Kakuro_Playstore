@@ -140,8 +140,16 @@ class KakuroGameplayActivity : AppCompatActivity() {
         // Rules: Cursoring or selecting without a selectedID will set the selected ID to the top left visible play square
         // TODO: Need a flag for mode for cursoring in the Controls Area.
         // controlCursorActiveView - a pointer to the active view
-        // If controlCursorActiveView is not null, then select will put the cursor into playing grid.\
-        // TODO: User needs a visible indication that the cursor is active in the Controls Area.
+        // If controlCursorActiveView is not null, then select will put the cursor into playing grid.
+
+        // TODO - until the D-pad buttons are used, there is no cursor.
+        // TODO - The cursor starts at the default location in the grid at the first press of the D-pad buttons.
+
+        // TODO - playing grid needs a square added to the active square that vanishes when in the controls area.
+
+        // TODO - a map for cursor actions and next locations.
+
+        // TODO - cursor up will return to grid, also cursor left from digits will return to grid.
 
         // TODO - the IDs on the landscape view need to be fixed with logical names.
 
