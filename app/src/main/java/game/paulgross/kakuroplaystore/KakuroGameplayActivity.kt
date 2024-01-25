@@ -58,6 +58,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         // Setup the D-pad cursoring visuals
+        digitBackground_Selected = MaterialShapeDrawable()
+        (digitBackground_Selected as MaterialShapeDrawable).fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
+        (digitBackground_Selected as MaterialShapeDrawable).setStroke(10.0f, ContextCompat.getColor(this, R.color.white))
+
         digitBackground_NotSelected = findViewById<TextView>(R.id.textViewButton1).background
         currSelectedView = findViewById<TextView>(R.id.textViewButton1)
 
@@ -106,7 +110,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     var currSelectedView: View? = null
 
     // Backgrounds used to show where the D-pad cursor is located.
-    var digitBackground_Selected: Drawable? = null
+    var digitBackground_Selected: MaterialShapeDrawable? = null
     var digitBackground_NotSelected: Drawable? = null
 //    init {
 //        digitBackground_Selected = MaterialShapeDrawable()
@@ -152,13 +156,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
         Log.d(TAG, "selectedIndex BEFORE: $selectedIndex")
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
             if (currSelectedView == null) {
+                currSelectedView = findViewById<TextView>(R.id.textViewButton1)
+                findViewById<TextView>(R.id.textViewButton1).background = digitBackground_Selected
+            } else {
+                currSelectedView = null
                 Log.d(TAG, "Setting default selectedIndex...")
                 grid.setIndexToDefault()
 
                 findViewById<TextView>(R.id.textViewButton1).background = digitBackground_NotSelected
-            } else {
-                currSelectedView = findViewById<PlayingGridView>(R.id.textViewButton1)
-                findViewById<TextView>(R.id.textViewButton1).background = digitBackground_Selected
             }
 
         }
