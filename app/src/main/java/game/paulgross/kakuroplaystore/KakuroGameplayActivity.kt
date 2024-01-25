@@ -151,9 +151,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         // If controlCursorActiveView is not null, then select will put the cursor into playing grid.\
         // TODO: User needs a visible indication that the cursor is active in the Controls Area.
 
-        // FIXME: This doesn't work
-        val selectedIndex = grid.getSelectedIndex()
-        Log.d(TAG, "selectedIndex BEFORE: $selectedIndex")
+        // TODO - the IDs on the landscape view need to be fixed with logical names.
+
+        val digit1View = findViewById<TextView>(R.id.textViewButton1)
+        val digit2View = findViewById<TextView>(R.id.textViewButton2)
+
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
             if (currSelectedView == null) {
                 currSelectedView = findViewById<TextView>(R.id.textViewButton1)
@@ -165,9 +167,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
                 findViewById<TextView>(R.id.textViewButton1).background = digitBackground_NotSelected
             }
-
         }
-        Log.d(TAG, "selectedIndex AFTER: ${grid.getSelectedIndex()}")
+
+        if ( currSelectedView == digit1View && event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN) {
+            (currSelectedView as TextView?)?.background = digitBackground_NotSelected
+            currSelectedView = digit2View
+            (currSelectedView as TextView?)?.background = digitBackground_Selected
+        }
 
         return true
     }
