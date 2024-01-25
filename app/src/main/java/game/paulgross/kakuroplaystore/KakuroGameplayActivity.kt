@@ -6,18 +6,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Matrix
-import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.util.AttributeSet
 import android.util.Log
 import android.view.KeyEvent
-import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
@@ -62,8 +54,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         (digitBackground_Selected as MaterialShapeDrawable).fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
         (digitBackground_Selected as MaterialShapeDrawable).setStroke(10.0f, ContextCompat.getColor(this, R.color.white))
 
-        digitBackground_NotSelected = findViewById<TextView>(R.id.textViewButton1).background
-        currSelectedView = findViewById<TextView>(R.id.textViewButton1)
+        digitBackground_NotSelected = findViewById<TextView>(R.id.textViewDigit1).background
+        currSelectedView = findViewById<TextView>(R.id.textViewDigit1)
 
         engine = GameEngine.activate(KakuroGameplayDefinition, this)
 
@@ -153,25 +145,30 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         // TODO - the IDs on the landscape view need to be fixed with logical names.
 
-        val digit1View = findViewById<TextView>(R.id.textViewButton1)
-        val digit2View = findViewById<TextView>(R.id.textViewButton2)
+        val digit1View = findViewById<TextView>(R.id.textViewDigit1)
+        val digit4View = findViewById<TextView>(R.id.textViewDigit4)
 
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
             if (currSelectedView == null) {
-                currSelectedView = findViewById<TextView>(R.id.textViewButton1)
-                findViewById<TextView>(R.id.textViewButton1).background = digitBackground_Selected
+                currSelectedView = findViewById<TextView>(R.id.textViewDigit1)
+                findViewById<TextView>(R.id.textViewDigit1).background = digitBackground_Selected
             } else {
                 currSelectedView = null
                 Log.d(TAG, "Setting default selectedIndex...")
                 grid.setIndexToDefault()
 
-                findViewById<TextView>(R.id.textViewButton1).background = digitBackground_NotSelected
+                findViewById<TextView>(R.id.textViewDigit1).background = digitBackground_NotSelected
             }
         }
 
         if ( currSelectedView == digit1View && event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN) {
             (currSelectedView as TextView?)?.background = digitBackground_NotSelected
-            currSelectedView = digit2View
+            currSelectedView = digit4View
+            (currSelectedView as TextView?)?.background = digitBackground_Selected
+        }
+        if ( currSelectedView == digit4View && event.keyCode == KeyEvent.KEYCODE_DPAD_UP && event.action == KeyEvent.ACTION_DOWN) {
+            (currSelectedView as TextView?)?.background = digitBackground_NotSelected
+            currSelectedView = digit1View
             (currSelectedView as TextView?)?.background = digitBackground_Selected
         }
 
