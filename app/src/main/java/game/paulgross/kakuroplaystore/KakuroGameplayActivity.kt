@@ -41,30 +41,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             Log.d(TAG, "THIS AN ANDROID TV")
             setContentView(R.layout.activity_kakurogameplay_landscape)
 
-            digit1View = findViewById<TextView>(R.id.textViewDigit1)
-            digit2View = findViewById<TextView>(R.id.textViewDigit2)
-            digit3View = findViewById<TextView>(R.id.textViewDigit3)
-            digit4View = findViewById<TextView>(R.id.textViewDigit4)
-            digit5View = findViewById<TextView>(R.id.textViewDigit5)
-            digit6View = findViewById<TextView>(R.id.textViewDigit6)
-            digit7View = findViewById<TextView>(R.id.textViewDigit7)
-            digit8View = findViewById<TextView>(R.id.textViewDigit8)
-            digit9View = findViewById<TextView>(R.id.textViewDigit9)
-            digitClearView = findViewById<TextView>(R.id.textViewDigitClear)
-
-            setupDpadNav()
-
-            // Setup the D-pad cursoring visuals
-            // TODO: make strokeWidth relative. BUT why is digit1View.measuredWidth = 0???
-            Log.d(TAG, "Digit width ${(digit1View as TextView?)?.measuredWidth}")
-            digitBackground_Selected = MaterialShapeDrawable()
-            (digitBackground_Selected as MaterialShapeDrawable).fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
-            (digitBackground_Selected as MaterialShapeDrawable).setStroke(10.0f, ContextCompat.getColor(this, R.color.white))
-
-            // Setup defaults
-            digitBackground_NotSelected = (digit1View as TextView?)?.background
-            currSelectedView = digit1View
-
+            setupTvNav()
         } else {
             Log.d(TAG, "THIS NOT AN ANDROID TV")
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -145,6 +122,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
      */
 
+    private var gridView: PlayingGridView? = null // FIXME - this is a duplicate declaration....
     private var digit1View: View? = null
     private var digit2View: View? = null
     private var digit3View: View? = null
@@ -158,53 +136,124 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private data class NavCmd(
         val view: View,
-        val keyCode: Int
+        val direction: NavDirection
     )
+
+    enum class NavDirection{
+        CURSOR_UP, CURSOR_DOWN, CURSOR_LEFT, CURSOR_RIGHT
+    }
 
     private var dpadNavLookup: MutableMap<NavCmd, View> = mutableMapOf()
 
-    private fun setupDpadNav() {
+    private fun setupTvNav() {
+        // TODO: make strokeWidth relative. How to get the whole screen width???
+        val strokeWidth = 10.0f
+        digitBackground_Selected = MaterialShapeDrawable()
+        (digitBackground_Selected as MaterialShapeDrawable).fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
+        (digitBackground_Selected as MaterialShapeDrawable).setStroke(strokeWidth, ContextCompat.getColor(this, R.color.white))
+
+        gridView = findViewById(R.id.viewPlayGrid)
+        gridView!!.setIndexToDefault()
+        currSelectedView = gridView
+
+        digit1View = findViewById<TextView>(R.id.textViewDigit1)
+        digit2View = findViewById<TextView>(R.id.textViewDigit2)
+        digit3View = findViewById<TextView>(R.id.textViewDigit3)
+        digit4View = findViewById<TextView>(R.id.textViewDigit4)
+        digit5View = findViewById<TextView>(R.id.textViewDigit5)
+        digit6View = findViewById<TextView>(R.id.textViewDigit6)
+        digit7View = findViewById<TextView>(R.id.textViewDigit7)
+        digit8View = findViewById<TextView>(R.id.textViewDigit8)
+        digit9View = findViewById<TextView>(R.id.textViewDigit9)
+        digitClearView = findViewById<TextView>(R.id.textViewDigitClear)
+
+        digitBackground_NotSelected = (digit1View as TextView?)?.background
+
         // TODO: All the nav events here, including nav to grid.
-        dpadNavLookup[NavCmd(digit1View!!, KeyEvent.KEYCODE_DPAD_RIGHT)] = digit2View!!
-        dpadNavLookup[NavCmd(digit1View!!, KeyEvent.KEYCODE_DPAD_DOWN)] = digit4View!!
+        dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_LEFT)] = gridView!!
+        dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_RIGHT)] = digit2View!!
+        dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_DOWN)] = digit4View!!
 
-        dpadNavLookup[NavCmd(digit2View!!, KeyEvent.KEYCODE_DPAD_LEFT)] = digit1View!!
-        dpadNavLookup[NavCmd(digit2View!!, KeyEvent.KEYCODE_DPAD_RIGHT)] = digit3View!!
-        dpadNavLookup[NavCmd(digit2View!!, KeyEvent.KEYCODE_DPAD_DOWN)] = digit5View!!
+        dpadNavLookup[NavCmd(digit2View!!, NavDirection.CURSOR_LEFT)] = digit1View!!
+        dpadNavLookup[NavCmd(digit2View!!, NavDirection.CURSOR_RIGHT)] = digit3View!!
+        dpadNavLookup[NavCmd(digit2View!!, NavDirection.CURSOR_DOWN)] = digit5View!!
 
-        dpadNavLookup[NavCmd(digit3View!!, KeyEvent.KEYCODE_DPAD_LEFT)] = digit2View!!
-        dpadNavLookup[NavCmd(digit3View!!, KeyEvent.KEYCODE_DPAD_DOWN)] = digit6View!!
+        dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_LEFT)] = digit2View!!
+        dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_DOWN)] = digit6View!!
 
-        dpadNavLookup[NavCmd(digit4View!!, KeyEvent.KEYCODE_DPAD_UP)] = digit1View!!
-        dpadNavLookup[NavCmd(digit4View!!, KeyEvent.KEYCODE_DPAD_RIGHT)] = digit5View!!
+        dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_UP)] = digit1View!!
+        dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_LEFT)] = gridView!!
+        dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_RIGHT)] = digit5View!!
+        dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_DOWN)] = digit7View!!
 
-        dpadNavLookup[NavCmd(digit5View!!, KeyEvent.KEYCODE_DPAD_UP)] = digit2View!!
-        dpadNavLookup[NavCmd(digit5View!!, KeyEvent.KEYCODE_DPAD_LEFT)] = digit4View!!
-        dpadNavLookup[NavCmd(digit5View!!, KeyEvent.KEYCODE_DPAD_RIGHT)] = digit6View!!
+        dpadNavLookup[NavCmd(digit5View!!, NavDirection.CURSOR_UP)] = digit2View!!
+        dpadNavLookup[NavCmd(digit5View!!, NavDirection.CURSOR_LEFT)] = digit4View!!
+        dpadNavLookup[NavCmd(digit5View!!, NavDirection.CURSOR_RIGHT)] = digit6View!!
+        dpadNavLookup[NavCmd(digit5View!!, NavDirection.CURSOR_DOWN)] = digit8View!!
 
-        dpadNavLookup[NavCmd(digit6View!!, KeyEvent.KEYCODE_DPAD_LEFT)] = digit5View!!
-        dpadNavLookup[NavCmd(digit6View!!, KeyEvent.KEYCODE_DPAD_UP)] = digit3View!!
+        dpadNavLookup[NavCmd(digit6View!!, NavDirection.CURSOR_LEFT)] = digit5View!!
+        dpadNavLookup[NavCmd(digit6View!!, NavDirection.CURSOR_UP)] = digit3View!!
+        dpadNavLookup[NavCmd(digit6View!!, NavDirection.CURSOR_DOWN)] = digit9View!!
 
+        dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_UP)] = digit4View!!
+        dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_LEFT)] = gridView!!
+        dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_RIGHT)] = digit8View!!
+        dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_DOWN)] = digitClearView!!
+
+        dpadNavLookup[NavCmd(digit8View!!, NavDirection.CURSOR_UP)] = digit5View!!
+        dpadNavLookup[NavCmd(digit8View!!, NavDirection.CURSOR_LEFT)] = digit7View!!
+        dpadNavLookup[NavCmd(digit8View!!, NavDirection.CURSOR_RIGHT)] = digit9View!!
+        dpadNavLookup[NavCmd(digit8View!!, NavDirection.CURSOR_DOWN)] = digitClearView!!
+
+        dpadNavLookup[NavCmd(digit9View!!, NavDirection.CURSOR_UP)] = digit6View!!
+        dpadNavLookup[NavCmd(digit9View!!, NavDirection.CURSOR_LEFT)] = digit8View!!
+        dpadNavLookup[NavCmd(digit9View!!, NavDirection.CURSOR_DOWN)] = digitClearView!!
+
+        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_UP)] = digit8View!!
     }
 
-    private fun getDpadNavTarget(view: View, keyCode: Int): View? {
-        var targetView = dpadNavLookup[NavCmd(view, keyCode)]
+    private fun getDpadNavTarget(view: View, dir: NavDirection): View? {
+        var targetView = dpadNavLookup[NavCmd(view, dir)]
 
         return targetView
     }
 
+    private fun getNavDirection(event: KeyEvent): NavDirection? {
+        // TODO: Aggregate all scrollable keycodes into a scroll action, including joysticks.
+
+        if (event.action == KeyEvent.ACTION_DOWN) {
+            if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                return NavDirection.CURSOR_UP
+            }
+            if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                return NavDirection.CURSOR_DOWN
+            }
+            if (event.keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+                return NavDirection.CURSOR_LEFT
+            }
+            if (event.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                return NavDirection.CURSOR_RIGHT
+            }
+        }
+        return null
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        Log.d(TAG, "KeyEvent: $event")
+//        Log.d(TAG, "KeyEvent: $event")
 
         if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
             confirmExitApp()
             return true
         }
 
-        val grid =  findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        if (currSelectedView == null) {
+            currSelectedView = gridView
+        }
+
+//        val grid = findViewById<PlayingGridView>(R.id.viewPlayGrid)
 
         // Rules: Cursoring or selecting without a selectedID will set the selected ID to the top left visible play square
-        // TODO: Need a flag for mode for cursoring in the Controls Area.
+        // TODO: Need a flag for mode for cursoring in the Controls Area. (this is currSelectedView != gridView)
         // controlCursorActiveView - a pointer to the active view
         // If controlCursorActiveView is not null, then select will put the cursor into playing grid.
 
@@ -213,49 +262,61 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         // TODO - playing grid needs a square added to the active square that vanishes when in the controls area.
 
-        // TODO - a map for cursor actions and next locations.
-
         // TODO - cursor up will return to grid, also cursor left from digits will return to grid.
-
-        // TODO - the IDs on the landscape view need to be fixed with logical names.
 
 
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
-            if (currSelectedView == null) {
-                currSelectedView = findViewById<TextView>(R.id.textViewDigit1)
-                findViewById<TextView>(R.id.textViewDigit1).background = digitBackground_Selected
+            if (currSelectedView == gridView) {
+                currSelectedView = digit5View
+                digit5View!!.background = digitBackground_Selected
             } else {
-                currSelectedView = null
-                Log.d(TAG, "Setting default selectedIndex...")
-                grid.setIndexToDefault()
-
-                findViewById<TextView>(R.id.textViewDigit1).background = digitBackground_NotSelected
+                var index = gridView!!.getSelectedIndex()
+                if (index == -1) {
+                    gridView!!.setIndexToDefault()
+                    index = gridView!!.getSelectedIndex()
+                }
+//                Log.d(TAG, "TODO: react to the chosen control...")
+                // Can I just call the view's onClick already set by the layout here???
+                if (currSelectedView != null) {
+//                    onClickDigit(currSelectedView!!)
+                    currSelectedView!!.callOnClick()
+                }
             }
         }
 
-/*        if ( currSelectedView == digit1View && event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN) {
-            (currSelectedView as TextView?)?.background = digitBackground_NotSelected
-            currSelectedView = digit4View
-            (currSelectedView as TextView?)?.background = digitBackground_Selected
-        }
-        if ( currSelectedView == digit4View && event.keyCode == KeyEvent.KEYCODE_DPAD_UP && event.action == KeyEvent.ACTION_DOWN) {
-            (currSelectedView as TextView?)?.background = digitBackground_NotSelected
-            currSelectedView = digit1View
-            (currSelectedView as TextView?)?.background = digitBackground_Selected
-        }*/
+        val cursorDir = getNavDirection(event)
+        if (cursorDir != null) {
+            if (currSelectedView != gridView) {
+                val targetView = getDpadNavTarget(currSelectedView!!, cursorDir)
 
-        if (currSelectedView != null && event.action == KeyEvent.ACTION_DOWN) {
-            val targetView = getDpadNavTarget(currSelectedView!!, event.keyCode)
-
-            if (targetView != null) {
-                currSelectedView!!.background = digitBackground_NotSelected
-                currSelectedView = targetView
-                currSelectedView!!.background = digitBackground_Selected
+                if (targetView != null) {
+                    unselectByNav(currSelectedView)
+                    currSelectedView = targetView
+                    selectByNav(currSelectedView)
+                }
+            } else {
+                // TODO: Cursor around the grid
+                Log.d(TAG, "Cursoring not yet implemented...")
             }
-
         }
 
         return true
+    }
+
+    private fun selectByNav(view: View?) {
+        if (view == null) return
+
+        if (view is TextView) {
+            view.background = digitBackground_Selected
+        }
+    }
+
+    private fun unselectByNav(view: View?) {
+        if (view == null) return
+
+        if (view is TextView) {
+            view.background = digitBackground_NotSelected
+        }
     }
 
     //

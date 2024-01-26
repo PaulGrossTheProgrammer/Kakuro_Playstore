@@ -262,7 +262,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         var index = 0
-//        var defaultIndex = -1
 
         for (row in (1..gameState!!.puzzleHeight + 1)) {
             for (col in (1..gameState!!.puzzleWidth + 1)) {
@@ -279,10 +278,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                             visible = false
                         }
 
-                        // FIXME - only do this for visible squares
                         if (defaultIndex == -1 && visible) {
                             defaultIndex = index
                             Log.d(TAG, "Setting default index to $defaultIndex")
+                            selectedIndex = index // Is this OK for both TV and phone/tablet???
                         }
                         val selected = (index == selectedIndex)
 
