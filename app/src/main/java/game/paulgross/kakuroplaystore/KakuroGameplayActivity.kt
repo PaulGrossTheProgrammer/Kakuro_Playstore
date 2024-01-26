@@ -40,6 +40,31 @@ class KakuroGameplayActivity : AppCompatActivity() {
         if (applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")) {
             Log.d(TAG, "THIS AN ANDROID TV")
             setContentView(R.layout.activity_kakurogameplay_landscape)
+
+            digit1View = findViewById<TextView>(R.id.textViewDigit1)
+            digit2View = findViewById<TextView>(R.id.textViewDigit2)
+            digit3View = findViewById<TextView>(R.id.textViewDigit3)
+            digit4View = findViewById<TextView>(R.id.textViewDigit4)
+            digit5View = findViewById<TextView>(R.id.textViewDigit5)
+            digit6View = findViewById<TextView>(R.id.textViewDigit6)
+            digit7View = findViewById<TextView>(R.id.textViewDigit7)
+            digit8View = findViewById<TextView>(R.id.textViewDigit8)
+            digit9View = findViewById<TextView>(R.id.textViewDigit9)
+            digitClearView = findViewById<TextView>(R.id.textViewDigitClear)
+
+            setupDpadNav()
+
+            // Setup the D-pad cursoring visuals
+            // TODO: make strokeWidth relative. BUT why is digit1View.measuredWidth = 0???
+            Log.d(TAG, "Digit width ${(digit1View as TextView?)?.measuredWidth}")
+            digitBackground_Selected = MaterialShapeDrawable()
+            (digitBackground_Selected as MaterialShapeDrawable).fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
+            (digitBackground_Selected as MaterialShapeDrawable).setStroke(10.0f, ContextCompat.getColor(this, R.color.white))
+
+            // Setup defaults
+            digitBackground_NotSelected = (digit1View as TextView?)?.background
+            currSelectedView = digit1View
+
         } else {
             Log.d(TAG, "THIS NOT AN ANDROID TV")
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -49,13 +74,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
         }
 
-        // Setup the D-pad cursoring visuals
-        digitBackground_Selected = MaterialShapeDrawable()
-        (digitBackground_Selected as MaterialShapeDrawable).fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
-        (digitBackground_Selected as MaterialShapeDrawable).setStroke(10.0f, ContextCompat.getColor(this, R.color.white))
-
-        digitBackground_NotSelected = findViewById<TextView>(R.id.textViewDigit1).background
-        currSelectedView = findViewById<TextView>(R.id.textViewDigit1)
 
         engine = GameEngine.activate(KakuroGameplayDefinition, this)
 
@@ -127,6 +145,54 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
      */
 
+    private var digit1View: View? = null
+    private var digit2View: View? = null
+    private var digit3View: View? = null
+    private var digit4View: View? = null
+    private var digit5View: View? = null
+    private var digit6View: View? = null
+    private var digit7View: View? = null
+    private var digit8View: View? = null
+    private var digit9View: View? = null
+    private var digitClearView: View? = null
+
+    private data class NavCmd(
+        val view: View,
+        val keyCode: Int
+    )
+
+    private var dpadNavLookup: MutableMap<NavCmd, View> = mutableMapOf()
+
+    private fun setupDpadNav() {
+        // TODO: All the nav events here, including nav to grid.
+        dpadNavLookup[NavCmd(digit1View!!, KeyEvent.KEYCODE_DPAD_RIGHT)] = digit2View!!
+        dpadNavLookup[NavCmd(digit1View!!, KeyEvent.KEYCODE_DPAD_DOWN)] = digit4View!!
+
+        dpadNavLookup[NavCmd(digit2View!!, KeyEvent.KEYCODE_DPAD_LEFT)] = digit1View!!
+        dpadNavLookup[NavCmd(digit2View!!, KeyEvent.KEYCODE_DPAD_RIGHT)] = digit3View!!
+        dpadNavLookup[NavCmd(digit2View!!, KeyEvent.KEYCODE_DPAD_DOWN)] = digit5View!!
+
+        dpadNavLookup[NavCmd(digit3View!!, KeyEvent.KEYCODE_DPAD_LEFT)] = digit2View!!
+        dpadNavLookup[NavCmd(digit3View!!, KeyEvent.KEYCODE_DPAD_DOWN)] = digit6View!!
+
+        dpadNavLookup[NavCmd(digit4View!!, KeyEvent.KEYCODE_DPAD_UP)] = digit1View!!
+        dpadNavLookup[NavCmd(digit4View!!, KeyEvent.KEYCODE_DPAD_RIGHT)] = digit5View!!
+
+        dpadNavLookup[NavCmd(digit5View!!, KeyEvent.KEYCODE_DPAD_UP)] = digit2View!!
+        dpadNavLookup[NavCmd(digit5View!!, KeyEvent.KEYCODE_DPAD_LEFT)] = digit4View!!
+        dpadNavLookup[NavCmd(digit5View!!, KeyEvent.KEYCODE_DPAD_RIGHT)] = digit6View!!
+
+        dpadNavLookup[NavCmd(digit6View!!, KeyEvent.KEYCODE_DPAD_LEFT)] = digit5View!!
+        dpadNavLookup[NavCmd(digit6View!!, KeyEvent.KEYCODE_DPAD_UP)] = digit3View!!
+
+    }
+
+    private fun getDpadNavTarget(view: View, keyCode: Int): View? {
+        var targetView = dpadNavLookup[NavCmd(view, keyCode)]
+
+        return targetView
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         Log.d(TAG, "KeyEvent: $event")
 
@@ -153,8 +219,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         // TODO - the IDs on the landscape view need to be fixed with logical names.
 
-        val digit1View = findViewById<TextView>(R.id.textViewDigit1)
-        val digit4View = findViewById<TextView>(R.id.textViewDigit4)
 
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
             if (currSelectedView == null) {
@@ -169,7 +233,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
         }
 
-        if ( currSelectedView == digit1View && event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN) {
+/*        if ( currSelectedView == digit1View && event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN) {
             (currSelectedView as TextView?)?.background = digitBackground_NotSelected
             currSelectedView = digit4View
             (currSelectedView as TextView?)?.background = digitBackground_Selected
@@ -178,6 +242,17 @@ class KakuroGameplayActivity : AppCompatActivity() {
             (currSelectedView as TextView?)?.background = digitBackground_NotSelected
             currSelectedView = digit1View
             (currSelectedView as TextView?)?.background = digitBackground_Selected
+        }*/
+
+        if (currSelectedView != null && event.action == KeyEvent.ACTION_DOWN) {
+            val targetView = getDpadNavTarget(currSelectedView!!, event.keyCode)
+
+            if (targetView != null) {
+                currSelectedView!!.background = digitBackground_NotSelected
+                currSelectedView = targetView
+                currSelectedView!!.background = digitBackground_Selected
+            }
+
         }
 
         return true
