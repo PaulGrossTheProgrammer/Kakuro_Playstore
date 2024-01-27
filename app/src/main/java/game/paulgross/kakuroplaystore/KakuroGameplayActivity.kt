@@ -99,7 +99,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     var currSelectedView: View? = null
 
     // Backgrounds used to show where the D-pad cursor is located.
-    private var digitBackground_Selected: MaterialShapeDrawable? = null
+    private var textViewBackgroundSelected: MaterialShapeDrawable? = null
     private var digitBackground_NotSelected: Drawable? = null
     private var generalBackgroundSelected: Drawable? = null
 
@@ -126,14 +126,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
         CURSOR_UP, CURSOR_DOWN, CURSOR_LEFT, CURSOR_RIGHT
     }
 
-    private var dpadNavLookup: MutableMap<NavCmd, View> = mutableMapOf()
+    private val dpadNavLookup: MutableMap<NavCmd, View> = mutableMapOf()
 
     private fun setupTvNav() {
         // TODO: make strokeWidth relative. How to get the whole screen width???
         val strokeWidth = 4.0f
-        digitBackground_Selected = MaterialShapeDrawable()
-        (digitBackground_Selected as MaterialShapeDrawable).fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
-        (digitBackground_Selected as MaterialShapeDrawable).setStroke(strokeWidth, ContextCompat.getColor(this, R.color.white))
+        textViewBackgroundSelected = MaterialShapeDrawable()
+        (textViewBackgroundSelected as MaterialShapeDrawable).fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
+        (textViewBackgroundSelected as MaterialShapeDrawable).setStroke(strokeWidth, ContextCompat.getColor(this, R.color.white))
         // TODO: Use digitBackground_Selected for possibles too
 
         generalBackgroundSelected = MaterialShapeDrawable()
@@ -153,6 +153,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         digit8View = findViewById<TextView>(R.id.textViewDigit8)
         digit9View = findViewById<TextView>(R.id.textViewDigit9)
         digitClearView = findViewById<TextView>(R.id.textViewDigitClear)
+
+        scrollUpView = findViewById<TextView>(R.id.imageButtonScrollUp)
 
         // TODO - add possibles views
 
@@ -204,6 +206,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(digit9View!!, NavDirection.CURSOR_DOWN)] = digitClearView!!
 
         dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_UP)] = digit8View!!
+        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_DOWN)] = scrollUpView!!
+
+        dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_UP)] = digitClearView!!
+
     }
 
     private fun getDpadNavTarget(view: View, dir: NavDirection): View? {
@@ -262,10 +268,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
             if (currSelectedView == gridView) {
                 currSelectedView = digit5View
-                digit5View!!.background = digitBackground_Selected
+//                digit5View!!.background = textViewBackgroundSelected
+                selectByNav(currSelectedView)
 
                 // TESTONLy - DELETEME:
-                scrollUpView!!.background = generalBackgroundSelected
+//                scrollUpView!!.background = generalBackgroundSelected
             } else {
                 var index = gridView!!.getSelectedIndex()
                 if (index == -1) {
@@ -300,19 +307,31 @@ class KakuroGameplayActivity : AppCompatActivity() {
         return true
     }
 
+    private val cachedBackgroundLookup: MutableMap<View, Drawable> = mutableMapOf()
+
     private fun selectByNav(view: View?) {
         if (view == null) return
 
+        if (view == gridView) return
+
+        val cachedBackground: Drawable? = cachedBackgroundLookup[view]
+        if (cachedBackground == null) {
+            cachedBackgroundLookup[view] = view.background
+        }
+
         if (view is TextView) {
-            view.background = digitBackground_Selected
+            view.background = textViewBackgroundSelected
+        } else {
+            view.background = generalBackgroundSelected
         }
     }
 
     private fun unselectByNav(view: View?) {
         if (view == null) return
 
-        if (view is TextView) {
-            view.background = digitBackground_NotSelected
+        val cachedBackground: Drawable? = cachedBackgroundLookup[view]
+        if (cachedBackground != null) {
+            view.background = cachedBackground
         }
     }
 
