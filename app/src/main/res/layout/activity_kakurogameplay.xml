@@ -76,14 +76,14 @@
         android:layout_height="32dp"
         android:layout_marginTop="8dp"
         android:onClick="onClickScrollUp"
-        app:layout_constraintEnd_toStartOf="@+id/textViewButton18"
+        app:layout_constraintEnd_toStartOf="@+id/textViewPossible4"
         app:layout_constraintStart_toEndOf="@+id/textViewDigit6"
         app:layout_constraintTop_toBottomOf="@+id/viewPlayGrid"
         app:srcCompat="@android:drawable/arrow_up_float" />
 
 
     <TextView
-        android:id="@+id/textViewButton17"
+        android:id="@+id/textViewPossible1"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginEnd="2dp"
@@ -95,11 +95,11 @@
         android:textAlignment="textStart"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toStartOf="@+id/textViewButton14"
-        app:layout_constraintTop_toTopOf="@+id/textViewButton11" />
+        app:layout_constraintEnd_toStartOf="@+id/textViewPossible2"
+        app:layout_constraintTop_toTopOf="@+id/textViewPossible3" />
 
     <TextView
-        android:id="@+id/textViewButton19"
+        android:id="@+id/textViewPossible7"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
@@ -111,11 +111,11 @@
         android:textAlignment="textStart"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/textViewButton18"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton18" />
+        app:layout_constraintEnd_toEndOf="@+id/textViewPossible4"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible4" />
 
     <TextView
-        android:id="@+id/textViewButton18"
+        android:id="@+id/textViewPossible4"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
@@ -127,11 +127,11 @@
         android:textAlignment="textStart"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/textViewButton17"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton17" />
+        app:layout_constraintEnd_toEndOf="@+id/textViewPossible1"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible1" />
 
     <TextView
-        android:id="@+id/textViewButton16"
+        android:id="@+id/textViewPossible8"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
@@ -143,11 +143,11 @@
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/textViewButton15"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton15" />
+        app:layout_constraintEnd_toEndOf="@+id/textViewPossible5"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible5" />
 
     <TextView
-        android:id="@+id/textViewButton15"
+        android:id="@+id/textViewPossible5"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
@@ -159,11 +159,11 @@
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/textViewButton14"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton14" />
+        app:layout_constraintEnd_toEndOf="@+id/textViewPossible2"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible2" />
 
     <TextView
-        android:id="@+id/textViewButton13"
+        android:id="@+id/textViewPossible9"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
@@ -175,11 +175,11 @@
         android:textAlignment="textEnd"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/textViewButton11"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton12" />
+        app:layout_constraintEnd_toEndOf="@+id/textViewPossible3"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible6" />
 
     <TextView
-        android:id="@+id/textViewButton12"
+        android:id="@+id/textViewPossible6"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
@@ -191,11 +191,11 @@
         android:textAlignment="textEnd"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/textViewButton11"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton11" />
+        app:layout_constraintEnd_toEndOf="@+id/textViewPossible3"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible3" />
 
     <TextView
-        android:id="@+id/textViewButton11"
+        android:id="@+id/textViewPossible3"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="8dp"
@@ -212,7 +212,7 @@
         app:layout_constraintTop_toBottomOf="@+id/viewPlayGrid" />
 
     <TextView
-        android:id="@+id/textViewButton14"
+        android:id="@+id/textViewPossible2"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginEnd="2dp"
@@ -224,8 +224,8 @@
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toStartOf="@+id/textViewButton11"
-        app:layout_constraintTop_toTopOf="@+id/textViewButton11" />
+        app:layout_constraintEnd_toStartOf="@+id/textViewPossible3"
+        app:layout_constraintTop_toTopOf="@+id/textViewPossible3" />
 
     <TextView
         android:id="@+id/textViewDigitClear"
@@ -423,7 +423,7 @@
         android:layout_marginTop="8dp"
         android:onClick="onClickZoomOut"
         app:layout_constraintStart_toStartOf="@+id/imageButtonScrollDown"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton19"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible7"
         app:srcCompat="@android:drawable/btn_minus" />
 
     <ImageButton

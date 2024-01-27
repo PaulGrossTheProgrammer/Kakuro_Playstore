@@ -92,35 +92,16 @@ class KakuroGameplayActivity : AppCompatActivity() {
     // Controller handling: D-pad used by Google TV
     //
 
+//    https://developer.android.com/training/game-controllers/controller-input
+//    https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
 
     // The current control selected by the D-pad
     var currSelectedView: View? = null
 
     // Backgrounds used to show where the D-pad cursor is located.
-    var digitBackground_Selected: MaterialShapeDrawable? = null
-    var digitBackground_NotSelected: Drawable? = null
-//    init {
-//        digitBackground_Selected = MaterialShapeDrawable()
-//        (digitBackground_Selected as MaterialShapeDrawable).fillColor =
-//            ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
-//        (digitBackground_Selected as MaterialShapeDrawable).setStroke(10.0f, ContextCompat.getColor(this, R.color.white))
-//    }
-
-//    https://developer.android.com/training/game-controllers/controller-input
-//    https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
-
-    /*
-    Possible way to show the currently selected View:
-    https://stackoverflow.com/questions/3496269/how-to-put-a-border-around-an-android-textview
-    you can programmatically apply a MaterialShapeDrawable:
-
-    TextView textView = findViewById(R.id.textview);
-    MaterialShapeDrawable shapeDrawable = new MaterialShapeDrawable();
-    shapeDrawable.setFillColor(ContextCompat.getColorStateList(this,android.R.color.transparent));
-    shapeDrawable.setStroke(1.0f, ContextCompat.getColor(this,R.color....));
-    ViewCompat.setBackground(textView,shapeDrawable);
-
-     */
+    private var digitBackground_Selected: MaterialShapeDrawable? = null
+    private var digitBackground_NotSelected: Drawable? = null
+    private var generalBackgroundSelected: Drawable? = null
 
     private var gridView: PlayingGridView? = null // FIXME - this is a duplicate declaration....
     private var digit1View: View? = null
@@ -133,6 +114,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private var digit8View: View? = null
     private var digit9View: View? = null
     private var digitClearView: View? = null
+
+    private var scrollUpView: View? = null
 
     private data class NavCmd(
         val view: View,
@@ -147,10 +130,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private fun setupTvNav() {
         // TODO: make strokeWidth relative. How to get the whole screen width???
-        val strokeWidth = 10.0f
+        val strokeWidth = 4.0f
         digitBackground_Selected = MaterialShapeDrawable()
         (digitBackground_Selected as MaterialShapeDrawable).fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
         (digitBackground_Selected as MaterialShapeDrawable).setStroke(strokeWidth, ContextCompat.getColor(this, R.color.white))
+        // TODO: Use digitBackground_Selected for possibles too
+
+        generalBackgroundSelected = MaterialShapeDrawable()
+        (generalBackgroundSelected as MaterialShapeDrawable).setStroke(strokeWidth, ContextCompat.getColor(this, R.color.white))
 
         gridView = findViewById(R.id.viewPlayGrid)
         gridView!!.setIndexToDefault()
@@ -167,17 +154,24 @@ class KakuroGameplayActivity : AppCompatActivity() {
         digit9View = findViewById<TextView>(R.id.textViewDigit9)
         digitClearView = findViewById<TextView>(R.id.textViewDigitClear)
 
+        // TODO - add possibles views
+
+        scrollUpView = findViewById(R.id.imageButtonScrollUp)
+
         digitBackground_NotSelected = (digit1View as TextView?)?.background
 
-        // TODO: All the nav events here, including nav to grid.
+        // TODO: All the nav events for possibles and game controls.
+        dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_UP)] = gridView!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_RIGHT)] = digit2View!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_DOWN)] = digit4View!!
 
+        dpadNavLookup[NavCmd(digit2View!!, NavDirection.CURSOR_UP)] = gridView!!
         dpadNavLookup[NavCmd(digit2View!!, NavDirection.CURSOR_LEFT)] = digit1View!!
         dpadNavLookup[NavCmd(digit2View!!, NavDirection.CURSOR_RIGHT)] = digit3View!!
         dpadNavLookup[NavCmd(digit2View!!, NavDirection.CURSOR_DOWN)] = digit5View!!
 
+        dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_UP)] = gridView!!
         dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_LEFT)] = digit2View!!
         dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_DOWN)] = digit6View!!
 
@@ -269,6 +263,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (currSelectedView == gridView) {
                 currSelectedView = digit5View
                 digit5View!!.background = digitBackground_Selected
+
+                // TESTONLy - DELETEME:
+                scrollUpView!!.background = generalBackgroundSelected
             } else {
                 var index = gridView!!.getSelectedIndex()
                 if (index == -1) {

@@ -11,8 +11,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="onClickGotoSettings"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/viewPlayGrid"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewButton10"
+        app:layout_constraintStart_toStartOf="@+id/textViewDigit1"
         app:srcCompat="@android:drawable/ic_menu_manage" />
 
     <TextView
@@ -48,6 +48,7 @@
         android:id="@+id/textNextPuzzle"
         android:layout_width="62dp"
         android:layout_height="42dp"
+        android:layout_marginEnd="8dp"
         android:background="@android:color/holo_blue_bright"
         android:onClick="onClickNextPuzzle"
         android:text="Next Puzzle"
@@ -90,9 +91,10 @@
 
 
     <TextView
-        android:id="@+id/textViewButton17"
+        android:id="@+id/textViewPossible1"
         android:layout_width="42dp"
         android:layout_height="42dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="2dp"
         android:background="?attr/colorPrimaryVariant"
         android:onClick="onClickPossibleDigit"
@@ -102,11 +104,11 @@
         android:textAlignment="textStart"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toStartOf="@+id/textViewButton14"
-        app:layout_constraintTop_toTopOf="@+id/textViewButton11" />
+        app:layout_constraintEnd_toStartOf="@+id/textViewPossible2"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/textViewButton19"
+        android:id="@+id/textViewPossible7"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
@@ -118,11 +120,11 @@
         android:textAlignment="textStart"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/textViewButton18"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton18" />
+        app:layout_constraintEnd_toEndOf="@+id/textViewPossible4"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible4" />
 
     <TextView
-        android:id="@+id/textViewButton18"
+        android:id="@+id/textViewPossible4"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
@@ -134,11 +136,11 @@
         android:textAlignment="textStart"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/textViewButton17"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton17" />
+        app:layout_constraintEnd_toEndOf="@+id/textViewPossible1"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible1" />
 
     <TextView
-        android:id="@+id/textViewButton16"
+        android:id="@+id/textViewPossible8"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
@@ -150,11 +152,11 @@
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/textViewButton15"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton15" />
+        app:layout_constraintEnd_toEndOf="@+id/textViewPossible5"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible5" />
 
     <TextView
-        android:id="@+id/textViewButton15"
+        android:id="@+id/textViewPossible5"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
@@ -166,11 +168,11 @@
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/textViewButton14"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton14" />
+        app:layout_constraintEnd_toEndOf="@+id/textViewPossible2"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible2" />
 
     <TextView
-        android:id="@+id/textViewButton13"
+        android:id="@+id/textViewPossible9"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
@@ -182,11 +184,11 @@
         android:textAlignment="textEnd"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/textViewButton11"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton12" />
+        app:layout_constraintEnd_toEndOf="@+id/textViewPossible3"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible6" />
 
     <TextView
-        android:id="@+id/textViewButton12"
+        android:id="@+id/textViewPossible6"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginTop="2dp"
@@ -198,13 +200,14 @@
         android:textAlignment="textEnd"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/textViewButton11"
-        app:layout_constraintTop_toBottomOf="@+id/textViewButton11" />
+        app:layout_constraintEnd_toEndOf="@+id/textViewPossible3"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPossible3" />
 
     <TextView
-        android:id="@+id/textViewButton11"
+        android:id="@+id/textViewPossible3"
         android:layout_width="42dp"
         android:layout_height="42dp"
+        android:layout_marginEnd="8dp"
         android:background="?attr/colorPrimaryVariant"
         android:onClick="onClickPossibleDigit"
         android:paddingTop="2dp"
@@ -214,10 +217,10 @@
         android:textColor="@color/white"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="@+id/textViewPossible1" />
 
     <TextView
-        android:id="@+id/textViewButton14"
+        android:id="@+id/textViewPossible2"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:layout_marginEnd="2dp"
@@ -229,8 +232,8 @@
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="14sp"
-        app:layout_constraintEnd_toStartOf="@+id/textViewButton11"
-        app:layout_constraintTop_toTopOf="@+id/textViewButton11" />
+        app:layout_constraintEnd_toStartOf="@+id/textViewPossible3"
+        app:layout_constraintTop_toTopOf="@+id/textViewPossible1" />
 
     <TextView
         android:id="@+id/textViewDigitClear"
@@ -382,6 +385,8 @@
         android:id="@+id/textViewDigit1"
         android:layout_width="42dp"
         android:layout_height="42dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         android:background="@android:color/holo_blue_bright"
         android:onClick="onClickDigit"
         android:tag="Guess1"
@@ -414,7 +419,7 @@
         android:layout_marginTop="16dp"
         android:onClick="onClickScrollLeft"
         android:rotation="90"
-        app:layout_constraintStart_toEndOf="@+id/viewPlayGrid"
+        app:layout_constraintStart_toStartOf="@+id/textViewDigit1"
         app:layout_constraintTop_toBottomOf="@+id/textViewDigitClear"
         app:srcCompat="@android:drawable/arrow_down_float" />
 
@@ -432,7 +437,7 @@
         android:layout_width="78dp"
         android:layout_height="46dp"
         android:onClick="onClickZoomIn"
-        app:layout_constraintStart_toEndOf="@+id/viewPlayGrid"
+        app:layout_constraintStart_toStartOf="@+id/textViewDigit1"
         app:layout_constraintTop_toBottomOf="@+id/imageButtonScrollDown"
         app:srcCompat="@android:drawable/btn_plus" />
 
@@ -440,7 +445,7 @@
         android:id="@+id/textViewDebug"
         android:layout_width="311dp"
         android:layout_height="45dp"
-        app:layout_constraintBottom_toTopOf="@+id/textViewButton10"
+        app:layout_constraintBottom_toTopOf="@+id/imageButton"
         app:layout_constraintStart_toEndOf="@+id/viewPlayGrid" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
