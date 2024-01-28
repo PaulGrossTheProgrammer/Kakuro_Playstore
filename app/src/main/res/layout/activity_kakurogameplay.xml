@@ -18,11 +18,11 @@
         android:textColor="@color/black"
         android:textSize="20sp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/textViewButton10"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewReset"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
-        android:id="@+id/textPrevPuzzle"
+        android:id="@+id/textViewPrevPuzzle"
         android:layout_width="62dp"
         android:layout_height="42dp"
         android:layout_marginStart="8dp"
@@ -32,11 +32,11 @@
         android:textAlignment="center"
         android:textColor="@color/black"
         android:textSize="14sp"
-        app:layout_constraintBottom_toBottomOf="@+id/textViewButton10"
-        app:layout_constraintStart_toEndOf="@+id/textViewButton10" />
+        app:layout_constraintBottom_toBottomOf="@+id/textViewReset"
+        app:layout_constraintStart_toEndOf="@+id/textViewReset" />
 
     <TextView
-        android:id="@+id/textNextPuzzle"
+        android:id="@+id/textViewNextPuzzle"
         android:layout_width="62dp"
         android:layout_height="42dp"
         android:layout_marginStart="8dp"
@@ -46,8 +46,8 @@
         android:textAlignment="center"
         android:textColor="@color/black"
         android:textSize="14sp"
-        app:layout_constraintBottom_toBottomOf="@+id/textPrevPuzzle"
-        app:layout_constraintStart_toEndOf="@+id/textPrevPuzzle" />
+        app:layout_constraintBottom_toBottomOf="@+id/textViewPrevPuzzle"
+        app:layout_constraintStart_toEndOf="@+id/textViewPrevPuzzle" />
 
     <ImageButton
         android:id="@+id/imageButtonScrollRight"
@@ -244,7 +244,7 @@
         app:layout_constraintTop_toBottomOf="@+id/textViewDigit8" />
 
     <TextView
-        android:id="@+id/textViewButton10"
+        android:id="@+id/textViewReset"
         android:layout_width="76dp"
         android:layout_height="42dp"
         android:layout_marginStart="8dp"
@@ -416,7 +416,7 @@
         app:srcCompat="@android:drawable/arrow_down_float" />
 
     <ImageButton
-        android:id="@+id/imageButton3"
+        android:id="@+id/imageButtonZoomOut"
         android:layout_width="78dp"
         android:layout_height="46dp"
         android:layout_marginStart="16dp"
@@ -427,7 +427,7 @@
         app:srcCompat="@android:drawable/btn_minus" />
 
     <ImageButton
-        android:id="@+id/imageButton4"
+        android:id="@+id/imageButtonZoomIn"
         android:layout_width="78dp"
         android:layout_height="46dp"
         android:layout_marginTop="8dp"
@@ -441,11 +441,11 @@
         android:id="@+id/textViewDebug"
         android:layout_width="match_parent"
         android:layout_height="27dp"
-        app:layout_constraintBottom_toTopOf="@+id/textViewButton10"
+        app:layout_constraintBottom_toTopOf="@+id/textViewReset"
         app:layout_constraintStart_toStartOf="parent" />
 
     <ImageButton
-        android:id="@+id/imageButton"
+        android:id="@+id/imageButtonSettings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="onClickGotoSettings"

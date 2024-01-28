@@ -103,7 +103,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private var digitBackground_NotSelected: Drawable? = null
     private var generalBackgroundSelected: Drawable? = null
 
-    private var gridView: PlayingGridView? = null // FIXME - this is a duplicate declaration....
+    private var gridView: PlayingGridView? = null
     private var digit1View: View? = null
     private var digit2View: View? = null
     private var digit3View: View? = null
@@ -116,6 +116,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private var digitClearView: View? = null
 
     private var scrollUpView: View? = null
+    private var scrollDownView: View? = null
+    private var scrollLeftView: View? = null
+    private var scrollRightView: View? = null
+
+    private var zoomInView: View? = null
+    private var zoomOutView: View? = null
+
+    private var settingsView: View? = null
+    private var resetView: View? = null
+    private var prevPuzzleView: View? = null
+    private var nextPuzzleView: View? = null
+
 
     private data class NavCmd(
         val view: View,
@@ -143,7 +155,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         gridView!!.setIndexToDefault()
         currSelectedView = gridView
 
-        digit1View = findViewById<TextView>(R.id.textViewDigit1)
+        digit1View = findViewById(R.id.textViewDigit1)
         digit2View = findViewById<TextView>(R.id.textViewDigit2)
         digit3View = findViewById<TextView>(R.id.textViewDigit3)
         digit4View = findViewById<TextView>(R.id.textViewDigit4)
@@ -154,7 +166,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
         digit9View = findViewById<TextView>(R.id.textViewDigit9)
         digitClearView = findViewById<TextView>(R.id.textViewDigitClear)
 
-        scrollUpView = findViewById<TextView>(R.id.imageButtonScrollUp)
+        scrollUpView = findViewById(R.id.imageButtonScrollUp)
+        scrollDownView = findViewById(R.id.imageButtonScrollDown)
+        scrollLeftView = findViewById(R.id.imageButtonScrollLeft)
+        scrollRightView = findViewById(R.id.imageButtonScrollRight)
+
+        zoomInView = findViewById(R.id.imageButtonZoomIn)
+        zoomOutView = findViewById(R.id.imageButtonZoomOut)
+
+        settingsView = findViewById(R.id.imageButtonSettings)
+        resetView = findViewById(R.id.textViewReset)
+        nextPuzzleView = findViewById(R.id.textViewNextPuzzle)
+        prevPuzzleView = findViewById(R.id.textViewPrevPuzzle)
 
         // TODO - add possibles views
 
@@ -209,6 +232,16 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_DOWN)] = scrollUpView!!
 
         dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_UP)] = digitClearView!!
+        dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_DOWN)] = scrollDownView!!
+
+        dpadNavLookup[NavCmd(scrollDownView!!, NavDirection.CURSOR_UP)] = scrollUpView!!
+        dpadNavLookup[NavCmd(scrollDownView!!, NavDirection.CURSOR_DOWN)] = zoomInView!!
+
+        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_UP)] = scrollDownView!!
+        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_DOWN)] = settingsView!!
+
+        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_UP)] = zoomInView!!
+        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_DOWN)] = gridView!!
 
     }
 
