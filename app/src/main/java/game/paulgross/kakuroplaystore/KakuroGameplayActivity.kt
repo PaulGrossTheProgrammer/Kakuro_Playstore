@@ -387,36 +387,25 @@ class KakuroGameplayActivity : AppCompatActivity() {
             currSelectedView = gridView
         }
 
-//        val grid = findViewById<PlayingGridView>(R.id.viewPlayGrid)
 
         // Rules: Cursoring or selecting without a selectedID will set the selected ID to the top left visible play square
         // TODO: Need a flag for mode for cursoring in the Controls Area. (this is currSelectedView != gridView)
         // controlCursorActiveView - a pointer to the active view
         // If controlCursorActiveView is not null, then select will put the cursor into playing grid.
 
-        // TODO - until the D-pad buttons are used, there is no cursor.
         // TODO - The cursor starts at the default location in the grid at the first press of the D-pad buttons.
-
         // TODO - playing grid needs a square added to the active square that vanishes when in the controls area.
-
-        // TODO - cursor up will return to grid, also cursor left from digits will return to grid.
-
 
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
             if (currSelectedView == gridView) {
                 currSelectedView = digit5View
-//                digit5View!!.background = textViewBackgroundSelected
                 selectByNav(currSelectedView)
-
-                // TESTONLy - DELETEME:
-//                scrollUpView!!.background = generalBackgroundSelected
             } else {
                 var index = gridView!!.getSelectedIndex()
                 if (index == -1) {
                     gridView!!.setIndexToDefault()
-                    index = gridView!!.getSelectedIndex()
+//                    index = gridView!!.getSelectedIndex()???
                 }
-//                Log.d(TAG, "TODO: react to the chosen control...")
                 // Can I just call the view's onClick already set by the layout here???
                 if (currSelectedView != null) {
 //                    onClickDigit(currSelectedView!!)
@@ -436,8 +425,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
                     selectByNav(currSelectedView)
                 }
             } else {
-                // TODO: Cursor around the grid
-                Log.d(TAG, "Cursoring not yet implemented...")
+                if (cursorDir == NavDirection.CURSOR_UP) {
+                    gridView!!.navigateUp()
+                }
+                if (cursorDir == NavDirection.CURSOR_DOWN) {
+                    gridView!!.navigateDown()
+                }
+                if (cursorDir == NavDirection.CURSOR_LEFT) {
+                    gridView!!.navigateLeft()
+                }
+                if (cursorDir == NavDirection.CURSOR_RIGHT) {
+                    gridView!!.navigateRight()
+                }
             }
         }
 

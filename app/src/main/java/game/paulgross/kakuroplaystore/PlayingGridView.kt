@@ -423,6 +423,58 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         canvas.drawText(hintString, x + squareWidth * 0.56f  - squareWidth, y + squareWidth * 0.45f, paint)
     }
 
+    fun navigateUp() {
+        if (selectedIndex == -1) {
+            selectedIndex = defaultIndex
+            invalidate()
+        }
+
+        selectedIndex -= gameState!!.puzzleWidth
+        invalidate()
+    }
+
+    fun navigateDown() {
+        Log.d(TAG, "navigateDown: START selectedIndex = $selectedIndex")
+        if (selectedIndex == -1) {
+            selectedIndex = defaultIndex
+            invalidate()
+        }
+
+        selectedIndex += gameState!!.puzzleWidth
+        invalidate()
+        Log.d(TAG, "navigateDown: END selectedIndex = $selectedIndex")
+    }
+
+    fun navigateLeft() {
+        if (selectedIndex == -1) {
+            selectedIndex = defaultIndex
+            invalidate()
+        }
+
+        selectedIndex -= 1
+        invalidate()
+    }
+
+    fun navigateRight() {
+        if (selectedIndex == -1) {
+            selectedIndex = defaultIndex
+            invalidate()
+        }
+
+        selectedIndex += 1
+        invalidate()
+    }
+
+    private fun searchForNextSquare(startIndex: Int, direction: KakuroGameplayActivity.NavDirection): Int {
+        var delta = 0
+        if (direction == KakuroGameplayActivity.NavDirection.CURSOR_UP) {
+            delta = -gameState!!.puzzleWidth
+        }
+        var currTestLocation = startIndex
+        // TODO ...
+        return -1
+    }
+
     companion object {
         private val TAG = PlayingGridView::class.java.simpleName
     }
