@@ -104,6 +104,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private var generalBackgroundSelected: Drawable? = null
 
     private var gridView: PlayingGridView? = null
+
     private var digit1View: View? = null
     private var digit2View: View? = null
     private var digit3View: View? = null
@@ -113,8 +114,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private var digit7View: View? = null
     private var digit8View: View? = null
     private var digit9View: View? = null
-    private var digitClearView: View? = null
 
+    private var possible1View: View? = null
+    private var possible2View: View? = null
+    private var possible3View: View? = null
+    private var possible4View: View? = null
+    private var possible5View: View? = null
+    private var possible6View: View? = null
+    private var possible7View: View? = null
+    private var possible8View: View? = null
+    private var possible9View: View? = null
+
+    private var digitClearView: View? = null
     private var scrollUpView: View? = null
     private var scrollDownView: View? = null
     private var scrollLeftView: View? = null
@@ -146,7 +157,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         textViewBackgroundSelected = MaterialShapeDrawable()
         (textViewBackgroundSelected as MaterialShapeDrawable).fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
         (textViewBackgroundSelected as MaterialShapeDrawable).setStroke(strokeWidth, ContextCompat.getColor(this, R.color.white))
-        // TODO: Use digitBackground_Selected for possibles too
 
         generalBackgroundSelected = MaterialShapeDrawable()
         (generalBackgroundSelected as MaterialShapeDrawable).setStroke(strokeWidth, ContextCompat.getColor(this, R.color.white))
@@ -156,16 +166,26 @@ class KakuroGameplayActivity : AppCompatActivity() {
         currSelectedView = gridView
 
         digit1View = findViewById(R.id.textViewDigit1)
-        digit2View = findViewById<TextView>(R.id.textViewDigit2)
-        digit3View = findViewById<TextView>(R.id.textViewDigit3)
-        digit4View = findViewById<TextView>(R.id.textViewDigit4)
-        digit5View = findViewById<TextView>(R.id.textViewDigit5)
-        digit6View = findViewById<TextView>(R.id.textViewDigit6)
-        digit7View = findViewById<TextView>(R.id.textViewDigit7)
-        digit8View = findViewById<TextView>(R.id.textViewDigit8)
-        digit9View = findViewById<TextView>(R.id.textViewDigit9)
-        digitClearView = findViewById<TextView>(R.id.textViewDigitClear)
+        digit2View = findViewById(R.id.textViewDigit2)
+        digit3View = findViewById(R.id.textViewDigit3)
+        digit4View = findViewById(R.id.textViewDigit4)
+        digit5View = findViewById(R.id.textViewDigit5)
+        digit6View = findViewById(R.id.textViewDigit6)
+        digit7View = findViewById(R.id.textViewDigit7)
+        digit8View = findViewById(R.id.textViewDigit8)
+        digit9View = findViewById(R.id.textViewDigit9)
 
+        possible1View = findViewById(R.id.textViewPossible1)
+        possible2View = findViewById(R.id.textViewPossible2)
+        possible3View = findViewById(R.id.textViewPossible3)
+        possible4View = findViewById(R.id.textViewPossible4)
+        possible5View = findViewById(R.id.textViewPossible5)
+        possible6View = findViewById(R.id.textViewPossible6)
+        possible7View = findViewById(R.id.textViewPossible7)
+        possible8View = findViewById(R.id.textViewPossible8)
+        possible9View = findViewById(R.id.textViewPossible9)
+
+        digitClearView = findViewById(R.id.textViewDigitClear)
         scrollUpView = findViewById(R.id.imageButtonScrollUp)
         scrollDownView = findViewById(R.id.imageButtonScrollDown)
         scrollLeftView = findViewById(R.id.imageButtonScrollLeft)
@@ -179,13 +199,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
         nextPuzzleView = findViewById(R.id.textViewNextPuzzle)
         prevPuzzleView = findViewById(R.id.textViewPrevPuzzle)
 
-        // TODO - add possibles views
-
         scrollUpView = findViewById(R.id.imageButtonScrollUp)
 
         digitBackground_NotSelected = (digit1View as TextView?)?.background
 
-        // TODO: All the nav events for possibles and game controls.
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_UP)] = gridView!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_RIGHT)] = digit2View!!
@@ -198,6 +215,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_UP)] = gridView!!
         dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_LEFT)] = digit2View!!
+        dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_RIGHT)] = possible1View!!
         dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_DOWN)] = digit6View!!
 
         dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_UP)] = digit1View!!
@@ -210,8 +228,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(digit5View!!, NavDirection.CURSOR_RIGHT)] = digit6View!!
         dpadNavLookup[NavCmd(digit5View!!, NavDirection.CURSOR_DOWN)] = digit8View!!
 
-        dpadNavLookup[NavCmd(digit6View!!, NavDirection.CURSOR_LEFT)] = digit5View!!
         dpadNavLookup[NavCmd(digit6View!!, NavDirection.CURSOR_UP)] = digit3View!!
+        dpadNavLookup[NavCmd(digit6View!!, NavDirection.CURSOR_LEFT)] = digit5View!!
+        dpadNavLookup[NavCmd(digit6View!!, NavDirection.CURSOR_RIGHT)] = possible4View!!
         dpadNavLookup[NavCmd(digit6View!!, NavDirection.CURSOR_DOWN)] = digit9View!!
 
         dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_UP)] = digit4View!!
@@ -226,23 +245,108 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         dpadNavLookup[NavCmd(digit9View!!, NavDirection.CURSOR_UP)] = digit6View!!
         dpadNavLookup[NavCmd(digit9View!!, NavDirection.CURSOR_LEFT)] = digit8View!!
+        dpadNavLookup[NavCmd(digit9View!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
         dpadNavLookup[NavCmd(digit9View!!, NavDirection.CURSOR_DOWN)] = digitClearView!!
 
         dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_UP)] = digit8View!!
+        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_LEFT)] = gridView!!
+        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
         dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_DOWN)] = scrollUpView!!
 
         dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_UP)] = digitClearView!!
+        dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_LEFT)] = scrollLeftView!!
+        dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_RIGHT)] = scrollRightView!!
         dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_DOWN)] = scrollDownView!!
 
         dpadNavLookup[NavCmd(scrollDownView!!, NavDirection.CURSOR_UP)] = scrollUpView!!
+        dpadNavLookup[NavCmd(scrollDownView!!, NavDirection.CURSOR_LEFT)] = scrollLeftView!!
+        dpadNavLookup[NavCmd(scrollDownView!!, NavDirection.CURSOR_RIGHT)] = scrollRightView!!
         dpadNavLookup[NavCmd(scrollDownView!!, NavDirection.CURSOR_DOWN)] = zoomInView!!
 
+        dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_UP)] = scrollUpView!!
+        dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_LEFT)] = gridView!!
+        dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_RIGHT)] = scrollRightView!!
+        dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_DOWN)] = scrollDownView!!
+
+        dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_UP)] = scrollUpView!!
+        dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_LEFT)] = scrollLeftView!!
+        dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
+        dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_DOWN)] = scrollDownView!!
+
         dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_UP)] = scrollDownView!!
+        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_LEFT)] = gridView!!
+        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_RIGHT)] = zoomOutView!!
         dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_DOWN)] = settingsView!!
 
+        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_UP)] = scrollDownView!!
+        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_LEFT)] = zoomInView!!
+        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
+        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_DOWN)] = resetView!!
+
         dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_UP)] = zoomInView!!
+        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_LEFT)] = gridView!!
+        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_RIGHT)] = resetView!!
         dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_DOWN)] = gridView!!
 
+        dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_UP)] = gridView!!
+        dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_LEFT)] = digit3View!!
+        dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_RIGHT)] = possible2View!!
+        dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_DOWN)] = possible4View!!
+
+        dpadNavLookup[NavCmd(possible2View!!, NavDirection.CURSOR_UP)] = gridView!!
+        dpadNavLookup[NavCmd(possible2View!!, NavDirection.CURSOR_LEFT)] = possible1View!!
+        dpadNavLookup[NavCmd(possible2View!!, NavDirection.CURSOR_RIGHT)] = possible3View!!
+        dpadNavLookup[NavCmd(possible2View!!, NavDirection.CURSOR_DOWN)] = possible5View!!
+
+        dpadNavLookup[NavCmd(possible3View!!, NavDirection.CURSOR_UP)] = gridView!!
+        dpadNavLookup[NavCmd(possible3View!!, NavDirection.CURSOR_LEFT)] = possible2View!!
+        dpadNavLookup[NavCmd(possible3View!!, NavDirection.CURSOR_RIGHT)] = gridView!!
+        dpadNavLookup[NavCmd(possible3View!!, NavDirection.CURSOR_DOWN)] = possible6View!!
+
+        dpadNavLookup[NavCmd(possible4View!!, NavDirection.CURSOR_UP)] = possible1View!!
+        dpadNavLookup[NavCmd(possible4View!!, NavDirection.CURSOR_LEFT)] = digit6View!!
+        dpadNavLookup[NavCmd(possible4View!!, NavDirection.CURSOR_RIGHT)] = possible5View!!
+        dpadNavLookup[NavCmd(possible4View!!, NavDirection.CURSOR_DOWN)] = possible7View!!
+
+        dpadNavLookup[NavCmd(possible5View!!, NavDirection.CURSOR_UP)] = possible2View!!
+        dpadNavLookup[NavCmd(possible5View!!, NavDirection.CURSOR_LEFT)] = possible4View!!
+        dpadNavLookup[NavCmd(possible5View!!, NavDirection.CURSOR_RIGHT)] = possible6View!!
+        dpadNavLookup[NavCmd(possible5View!!, NavDirection.CURSOR_DOWN)] = possible8View!!
+
+        dpadNavLookup[NavCmd(possible6View!!, NavDirection.CURSOR_LEFT)] = possible5View!!
+        dpadNavLookup[NavCmd(possible6View!!, NavDirection.CURSOR_RIGHT)] = gridView!!
+        dpadNavLookup[NavCmd(possible6View!!, NavDirection.CURSOR_UP)] = possible3View!!
+        dpadNavLookup[NavCmd(possible6View!!, NavDirection.CURSOR_DOWN)] = possible9View!!
+
+        dpadNavLookup[NavCmd(possible7View!!, NavDirection.CURSOR_UP)] = possible4View!!
+        dpadNavLookup[NavCmd(possible7View!!, NavDirection.CURSOR_LEFT)] = digit9View!!
+        dpadNavLookup[NavCmd(possible7View!!, NavDirection.CURSOR_RIGHT)] = possible8View!!
+        dpadNavLookup[NavCmd(possible7View!!, NavDirection.CURSOR_DOWN)] = prevPuzzleView!!
+
+        dpadNavLookup[NavCmd(possible8View!!, NavDirection.CURSOR_UP)] = possible5View!!
+        dpadNavLookup[NavCmd(possible8View!!, NavDirection.CURSOR_LEFT)] = possible7View!!
+        dpadNavLookup[NavCmd(possible8View!!, NavDirection.CURSOR_RIGHT)] = possible9View!!
+        dpadNavLookup[NavCmd(possible8View!!, NavDirection.CURSOR_DOWN)] = nextPuzzleView!!
+
+        dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_UP)] = possible6View!!
+        dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_LEFT)] = possible8View!!
+        dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_RIGHT)] = gridView!!
+        dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_DOWN)] = nextPuzzleView!!
+
+        dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_UP)] = zoomOutView!!
+        dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_LEFT)] = settingsView!!
+        dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_RIGHT)] = prevPuzzleView!!
+        dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_DOWN)] = gridView!!
+
+        dpadNavLookup[NavCmd(prevPuzzleView!!, NavDirection.CURSOR_UP)] = possible7View!!
+        dpadNavLookup[NavCmd(prevPuzzleView!!, NavDirection.CURSOR_LEFT)] = resetView!!
+        dpadNavLookup[NavCmd(prevPuzzleView!!, NavDirection.CURSOR_RIGHT)] = nextPuzzleView!!
+        dpadNavLookup[NavCmd(prevPuzzleView!!, NavDirection.CURSOR_DOWN)] = gridView!!
+
+        dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_UP)] = possible9View!!
+        dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_LEFT)] = prevPuzzleView!!
+        dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_RIGHT)] = gridView!!
+        dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_DOWN)] = gridView!!
     }
 
     private fun getDpadNavTarget(view: View, dir: NavDirection): View? {
