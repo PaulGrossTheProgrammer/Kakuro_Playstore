@@ -423,58 +423,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         canvas.drawText(hintString, x + squareWidth * 0.56f  - squareWidth, y + squareWidth * 0.45f, paint)
     }
 
-    fun navigateUp() {
-        if (selectedIndex == -1) {
-            selectedIndex = defaultIndex
-            invalidate()
-        }
-
-        val nextSquare = searchForNextSquare(selectedIndex, KakuroGameplayActivity.NavDirection.CURSOR_UP)
-        if (nextSquare != -1) {
-            selectedIndex = nextSquare
-            invalidate()
-        }
-    }
-
-    fun navigateDown() {
-        if (selectedIndex == -1) {
-            selectedIndex = defaultIndex
-            invalidate()
-        }
-
-        val nextSquare = searchForNextSquare(selectedIndex, KakuroGameplayActivity.NavDirection.CURSOR_DOWN)
-        if (nextSquare != -1) {
-            selectedIndex = nextSquare
-            invalidate()
-        }
-    }
-
-    fun navigateLeft() {
-        if (selectedIndex == -1) {
-            selectedIndex = defaultIndex
-            invalidate()
-        }
-
-        val nextSquare = searchForNextSquare(selectedIndex, KakuroGameplayActivity.NavDirection.CURSOR_LEFT)
-        if (nextSquare != -1) {
-            selectedIndex = nextSquare
-            invalidate()
-        }
-    }
-
-    fun navigateRight() {
-        if (selectedIndex == -1) {
-            selectedIndex = defaultIndex
-            invalidate()
-        }
-
-        val nextSquare = searchForNextSquare(selectedIndex, KakuroGameplayActivity.NavDirection.CURSOR_RIGHT)
-        if (nextSquare != -1) {
-            selectedIndex = nextSquare
-            invalidate()
-        }
-    }
-
     fun navigateGrid(dir: KakuroGameplayActivity.NavDirection) {
         if (selectedIndex == -1) {
             selectedIndex = defaultIndex
@@ -487,7 +435,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             invalidate()
         }
     }
-
 
     private fun searchForNextSquare(startIndex: Int, direction: KakuroGameplayActivity.NavDirection): Int {
         var delta = 0
@@ -512,7 +459,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             if (currTestLocation < 0 || currTestLocation >= gameState!!.playerGrid.size) {
                 return -1
             }
-            // TODO: Detect left and right edges...
+            // TODO: Detect left and right edges... and stop with -1
 
             if (gameState!!.playerGrid[currTestLocation] != -1) {
                 return currTestLocation
