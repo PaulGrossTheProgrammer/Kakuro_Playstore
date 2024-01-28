@@ -461,8 +461,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             invalidate()
         }
 
-        selectedIndex += 1
-        invalidate()
+//        selectedIndex += 1
+        val nextSquare = searchForNextSquare(selectedIndex, KakuroGameplayActivity.NavDirection.CURSOR_RIGHT)
+        if (nextSquare != -1) {
+            selectedIndex = nextSquare
+            invalidate()
+        }
     }
 
     private fun searchForNextSquare(startIndex: Int, direction: KakuroGameplayActivity.NavDirection): Int {
@@ -470,8 +474,27 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         if (direction == KakuroGameplayActivity.NavDirection.CURSOR_UP) {
             delta = -gameState!!.puzzleWidth
         }
+        if (direction == KakuroGameplayActivity.NavDirection.CURSOR_DOWN) {
+            delta = +gameState!!.puzzleWidth
+        }
+        if (direction == KakuroGameplayActivity.NavDirection.CURSOR_LEFT) {
+            delta = -1
+        }
+        if (direction == KakuroGameplayActivity.NavDirection.CURSOR_RIGHT) {
+            delta = +1
+        }
+
+
         var currTestLocation = startIndex
-        // TODO ...
+        // Keep moving in one direction until a play square or the edge...
+        // TODO: Detect left and right edges...
+        while (currTestLocation >= 0 && currTestLocation < gameState!!.playerGrid.size) {
+            currTestLocation += delta
+            if (gameState!!.playerGrid[currTestLocation] != -1) {
+                return currTestLocation
+            }
+        }
+
         return -1
     }
 
