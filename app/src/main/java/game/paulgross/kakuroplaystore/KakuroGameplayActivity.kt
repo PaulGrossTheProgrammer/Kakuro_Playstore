@@ -425,6 +425,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
                     selectByNav(currSelectedView)
                 }
             } else {
+                gridView!!.navigateGrid(cursorDir)
+
+/*
                 if (cursorDir == NavDirection.CURSOR_UP) {
                     gridView!!.navigateUp()
                 }
@@ -435,8 +438,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
                     gridView!!.navigateLeft()
                 }
                 if (cursorDir == NavDirection.CURSOR_RIGHT) {
-                    gridView!!.navigateRight()
+//                    gridView!!.navigateRight()
+                    gridView!!.navigateGrid(NavDirection.CURSOR_RIGHT)
+
                 }
+*/
             }
         }
 
