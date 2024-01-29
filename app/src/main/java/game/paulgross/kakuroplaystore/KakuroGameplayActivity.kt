@@ -399,16 +399,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
             if (currSelectedView == gridView) {
                 currSelectedView = digit5View
-                selectByNav(currSelectedView)
+                navOnto(currSelectedView)
             } else {
                 var index = gridView!!.getSelectedIndex()
                 if (index == -1) {
                     gridView!!.setIndexToDefault()
 //                    index = gridView!!.getSelectedIndex()???
                 }
-                // Can I just call the view's onClick already set by the layout here???
                 if (currSelectedView != null) {
-//                    onClickDigit(currSelectedView!!)
                     currSelectedView!!.callOnClick()
                 }
             }
@@ -420,29 +418,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 val targetView = getDpadNavTarget(currSelectedView!!, cursorDir)
 
                 if (targetView != null) {
-                    unselectByNav(currSelectedView)
+                    navAwayFrom(currSelectedView)
                     currSelectedView = targetView
-                    selectByNav(currSelectedView)
+                    navOnto(currSelectedView)
                 }
             } else {
                 gridView!!.navigateGrid(cursorDir)
-
-/*
-                if (cursorDir == NavDirection.CURSOR_UP) {
-                    gridView!!.navigateUp()
-                }
-                if (cursorDir == NavDirection.CURSOR_DOWN) {
-                    gridView!!.navigateDown()
-                }
-                if (cursorDir == NavDirection.CURSOR_LEFT) {
-                    gridView!!.navigateLeft()
-                }
-                if (cursorDir == NavDirection.CURSOR_RIGHT) {
-//                    gridView!!.navigateRight()
-                    gridView!!.navigateGrid(NavDirection.CURSOR_RIGHT)
-
-                }
-*/
             }
         }
 
@@ -451,7 +432,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private val cachedBackgroundLookup: MutableMap<View, Drawable> = mutableMapOf()
 
-    private fun selectByNav(view: View?) {
+    private fun navOnto(view: View?) {
         if (view == null) return
 
         if (view == gridView) return
@@ -468,7 +449,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
     }
 
-    private fun unselectByNav(view: View?) {
+    private fun navAwayFrom(view: View?) {
         if (view == null) return
 
         val cachedBackground: Drawable? = cachedBackgroundLookup[view]

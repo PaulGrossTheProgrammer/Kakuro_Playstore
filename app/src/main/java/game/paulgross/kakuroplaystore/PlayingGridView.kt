@@ -434,39 +434,41 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             selectedIndex = nextSquare
             invalidate()
         }
+
+        // FIXME - need to autoscroll the grid if the navigated square is not visible or only partly visible.
     }
 
     private fun searchForNextSquare(startIndex: Int, direction: KakuroGameplayActivity.NavDirection): Int {
-        var delta = 0
-        if (direction == KakuroGameplayActivity.NavDirection.CURSOR_UP) {
-            delta = -gameState!!.puzzleWidth
-        }
-        if (direction == KakuroGameplayActivity.NavDirection.CURSOR_DOWN) {
-            delta = +gameState!!.puzzleWidth
-        }
-        if (direction == KakuroGameplayActivity.NavDirection.CURSOR_LEFT) {
-            delta = -1
-        }
-        if (direction == KakuroGameplayActivity.NavDirection.CURSOR_RIGHT) {
-            delta = +1
+        val delta = when (direction) {
+            KakuroGameplayActivity.NavDirection.CURSOR_UP -> -gameState!!.puzzleWidth
+            KakuroGameplayActivity.NavDirection.CURSOR_DOWN -> +gameState!!.puzzleWidth
+            KakuroGameplayActivity.NavDirection.CURSOR_LEFT -> -1
+            KakuroGameplayActivity.NavDirection.CURSOR_RIGHT -> +1
         }
 
         var currTestLocation = startIndex
-        // Keep moving in one direction until a play square or the edge...
-        while (currTestLocation >= 0 && currTestLocation < gameState!!.playerGrid.size) {
+        // Keep moving in one direction until we reach a play square, or leave the grid.
+        do {
             currTestLocation += delta
 
+            // Exit with -1 if the search has gone outside the grid.
             if (currTestLocation < 0 || currTestLocation >= gameState!!.playerGrid.size) {
                 return -1
             }
-            // TODO: Detect left and right edges... and stop with -1
-
-            if (gameState!!.playerGrid[currTestLocation] != -1) {
-                return currTestLocation
+            // Exit with -1 if the search has crossed the right edge.
+            if (direction == KakuroGameplayActivity.NavDirection.CURSOR_RIGHT
+                && currTestLocation.mod(gameState!!.puzzleWidth) == 0) {
+                return -1
             }
-        }
+            // Exit with -1 if the search has crossed the left edge.
+            if (direction == KakuroGameplayActivity.NavDirection.CURSOR_LEFT
+                && currTestLocation.mod(gameState!!.puzzleWidth) == gameState!!.puzzleWidth - 1) {
+                return -1
+            }
+        } while (gameState!!.playerGrid[currTestLocation] == -1)
 
-        return -1
+
+        return currTestLocation
     }
 
     companion object {
