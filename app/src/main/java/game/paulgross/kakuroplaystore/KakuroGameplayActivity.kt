@@ -37,18 +37,22 @@ class KakuroGameplayActivity : AppCompatActivity() {
 //            Log.d(TAG, "Feature: ${it}")
 //        }
 
-        if (applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")) {
-            Log.d(TAG, "THIS AN ANDROID TV")
-            setContentView(R.layout.activity_kakurogameplay_landscape)
+        val isGoogleTv = applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")
+        // FIXME: Until I figure out how to correctly detect Google TV, force landscape mode and setup TV navigation.
+        setContentView(R.layout.activity_kakurogameplay_landscape)
+        setupTvNav()
 
-            setupTvNav()
+        if (applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")) {
+            Log.d(TAG, "GOOGLE TV DETECTED")
+//            setContentView(R.layout.activity_kakurogameplay_landscape)
+//            setupTvNav()
         } else {
-            Log.d(TAG, "THIS NOT AN ANDROID TV")
-            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                setContentView(R.layout.activity_kakurogameplay)
-            } else {
-                setContentView(R.layout.activity_kakurogameplay_landscape)
-            }
+            Log.d(TAG, "THIS NOT A GOOGLE TV")
+//            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+//                setContentView(R.layout.activity_kakurogameplay)
+//            } else {
+//                setContentView(R.layout.activity_kakurogameplay_landscape)
+//            }
         }
 
 
@@ -85,6 +89,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.setGameState(newestGameState)
         playGridView.setScreenSizes()  // TODO: Is there a way to avoid redundant calls to setScreenSizes()???
+        // Maybe cache non-zero measuredWidth values and compare???
         // NOTE: setScreenSizes() also forces a redraw.
     }
 
@@ -138,7 +143,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private var resetView: View? = null
     private var prevPuzzleView: View? = null
     private var nextPuzzleView: View? = null
-
 
     private data class NavCmd(
         val view: View,
@@ -349,12 +353,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_DOWN)] = gridView!!
     }
 
-    private fun getDpadNavTarget(view: View, dir: NavDirection): View? {
-        var targetView = dpadNavLookup[NavCmd(view, dir)]
-
-        return targetView
-    }
-
     private fun getNavDirection(event: KeyEvent): NavDirection? {
         // TODO: Aggregate all scrollable keycodes into a scroll action, including joysticks.
 
@@ -415,7 +413,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val cursorDir = getNavDirection(event)
         if (cursorDir != null) {
             if (currSelectedView != gridView) {
-                val targetView = getDpadNavTarget(currSelectedView!!, cursorDir)
+                val targetView = dpadNavLookup[NavCmd(currSelectedView!!, cursorDir)]
 
                 if (targetView != null) {
                     navAwayFrom(currSelectedView)
@@ -491,35 +489,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     fun onClickDigit(view: View) {
         Log.d(TAG, "Clicked a guess: ${view.tag}")
-
-        // TODO: TEST ONLY
-        // Try to indicate a  TextView is selected here:
-
-/*        Log.d(TAG, "View background: ${view.background}")
-
-        if (digitBackground_NotSelected == null) {
-            digitBackground_NotSelected = view.background
-        }
-
-        if (view.background == digitBackground_NotSelected) {
-            val shapeDrawable: MaterialShapeDrawable = MaterialShapeDrawable()
-            shapeDrawable.fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
-            shapeDrawable.setStroke(10.0f, ContextCompat.getColor(this, R.color.white))
-            view.background = shapeDrawable
-        } else {
-            view.background = digitBackground_NotSelected
-        }*/
-
-//        val textView: TextView = findViewById(R.id.textViewButton1)
-//        val shapeDrawable: MaterialShapeDrawable = MaterialShapeDrawable()
-//        shapeDrawable.fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
-//        shapeDrawable.fillColor = android.R.color.transparent
-        // make strokeWidth relative
-//        shapeDrawable.setStroke(10.0f, ContextCompat.getColor(this, R.color.white))
-//        view.background = shapeDrawable
-//        view.isSelected = true
-//        val newBg = ContextCompat.getColorStateList(this, android.R.color.holo_blue_bright)
-//        view.background = newBg
 
         val selectedIndex = findViewById<PlayingGridView>(R.id.viewPlayGrid).getSelectedIndex()
         if (selectedIndex == -1) {
