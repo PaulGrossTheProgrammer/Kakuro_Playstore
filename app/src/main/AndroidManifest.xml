@@ -12,10 +12,12 @@
         android:required="false" />
     <uses-feature android:name="android.hardware.gamepad" android:required="false"/>
 
+    <!--        android:banner="@mipmap/ic_banner_foreground" -->
+
     <application
         android:allowBackup="true"
         android:isGame="true"
-        android:banner="@mipmap/ic_banner_foreground"
+        android:banner="@drawable/banner_kakuro"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"

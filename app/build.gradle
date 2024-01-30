@@ -11,8 +11,8 @@ android {
         applicationId "game.paulgross.kakuroplaystore"
         minSdk 24
         targetSdk 33
-        versionCode 8
-        versionName "1.2.5"
+        versionCode 9
+        versionName "1.2.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
