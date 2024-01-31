@@ -377,7 +377,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
 //        Log.d(TAG, "KeyEvent: $event")
 
         if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
-            confirmExitApp()
+            // NOTE: TV apps are not permitted to "gate" the back button fom he main screen.
+            // It must always return the TV Live page with exitApp().
+//            confirmExitApp()
+            exitApp()
             return true
         }
 
@@ -385,14 +388,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             currSelectedView = gridView
         }
 
-
-        // Rules: Cursoring or selecting without a selectedID will set the selected ID to the top left visible play square
-        // TODO: Need a flag for mode for cursoring in the Controls Area. (this is currSelectedView != gridView)
-        // controlCursorActiveView - a pointer to the active view
-        // If controlCursorActiveView is not null, then select will put the cursor into playing grid.
-
-        // TODO - The cursor starts at the default location in the grid at the first press of the D-pad buttons.
-        // TODO - playing grid needs a square added to the active square that vanishes when in the controls area.
+        // TODO - playing grid needs a border added to the active square that vanishes when in the controls area.
 
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
             if (currSelectedView == gridView) {
@@ -591,7 +587,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine?.queueMessageFromActivity(GameEngine.Message("NextPuzzle"), ::queueMessage)
     }
 
-    private fun confirmExitApp() {
+/*    private fun confirmExitApp() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Exit")
         builder.setMessage("Are you sure you want to exit?")
@@ -600,7 +596,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
-    }
+    }*/
 
     private fun exitApp() {
         stopGameServer()
