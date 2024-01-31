@@ -377,7 +377,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 //        Log.d(TAG, "KeyEvent: $event")
 
         if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
-            // NOTE: TV apps are not permitted to "gate" the back button fom he main screen.
+            // NOTE: TV apps are not permitted to "gate" the back button from the main screen.
             // It must always return the TV Live page with exitApp().
 //            confirmExitApp()
             exitApp()
