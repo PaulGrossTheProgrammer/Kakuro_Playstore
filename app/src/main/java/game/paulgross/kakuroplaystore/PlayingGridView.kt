@@ -61,10 +61,18 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private lateinit var gameplayActivity: KakuroGameplayActivity
 
+    // TODO: Make a buncj of paint objects to execute onDraw() faster...
+    private val paint = Paint()
+    private val selectedByNavPaint = Paint()
+
     init {
         if (context is KakuroGameplayActivity) {
             gameplayActivity = context
         }
+
+        // Setup Paint objects for drawing the grid.
+        selectedByNavPaint.style = Paint.Style.STROKE
+        selectedByNavPaint.color = Color.CYAN
 
         // Attach the custom TouchListener
         setOnTouchListener(CustomListener(this))
@@ -213,6 +221,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         // scale the paperTexture
         paperTexture = getResizedBitmap(paperTexture, measuredWidth, measuredHeight)
 
+        selectedByNavPaint.strokeWidth = squareWidth * 0.10f
+
         invalidate()  // Force a redraw
     }
 
@@ -223,8 +233,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         xSquaresOffset = 0
         ySquaresOffset = 0
     }
-
-    private val paint = Paint()
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -291,7 +299,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                         // TODO: Use navigatedByDpad to add a selected border if true.
 
-                        drawGuessSquare(index, gridValue.toString(), possiblesString, selected, navigatedByDpad, visible, error,
+                        drawGuessSquare(index, gridValue.toString(), possiblesString, selected, visible, error,
                             gameState!!.solved, addTouchAreas, currX, currY, canvas, paint)
                     } else {
                         drawBlankSquare(currX, currY, canvas, paint)
@@ -326,7 +334,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         Log.d(TAG, "End of onDraw(), now defaultIndex = $defaultIndex")
     }
 
-    private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean, navigatedByDpad: Boolean,
+    private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean,
                                 visible: Boolean,error: Boolean, solved: Boolean,
                                 addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint
     ) {
@@ -356,11 +364,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         // TODO - see if this works to indicate the selected Dpad square...
         // FIXME - doesn't unselect when navigating away from grid??? Why ???
         if (navigatedByDpad && selected) {
-            val borderPaint = Paint()
-            borderPaint.style = Paint.Style.STROKE
-            borderPaint.strokeWidth = 10.0f // Make a relative width
-            borderPaint.color = Color.CYAN
-            canvas.drawRect(x, y, x + squareWidth, y + squareWidth, borderPaint)
+            canvas.drawRect(x, y, x + squareWidth, y + squareWidth, selectedByNavPaint)
         }
 
         if (content != "0") {
@@ -481,10 +485,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     fun setDpadNavSelected() {
         navigatedByDpad = true
+        invalidate()
     }
 
     fun unsetDpadNavSelected() {
         navigatedByDpad = false
+        invalidate()
     }
 
     companion object {
