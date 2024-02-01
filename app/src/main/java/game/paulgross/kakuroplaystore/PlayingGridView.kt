@@ -221,7 +221,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         // scale the paperTexture
         paperTexture = getResizedBitmap(paperTexture, measuredWidth, measuredHeight)
 
-        selectedByNavPaint.strokeWidth = squareWidth * 0.10f
+        selectedByNavPaint.strokeWidth = squareWidth * 0.18f
 
         invalidate()  // Force a redraw
     }

@@ -49,7 +49,9 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         selectedSetting = intent.extras?.getString("SelectedSetting" , "").toString()
         Log.d(TAG, "Activity Started with [$selectedSetting]")
 
-        showLayout()
+        // For the moment just display the provacy policy untilwe know why the app keeps failing Google TV approval.
+//        showLayout()
+        setContentView(R.layout.activity_settings_privacypolicy)
 
         enableQueuedMessages()
         // TODO - handle lack of engine activation... which is a null return here.
@@ -189,6 +191,10 @@ class GameEngineSettingsActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
+        // Force end task while we try to get Google TV approval.
+        finishAndRemoveTask()  // This should automatically return to the calling activity.
+
+/*
         if (selectedSetting == "") {
             Log.d(TAG, "onBackPressed - TOP LEVEL")
             finishAndRemoveTask()  // This should automatically return to the calling activity.
@@ -196,6 +202,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
         }
 
         showServerSettings(getSettingParent(selectedSetting))
+*/
     }
 
     /**

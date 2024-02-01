@@ -17,14 +17,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/textView3"
         android:layout_width="0dp"
-        android:layout_height="39dp"
-        android:layout_marginTop="24dp"
-        android:onClick="onClickPrivacyPolicy"
-        android:text="Click to view our privacy policy"
-        android:textSize="16sp"
+        android:layout_height="0dp"
+        android:text="This app does not collect any personal information.
+I, Paul Gross, as a representative of the Google Playstore Account named “Power Pops”, value and respect the privacy of all the people that I deal with. Power Pops is committed to protecting everyone’s privacy and complying with all applicable privacy laws and regulations.
+
+If you have any questions about this privacy policy, please Email me on: pauligross@gmail.com"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textServerTitle" />

@@ -208,17 +208,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         digitBackground_NotSelected = (digit1View as TextView?)?.background
 
-        dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_UP)] = gridView!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_RIGHT)] = digit2View!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_DOWN)] = digit4View!!
 
-        dpadNavLookup[NavCmd(digit2View!!, NavDirection.CURSOR_UP)] = gridView!!
         dpadNavLookup[NavCmd(digit2View!!, NavDirection.CURSOR_LEFT)] = digit1View!!
         dpadNavLookup[NavCmd(digit2View!!, NavDirection.CURSOR_RIGHT)] = digit3View!!
         dpadNavLookup[NavCmd(digit2View!!, NavDirection.CURSOR_DOWN)] = digit5View!!
 
-        dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_UP)] = gridView!!
         dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_LEFT)] = digit2View!!
         dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_RIGHT)] = possible1View!!
         dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_DOWN)] = digit6View!!
@@ -291,21 +288,16 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_UP)] = zoomInView!!
         dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_RIGHT)] = resetView!!
-        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_DOWN)] = gridView!!
 
-        dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_UP)] = gridView!!
         dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_LEFT)] = digit3View!!
         dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_RIGHT)] = possible2View!!
         dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_DOWN)] = possible4View!!
 
-        dpadNavLookup[NavCmd(possible2View!!, NavDirection.CURSOR_UP)] = gridView!!
         dpadNavLookup[NavCmd(possible2View!!, NavDirection.CURSOR_LEFT)] = possible1View!!
         dpadNavLookup[NavCmd(possible2View!!, NavDirection.CURSOR_RIGHT)] = possible3View!!
         dpadNavLookup[NavCmd(possible2View!!, NavDirection.CURSOR_DOWN)] = possible5View!!
 
-        dpadNavLookup[NavCmd(possible3View!!, NavDirection.CURSOR_UP)] = gridView!!
         dpadNavLookup[NavCmd(possible3View!!, NavDirection.CURSOR_LEFT)] = possible2View!!
-        dpadNavLookup[NavCmd(possible3View!!, NavDirection.CURSOR_RIGHT)] = gridView!!
         dpadNavLookup[NavCmd(possible3View!!, NavDirection.CURSOR_DOWN)] = possible6View!!
 
         dpadNavLookup[NavCmd(possible4View!!, NavDirection.CURSOR_UP)] = possible1View!!
@@ -319,7 +311,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(possible5View!!, NavDirection.CURSOR_DOWN)] = possible8View!!
 
         dpadNavLookup[NavCmd(possible6View!!, NavDirection.CURSOR_LEFT)] = possible5View!!
-        dpadNavLookup[NavCmd(possible6View!!, NavDirection.CURSOR_RIGHT)] = gridView!!
         dpadNavLookup[NavCmd(possible6View!!, NavDirection.CURSOR_UP)] = possible3View!!
         dpadNavLookup[NavCmd(possible6View!!, NavDirection.CURSOR_DOWN)] = possible9View!!
 
@@ -335,23 +326,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_UP)] = possible6View!!
         dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_LEFT)] = possible8View!!
-        dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_RIGHT)] = gridView!!
         dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_DOWN)] = nextPuzzleView!!
 
         dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_UP)] = zoomOutView!!
         dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_LEFT)] = settingsView!!
         dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_RIGHT)] = prevPuzzleView!!
-        dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_DOWN)] = gridView!!
 
         dpadNavLookup[NavCmd(prevPuzzleView!!, NavDirection.CURSOR_UP)] = possible7View!!
         dpadNavLookup[NavCmd(prevPuzzleView!!, NavDirection.CURSOR_LEFT)] = resetView!!
         dpadNavLookup[NavCmd(prevPuzzleView!!, NavDirection.CURSOR_RIGHT)] = nextPuzzleView!!
-        dpadNavLookup[NavCmd(prevPuzzleView!!, NavDirection.CURSOR_DOWN)] = gridView!!
 
         dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_UP)] = possible9View!!
         dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_LEFT)] = prevPuzzleView!!
-        dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_RIGHT)] = gridView!!
-        dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_DOWN)] = gridView!!
     }
 
     private fun getNavDirection(event: KeyEvent): NavDirection? {
@@ -379,8 +365,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
             // NOTE: TV apps are not permitted to "gate" the back button from the main screen.
-            // It must always return the TV Live page with exitApp().
-//            confirmExitApp()
+            // The back button must always return the TV "Live" page, so exitApp() is called.
             exitApp()
             return true
         }
@@ -389,8 +374,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             currSelectedView = gridView
             navOnto(currSelectedView)
         }
-
-        // TODO - playing grid needs a border added to the active square that vanishes when in the controls area.
 
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
             if (currSelectedView == gridView) {
@@ -438,6 +421,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         gridView!!.unsetDpadNavSelected()
 
+        // Cache the original background so that we can set it back with navAwayFrom().
         val cachedBackground: Drawable? = cachedBackgroundLookup[view]
         if (cachedBackground == null) {
             cachedBackgroundLookup[view] = view.background
@@ -462,6 +446,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             view.background = cachedBackground
         }
     }
+
 
     //
     // User touch controls
