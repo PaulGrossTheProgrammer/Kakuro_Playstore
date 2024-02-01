@@ -50,6 +50,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var xSquaresOffset = 0
     private var ySquaresOffset = 0
 
+    private var navigatedByDpad = false  // Indicates that the dpad has navigated to this grid.
     private var selectedIndex: Int = -1
     private var defaultIndex = -1
 
@@ -79,12 +80,14 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     /**
      * Create a TouchArea lookup to find the index of the guess square that was touched.
+     * Each TouchArea defines the top-left and bottom right of the touchscreen rectangle.
      */
     data class TouchArea(val xMin: Float, val yMin: Float, val xMax: Float, val yMax: Float)
     var playSquareTouchLookUpId: MutableMap<TouchArea, Int> = mutableMapOf()
 
     /**
-     * This CustomListener uses areas defined in the playSquareTouchLookUpId: Map to determine the Id for user screen touches.
+     * This CustomListener uses areas defined in the playSquareTouchLookUpId: Map
+     * to determine the Id of the square that the user touched.
      */
     class CustomListener(private val gridView: PlayingGridView):
         View.OnTouchListener {
@@ -231,17 +234,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             return
         }
 
-        Log.d(TAG, "Start of onDraw(), now defaultIndex = $defaultIndex")
-
         canvas.drawBitmap(paperTexture, 0f, 0f, paint)
 
-        // Add the touch areas if there are none.
-        var addTouchAreas = false
-        if (playSquareTouchLookUpId.isEmpty()) {
-            addTouchAreas = true
-        }
+        // Add new touch areas if there are currently none.
+        val addTouchAreas = playSquareTouchLookUpId.isEmpty()
 
-        // Draw grid
         paint.color = Color.WHITE
 
         val xStart = (squareWidth * outsideGridMargin)/2 + xSquaresOffset * squareWidth
@@ -292,7 +289,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                         val error = gameState!!.playerErrors.contains(index)
 
-                        drawGuessSquare(index, gridValue.toString(), possiblesString, selected, visible, error,
+                        // TODO: Use navigatedByDpad to add a selected border if true.
+
+                        drawGuessSquare(index, gridValue.toString(), possiblesString, selected, navigatedByDpad, visible, error,
                             gameState!!.solved, addTouchAreas, currX, currY, canvas, paint)
                     } else {
                         drawBlankSquare(currX, currY, canvas, paint)
@@ -327,8 +326,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         Log.d(TAG, "End of onDraw(), now defaultIndex = $defaultIndex")
     }
 
-    private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean, visible: Boolean,error: Boolean,
-                                solved: Boolean,
+    private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean, navigatedByDpad: Boolean,
+                                visible: Boolean,error: Boolean, solved: Boolean,
                                 addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint
     ) {
         // Clear selectedIndex if the square is not visible.
@@ -353,6 +352,16 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             }
         }
         canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )
+
+        // TODO - see if this works to indicate the selected Dpad square...
+        // FIXME - doesn't unselect when navigating away from grid??? Why ???
+        if (navigatedByDpad && selected) {
+            val borderPaint = Paint()
+            borderPaint.style = Paint.Style.STROKE
+            borderPaint.strokeWidth = 10.0f // Make a relative width
+            borderPaint.color = Color.CYAN
+            canvas.drawRect(x, y, x + squareWidth, y + squareWidth, borderPaint)
+        }
 
         if (content != "0") {
             // Display the player's guess.
@@ -467,8 +476,15 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             }
         } while (gameState!!.playerGrid[currTestLocation] == -1)
 
-
         return currTestLocation
+    }
+
+    fun setDpadNavSelected() {
+        navigatedByDpad = true
+    }
+
+    fun unsetDpadNavSelected() {
+        navigatedByDpad = false
     }
 
     companion object {

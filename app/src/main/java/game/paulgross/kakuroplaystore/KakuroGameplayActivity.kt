@@ -168,6 +168,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         gridView = findViewById(R.id.viewPlayGrid)
         gridView!!.setIndexToDefault()
         currSelectedView = gridView
+        navOnto(gridView)
 
         digit1View = findViewById(R.id.textViewDigit1)
         digit2View = findViewById(R.id.textViewDigit2)
@@ -386,19 +387,20 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         if (currSelectedView == null) {
             currSelectedView = gridView
+            navOnto(currSelectedView)
         }
 
         // TODO - playing grid needs a border added to the active square that vanishes when in the controls area.
 
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
             if (currSelectedView == gridView) {
+                navAwayFrom(gridView)
                 currSelectedView = digit5View
                 navOnto(currSelectedView)
             } else {
-                var index = gridView!!.getSelectedIndex()
+                val index = gridView!!.getSelectedIndex()
                 if (index == -1) {
                     gridView!!.setIndexToDefault()
-//                    index = gridView!!.getSelectedIndex()???
                 }
                 if (currSelectedView != null) {
                     currSelectedView!!.callOnClick()
@@ -429,7 +431,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private fun navOnto(view: View?) {
         if (view == null) return
 
-        if (view == gridView) return
+        if (view == gridView) {
+            gridView!!.setDpadNavSelected()
+            return
+        }
+
+        gridView!!.unsetDpadNavSelected()
 
         val cachedBackground: Drawable? = cachedBackgroundLookup[view]
         if (cachedBackground == null) {
@@ -445,6 +452,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private fun navAwayFrom(view: View?) {
         if (view == null) return
+
+        if (view == gridView) {
+            gridView!!.unsetDpadNavSelected()
+        }
 
         val cachedBackground: Drawable? = cachedBackgroundLookup[view]
         if (cachedBackground != null) {
