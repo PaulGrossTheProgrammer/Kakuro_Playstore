@@ -96,7 +96,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     //
     // Controller handling: D-pad used by Google TV
     //
-
+//  https://developer.android.com/training/tv/start/navigation
 //    https://developer.android.com/training/game-controllers/controller-input
 //    https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
 
@@ -208,7 +208,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         digitBackground_NotSelected = (digit1View as TextView?)?.background
 
-        dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_LEFT)] = gridView!!
+//        dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_RIGHT)] = digit2View!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_DOWN)] = digit4View!!
 
@@ -221,7 +221,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_DOWN)] = digit6View!!
 
         dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_UP)] = digit1View!!
-        dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_LEFT)] = gridView!!
+//        dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_RIGHT)] = digit5View!!
         dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_DOWN)] = digit7View!!
 
@@ -236,7 +236,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(digit6View!!, NavDirection.CURSOR_DOWN)] = digit9View!!
 
         dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_UP)] = digit4View!!
-        dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_LEFT)] = gridView!!
+//        dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_RIGHT)] = digit8View!!
         dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_DOWN)] = digitClearView!!
 
@@ -251,7 +251,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(digit9View!!, NavDirection.CURSOR_DOWN)] = digitClearView!!
 
         dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_UP)] = digit8View!!
-        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_LEFT)] = gridView!!
+//        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
         dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_DOWN)] = scrollUpView!!
 
@@ -266,7 +266,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(scrollDownView!!, NavDirection.CURSOR_DOWN)] = zoomInView!!
 
         dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_UP)] = scrollUpView!!
-        dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_LEFT)] = gridView!!
+//        dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_RIGHT)] = scrollRightView!!
         dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_DOWN)] = scrollDownView!!
 
@@ -276,7 +276,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_DOWN)] = scrollDownView!!
 
         dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_UP)] = scrollDownView!!
-        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_LEFT)] = gridView!!
+//        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_RIGHT)] = zoomOutView!!
         dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_DOWN)] = settingsView!!
 
@@ -286,7 +286,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_DOWN)] = resetView!!
 
         dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_UP)] = zoomInView!!
-        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_LEFT)] = gridView!!
+//        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_RIGHT)] = resetView!!
 
         dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_LEFT)] = digit3View!!
@@ -366,7 +366,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
         if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
             // NOTE: TV apps are not permitted to "gate" the back button from the main screen.
             // The back button must always return the TV "Live" page, so exitApp() is called.
-            exitApp()
+            if (currSelectedView == gridView) {
+                exitApp()
+            } else {
+                navAwayFrom(currSelectedView)
+                currSelectedView = gridView
+                navOnto(gridView)
+            }
             return true
         }
 
