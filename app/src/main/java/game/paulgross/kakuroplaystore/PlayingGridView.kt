@@ -95,7 +95,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     var playSquareTouchLookUpId: MutableMap<TouchArea, Int> = mutableMapOf()
 
     // TODO - add a scroll lookup to automatically scroll the grid when boundary squares are selected
-    var boundarySquareScrollTouchLookupId: MutableMap<TouchArea, Int> = mutableMapOf()
+    var boundaryLeftTouchLookupId: MutableMap<TouchArea, Int> = mutableMapOf()
+    var boundaryRightTouchLookupId: MutableMap<TouchArea, Int> = mutableMapOf()
+    var boundaryTopTouchLookupId: MutableMap<TouchArea, Int> = mutableMapOf()
+    var boundaryBottomTouchLookupId: MutableMap<TouchArea, Int> = mutableMapOf()
 
     /**
      * This CustomListener uses areas defined in the playSquareTouchLookUpId: Map
@@ -251,6 +254,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         // Add new touch areas if there are currently none.
         val addTouchAreas = playSquareTouchLookUpId.isEmpty()
 
+        if (addTouchAreas) {
+            Log.d(TAG, "Adding touch areas....")
+            boundaryLeftTouchLookupId.clear()
+        }
+
+
         paint.color = Color.WHITE
 
         val xStart = (squareWidth * outsideGridMargin)/2 + xSquaresOffset * squareWidth
@@ -274,6 +283,19 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         for (row in (1..gameState!!.puzzleHeight + 1)) {
             for (col in (1..gameState!!.puzzleWidth + 1)) {
+                Log.d(TAG, "currX = $currX")
+
+                // TODO add entries to boundaries for auto boundary scrolling
+                // Test overlap with the display edge to nominate the scroll direction
+                // Allow corner square to scroll in two directions, eg: up and left.
+                // Include all non-playing squares in the lookup.
+                if (addTouchAreas) {
+                    if (currX < 0 && currX + squareWidth > 0) {
+                        Log.d(TAG, "Adding left boundary scroll touch...")
+                        boundaryLeftTouchLookupId.put(TouchArea(x, y, x + squareWidth, y + squareWidth), index)
+                    }
+                }
+
                 // First row and colum are only used as space for showing hints.
                 val puzzleSquare = (row != 1 && col != 1)
 
@@ -283,14 +305,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                     if (gridValue != -1) {
                         // Determine if this square is within the visible area.
                         var visible = true
-                        if (x + squareWidth < 0 || y + squareWidth < 0 || x > measuredWidth || y > measuredHeight) {
+                        if (currX + squareWidth < 0 || currY + squareWidth < 0 || currX > measuredWidth || currY > measuredHeight) {
                             visible = false
                         }
-
-                        // TODO add entries to boundarySquareScrollTouchLookupId for auto boundary scrolling
-                        // Test overlap with the display edge to nominate the scroll direction
-                        // Allow corner square to scroll in two directions, eg: up and left.
-                        // Include all non-playing squares in the lookup.
 
                         if (defaultIndex == -1 && visible) {
                             defaultIndex = index
