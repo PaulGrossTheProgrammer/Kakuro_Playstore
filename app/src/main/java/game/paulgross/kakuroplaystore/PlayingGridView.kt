@@ -61,7 +61,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private lateinit var gameplayActivity: KakuroGameplayActivity
 
-    // TODO: Make a buncj of paint objects to execute onDraw() faster...
+    // TODO: Make a bunch of paint objects to execute onDraw() faster...
     private val paint = Paint()
     private val selectedByNavPaint = Paint()
 
@@ -91,7 +91,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
      * Each TouchArea defines the top-left and bottom right of the touchscreen rectangle.
      */
     data class TouchArea(val xMin: Float, val yMin: Float, val xMax: Float, val yMax: Float)
+
     var playSquareTouchLookUpId: MutableMap<TouchArea, Int> = mutableMapOf()
+
+    // TODO - add a scroll lookup to automatically scroll the grid when boundary squares are selected
+    var boundarySquareScrollTouchLookupId: MutableMap<TouchArea, Int> = mutableMapOf()
 
     /**
      * This CustomListener uses areas defined in the playSquareTouchLookUpId: Map
@@ -282,6 +286,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                         if (x + squareWidth < 0 || y + squareWidth < 0 || x > measuredWidth || y > measuredHeight) {
                             visible = false
                         }
+
+                        // TODO add entries to boundarySquareScrollTouchLookupId for auto boundary scrolling
+                        // Test overlap with the display edge to nominate the scroll direction
+                        // Allow corner square to scroll in two directions, eg: up and left.
+                        // Include all non-playing squares in the lookup.
 
                         if (defaultIndex == -1 && visible) {
                             defaultIndex = index
