@@ -254,8 +254,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
 //        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
         dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_DOWN)] = scrollUpView!!
+// FIXME  - skip the scrollers
 
-        dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_UP)] = digitClearView!!
+/*        dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_UP)] = digitClearView!!
         dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_LEFT)] = scrollLeftView!!
         dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_RIGHT)] = scrollRightView!!
         dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_DOWN)] = scrollDownView!!
@@ -273,7 +274,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_UP)] = scrollUpView!!
         dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_LEFT)] = scrollLeftView!!
         dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
-        dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_DOWN)] = scrollDownView!!
+        dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_DOWN)] = scrollDownView!!*/
 
         dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_UP)] = scrollDownView!!
 //        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_LEFT)] = gridView!!

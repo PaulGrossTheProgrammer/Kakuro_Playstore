@@ -110,6 +110,22 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             when(event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     gridView.selectedIndex = lookupTouchedGuessId(event.x, event.y)
+
+                    // Autoscroll to square if required
+                    if (lookupTouchedId(gridView.boundaryLeftTouchLookupId, event.x, event.y) != -1) {
+                        gridView.scrollGrid(1, 0)
+                    }
+                    if (lookupTouchedId(gridView.boundaryRightTouchLookupId, event.x, event.y) != -1) {
+                        gridView.scrollGrid(-1, 0)
+                    }
+
+                    if (lookupTouchedId(gridView.boundaryTopTouchLookupId, event.x, event.y) != -1) {
+                        gridView.scrollGrid(0, 1)
+                    }
+                    if (lookupTouchedId(gridView.boundaryBottomTouchLookupId, event.x, event.y) != -1) {
+                        gridView.scrollGrid(0, -1)
+                    }
+
                     gridView.invalidate()  // Force the grid to be redrawn
                 }
             }
@@ -122,6 +138,15 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
          */
         private fun lookupTouchedGuessId(x: Float, y: Float): Int {
             for (entry in gridView.playSquareTouchLookUpId.entries.iterator()) {
+                if (x >= entry.key.xMin && x <= entry.key.xMax && y >= entry.key.yMin && y <= entry.key.yMax) {
+                    return entry.value
+                }
+            }
+            return -1
+        }
+
+        private fun lookupTouchedId(lookup: Map<PlayingGridView.TouchArea, Int>, x: Float, y: Float): Int {
+            for (entry in lookup.entries.iterator()) {
                 if (x >= entry.key.xMin && x <= entry.key.xMax && y >= entry.key.yMin && y <= entry.key.yMax) {
                     return entry.value
                 }
@@ -283,16 +308,20 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         for (row in (1..gameState!!.puzzleHeight + 1)) {
             for (col in (1..gameState!!.puzzleWidth + 1)) {
-                Log.d(TAG, "currX = $currX")
 
-                // TODO add entries to boundaries for auto boundary scrolling
-                // Test overlap with the display edge to nominate the scroll direction
-                // Allow corner square to scroll in two directions, eg: up and left.
-                // Include all non-playing squares in the lookup.
                 if (addTouchAreas) {
+                    // Add any boundary squares for auto scrolling
                     if (currX < 0 && currX + squareWidth > 0) {
-                        Log.d(TAG, "Adding left boundary scroll touch...")
-                        boundaryLeftTouchLookupId.put(TouchArea(x, y, x + squareWidth, y + squareWidth), index)
+                        boundaryLeftTouchLookupId.put(TouchArea(currX, currY, currX + squareWidth, currY + squareWidth), index)
+                    }
+                    if (currX < measuredWidth && currX + squareWidth > measuredWidth) {
+                        boundaryRightTouchLookupId.put(TouchArea(currX, currY, currX + squareWidth, currY + squareWidth), index)
+                    }
+                    if (currY < 0 && currY + squareWidth > 0) {
+                        boundaryTopTouchLookupId.put(TouchArea(currX, currY, currX + squareWidth, currY + squareWidth), index)
+                    }
+                    if (currY < measuredHeight && currY + squareWidth > measuredHeight) {
+                        boundaryBottomTouchLookupId.put(TouchArea(currX, currY, currX + squareWidth, currY + squareWidth), index)
                     }
                 }
 
