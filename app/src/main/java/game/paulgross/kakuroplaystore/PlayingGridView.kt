@@ -213,7 +213,30 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         invalidate()  // Force the grid to be redrawn
     }
 
+    private fun checkAutoscrollForDpad() {
+        if (boundaryLeftTouchLookupId.containsValue(selectedIndex)) {
+            scrollGrid(1, 0)
+            invalidate()  // Force the grid to be redrawn
+        }
+        if (boundaryRightTouchLookupId.containsValue(selectedIndex)) {
+            scrollGrid(-1, 0)
+            invalidate()  // Force the grid to be redrawn
+        }
+
+        if (boundaryTopTouchLookupId.containsValue(selectedIndex)) {
+            scrollGrid(0, 1)
+            invalidate()  // Force the grid to be redrawn
+        }
+        if (boundaryBottomTouchLookupId.containsValue(selectedIndex)) {
+            scrollGrid(0, -1)
+            invalidate()  // Force the grid to be redrawn
+        }
+    }
+
     fun setScreenSizes() {
+        // TODO - pre-allocate the TouchArea for each on screen index.
+        // So that we can remove the allocation code and boundary intersect code from onDraw().
+
         Log.d("PlayingGridView", "setScreenSizes(): Width = $measuredWidth, height = $measuredHeight")
         if (gameState == null) {
             Log.d("PlayingGridView", "setScreenSizes() exiting because there is not yet a gameState.")
@@ -416,8 +439,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
         canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )
 
-        // TODO - see if this works to indicate the selected Dpad square...
-        // FIXME - doesn't unselect when navigating away from grid??? Why ???
         if (navigatedByDpad && selected) {
             canvas.drawRect(x, y, x + squareWidth, y + squareWidth, selectedByNavPaint)
         }
@@ -500,6 +521,17 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         val nextSquare = searchForNextSquare(selectedIndex, dir)
         if (nextSquare != -1) {
             selectedIndex = nextSquare
+            checkAutoscrollForDpad()
+
+            // FIXME - if we stop on a leftmost or topmost square, scroll once more to show top hints
+            if (selectedIndex < gameState!!.puzzleWidth) {
+                // Scroll up above top row
+                scrollGrid(0, 1)
+            }
+            if (selectedIndex.mod(gameState!!.puzzleWidth) == 0) {
+                // Scroll left past left row
+                scrollGrid(1, 0)
+            }
             invalidate()
         }
 

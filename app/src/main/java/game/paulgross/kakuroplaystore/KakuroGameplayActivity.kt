@@ -131,10 +131,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private var possible9View: View? = null
 
     private var digitClearView: View? = null
-    private var scrollUpView: View? = null
-    private var scrollDownView: View? = null
-    private var scrollLeftView: View? = null
-    private var scrollRightView: View? = null
 
     private var zoomInView: View? = null
     private var zoomOutView: View? = null
@@ -191,10 +187,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         possible9View = findViewById(R.id.textViewPossible9)
 
         digitClearView = findViewById(R.id.textViewDigitClear)
-        scrollUpView = findViewById(R.id.imageButtonScrollUp)
-        scrollDownView = findViewById(R.id.imageButtonScrollDown)
-        scrollLeftView = findViewById(R.id.imageButtonScrollLeft)
-        scrollRightView = findViewById(R.id.imageButtonScrollRight)
 
         zoomInView = findViewById(R.id.imageButtonZoomIn)
         zoomOutView = findViewById(R.id.imageButtonZoomOut)
@@ -204,11 +196,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         nextPuzzleView = findViewById(R.id.textViewNextPuzzle)
         prevPuzzleView = findViewById(R.id.textViewPrevPuzzle)
 
-        scrollUpView = findViewById(R.id.imageButtonScrollUp)
+        digitBackground_NotSelected = (digit1View as TextView?)?.background  // TODO: DO I still need this???
 
-        digitBackground_NotSelected = (digit1View as TextView?)?.background
-
-//        dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_RIGHT)] = digit2View!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_DOWN)] = digit4View!!
 
@@ -221,7 +210,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(digit3View!!, NavDirection.CURSOR_DOWN)] = digit6View!!
 
         dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_UP)] = digit1View!!
-//        dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_RIGHT)] = digit5View!!
         dpadNavLookup[NavCmd(digit4View!!, NavDirection.CURSOR_DOWN)] = digit7View!!
 
@@ -236,7 +224,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(digit6View!!, NavDirection.CURSOR_DOWN)] = digit9View!!
 
         dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_UP)] = digit4View!!
-//        dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_RIGHT)] = digit8View!!
         dpadNavLookup[NavCmd(digit7View!!, NavDirection.CURSOR_DOWN)] = digitClearView!!
 
@@ -251,44 +238,17 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(digit9View!!, NavDirection.CURSOR_DOWN)] = digitClearView!!
 
         dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_UP)] = digit8View!!
-//        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_LEFT)] = gridView!!
         dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
-        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_DOWN)] = scrollUpView!!
-// FIXME  - skip the scrollers
+        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_DOWN)] = zoomInView!!
 
-/*        dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_UP)] = digitClearView!!
-        dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_LEFT)] = scrollLeftView!!
-        dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_RIGHT)] = scrollRightView!!
-        dpadNavLookup[NavCmd(scrollUpView!!, NavDirection.CURSOR_DOWN)] = scrollDownView!!
-
-        dpadNavLookup[NavCmd(scrollDownView!!, NavDirection.CURSOR_UP)] = scrollUpView!!
-        dpadNavLookup[NavCmd(scrollDownView!!, NavDirection.CURSOR_LEFT)] = scrollLeftView!!
-        dpadNavLookup[NavCmd(scrollDownView!!, NavDirection.CURSOR_RIGHT)] = scrollRightView!!
-        dpadNavLookup[NavCmd(scrollDownView!!, NavDirection.CURSOR_DOWN)] = zoomInView!!
-
-        dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_UP)] = scrollUpView!!
-//        dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_LEFT)] = gridView!!
-        dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_RIGHT)] = scrollRightView!!
-        dpadNavLookup[NavCmd(scrollLeftView!!, NavDirection.CURSOR_DOWN)] = scrollDownView!!
-
-        dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_UP)] = scrollUpView!!
-        dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_LEFT)] = scrollLeftView!!
-        dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
-        dpadNavLookup[NavCmd(scrollRightView!!, NavDirection.CURSOR_DOWN)] = scrollDownView!!*/
-
-        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_UP)] = scrollDownView!!
-//        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_LEFT)] = gridView!!
+        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_UP)] = digitClearView!!
         dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_RIGHT)] = zoomOutView!!
-        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_DOWN)] = settingsView!!
+        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_DOWN)] = resetView!!
 
-        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_UP)] = scrollDownView!!
+        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_UP)] = digitClearView!!
         dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_LEFT)] = zoomInView!!
         dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
-        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_DOWN)] = resetView!!
-
-        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_UP)] = zoomInView!!
-//        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_LEFT)] = gridView!!
-        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_RIGHT)] = resetView!!
+        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_DOWN)] = prevPuzzleView!!
 
         dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_LEFT)] = digit3View!!
         dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_RIGHT)] = possible2View!!
@@ -329,16 +289,19 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_LEFT)] = possible8View!!
         dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_DOWN)] = nextPuzzleView!!
 
-        dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_UP)] = zoomOutView!!
-        dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_LEFT)] = settingsView!!
+        dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_UP)] = zoomInView!!
         dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_RIGHT)] = prevPuzzleView!!
 
-        dpadNavLookup[NavCmd(prevPuzzleView!!, NavDirection.CURSOR_UP)] = possible7View!!
+        dpadNavLookup[NavCmd(prevPuzzleView!!, NavDirection.CURSOR_UP)] = zoomOutView!!
         dpadNavLookup[NavCmd(prevPuzzleView!!, NavDirection.CURSOR_LEFT)] = resetView!!
         dpadNavLookup[NavCmd(prevPuzzleView!!, NavDirection.CURSOR_RIGHT)] = nextPuzzleView!!
 
-        dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_UP)] = possible9View!!
+        dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_UP)] = zoomOutView!!
         dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_LEFT)] = prevPuzzleView!!
+        dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_RIGHT)] = settingsView!!
+
+        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_UP)] = possible9View!!
+        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_LEFT)] = nextPuzzleView!!
     }
 
     private fun getNavDirection(event: KeyEvent): NavDirection? {
@@ -589,17 +552,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
         engine?.queueMessageFromActivity(GameEngine.Message("NextPuzzle"), ::queueMessage)
     }
-
-/*    private fun confirmExitApp() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Exit")
-        builder.setMessage("Are you sure you want to exit?")
-        builder.setPositiveButton("Exit") { _, _ ->
-            exitApp()
-        }
-        builder.setNegativeButton("Back") { _, _ -> }
-        builder.show()
-    }*/
 
     private fun exitApp() {
         stopGameServer()
