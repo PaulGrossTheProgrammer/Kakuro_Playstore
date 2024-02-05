@@ -55,17 +55,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
 //            }
         }
 
-
         engine = GameEngine.activate(KakuroGameplayDefinition, this)
 
         // Request that the GameEngine send a state message to queueMessage() whenever the game state changes.
         enableQueuedMessages()
         engine?.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
     }
-
-//    override fun onBackPressed() {
-//        confirmExitApp()
-//    }  // Note: Replaced by code in override fun dispatchKeyEvent()
 
     fun onClickSettings(view: View) {
         engine?.gotoSettingsActivity(this)
@@ -101,11 +96,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
 //    https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
 
     // The current control selected by the D-pad
-    var currSelectedView: View? = null
+    private var currSelectedView: View? = null
 
     // Backgrounds used to show where the D-pad cursor is located.
     private var textViewBackgroundSelected: MaterialShapeDrawable? = null
-    private var digitBackground_NotSelected: Drawable? = null
     private var generalBackgroundSelected: Drawable? = null
 
     private var gridView: PlayingGridView? = null
@@ -153,6 +147,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private fun setupTvNav() {
         // TODO: make strokeWidth relative. How to get the whole screen width???
+        // Maybe I wait for the next full execution of the playing grid's setScreenSizes()
+
         val strokeWidth = 4.0f
         textViewBackgroundSelected = MaterialShapeDrawable()
         (textViewBackgroundSelected as MaterialShapeDrawable).fillColor = ContextCompat.getColorStateList(this, android.R.color.holo_blue_dark)
@@ -196,7 +192,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         nextPuzzleView = findViewById(R.id.textViewNextPuzzle)
         prevPuzzleView = findViewById(R.id.textViewPrevPuzzle)
 
-        digitBackground_NotSelected = (digit1View as TextView?)?.background  // TODO: DO I still need this???
+//        digitBackground_NotSelected = (digit1View as TextView?)?.background  // TODO: DO I still need this???
 
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_RIGHT)] = digit2View!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_DOWN)] = digit4View!!

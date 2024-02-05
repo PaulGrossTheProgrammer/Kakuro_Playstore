@@ -187,7 +187,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             ySquaresOffset++
         }
 
-        setScreenSizes()  // This alo forces a redraw
+        setScreenSizes()  // This also forces a redraw
     }
 
     fun scrollGrid(xDeltaSquares: Int, yDeltaSquares: Int) {
@@ -233,7 +233,18 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
     }
 
+    private var lastKnownWidth = 0
+    private var lastKnownHeight = 0
+
     fun setScreenSizes() {
+        if (lastKnownWidth == measuredWidth && lastKnownHeight == measuredHeight) {
+            Log.d(TAG, "setScreenSizes EXITING WITHOUT ANY CHANGES: w = $measuredWidth, h = $measuredHeight")
+            return
+        }
+        Log.d(TAG, "setScreenSizes using w = $measuredWidth, h = $measuredHeight")
+        lastKnownWidth = measuredWidth
+        lastKnownHeight = measuredHeight
+
         // TODO - pre-allocate the TouchArea for each on screen index.
         // So that we can remove the allocation code and boundary intersect code from onDraw().
 
