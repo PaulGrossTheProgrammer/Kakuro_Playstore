@@ -83,7 +83,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.setGameState(newestGameState)
-        playGridView.setScreenSizes()  // TODO: Is there a way to avoid redundant calls to setScreenSizes()???
+//        playGridView.setScreenSizes()  // TODO: Is there a way to avoid redundant calls to setScreenSizes()???
         // Maybe cache non-zero measuredWidth values and compare???
         // NOTE: setScreenSizes() also forces a redraw.
     }

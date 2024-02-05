@@ -33,10 +33,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private var gameState: KakuroGameplayDefinition.StateVariables? = null // TODO: Get a copy of the latest gamestate
 
+    // TODO: Move some of these to companion object as const
     private val maxDisplayRows = 10
     private val minDisplayRows = 5
 
-    private val outsideGridMargin = 0.6f
     private var currViewWidth = 1
     private var currViewHeight = 1
     private var squareWidth = 1f
@@ -79,11 +79,32 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     fun setGameState(newestGameState: KakuroGameplayDefinition.StateVariables) {
-        this.gameState = newestGameState
+        var needNewSizes = (gameState == null)
 
-        // TODO: Can I detect the need to call setScreenSizes() here
-        // TODO: So that the caller doesn't need to ALWAYS call setScreenSizes()???
-        // TODO: Maybe look for changes in width, by storing the last measuredWidth ???
+        // FIXME - this doesn't work when changing to some puzzles...
+        var oldWidth = 0
+        if (gameState != null) {
+            oldWidth =  gameState!!.puzzleWidth
+        }
+        Log.d(TAG, "oldWidth = $oldWidth")
+
+        gameState = newestGameState
+        Log.d(TAG, "New Width = ${gameState!!.puzzleWidth}")
+
+        if (oldWidth != gameState!!.puzzleWidth) {
+            needNewSizes = true
+        }
+
+        if (needNewSizes || lastKnownWidth == 0 || lastKnownHeight == 0 || lastKnownWidth != measuredWidth || lastKnownHeight != measuredHeight) {
+            Log.d(TAG, "setGameState calling setScreenSizes()")
+
+            // FIXME - set something in setScreenSizes() to make sure it didn;t abort and fail to set the sizes anyway,
+            // so we can try again ...?
+            setScreenSizes()
+        } else {
+            Log.d(TAG, "setGameState SKIPPING setScreenSizes()")
+        }
+        invalidate()
     }
 
     /**
@@ -237,17 +258,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var lastKnownHeight = 0
 
     fun setScreenSizes() {
-        if (lastKnownWidth == measuredWidth && lastKnownHeight == measuredHeight) {
-            Log.d(TAG, "setScreenSizes EXITING WITHOUT ANY CHANGES: w = $measuredWidth, h = $measuredHeight")
-            return
-        }
-        Log.d(TAG, "setScreenSizes using w = $measuredWidth, h = $measuredHeight")
-        lastKnownWidth = measuredWidth
-        lastKnownHeight = measuredHeight
-
-        // TODO - pre-allocate the TouchArea for each on screen index.
-        // So that we can remove the allocation code and boundary intersect code from onDraw().
-
         Log.d("PlayingGridView", "setScreenSizes(): Width = $measuredWidth, height = $measuredHeight")
         if (gameState == null) {
             Log.d("PlayingGridView", "setScreenSizes() exiting because there is not yet a gameState.")
@@ -258,6 +268,19 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             Log.d("PlayingGridView", "setScreenSizes() exiting because of invalid width or height.")
             return
         }
+
+/*        // This optimisation doesn't work at all!!!
+        if (lastKnownWidth != 0 && lastKnownHeight != 0 && lastKnownWidth == measuredWidth && lastKnownHeight == measuredHeight) {
+            Log.d(TAG, "setScreenSizes EXITING WITHOUT ANY CHANGES: w = $measuredWidth, h = $measuredHeight")
+            return
+        }*/
+
+        Log.d(TAG, "setScreenSizes using w = $measuredWidth, h = $measuredHeight")
+        lastKnownWidth = measuredWidth
+        lastKnownHeight = measuredHeight
+
+        // TODO - pre-allocate the TouchArea for each on screen index.
+        // So that we can remove the allocation code and boundary intersect code from onDraw().
 
         playSquareTouchLookUpId.clear()
 
@@ -275,7 +298,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             currDisplayRows = minDisplayRows
         }
 
-        squareWidth = (currViewWidth/(currDisplayRows + outsideGridMargin)).toFloat()
+        squareWidth = (currViewWidth/(currDisplayRows + OUTSIDE_GRID_MARGIN)).toFloat()
         Log.d("PlayingGridView", "squareWidth = $squareWidth")
         borderThickness = squareWidth * 0.06f
 
@@ -321,8 +344,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         paint.color = Color.WHITE
 
-        val xStart = (squareWidth * outsideGridMargin)/2 + xSquaresOffset * squareWidth
-        val yStart = (squareWidth * outsideGridMargin)/2 + ySquaresOffset * squareWidth
+        val xStart = (squareWidth * OUTSIDE_GRID_MARGIN)/2 + xSquaresOffset * squareWidth
+        val yStart = (squareWidth * OUTSIDE_GRID_MARGIN)/2 + ySquaresOffset * squareWidth
 
         var currX = xStart
         var currY = yStart
@@ -593,5 +616,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     companion object {
         private val TAG = PlayingGridView::class.java.simpleName
+
+        const val OUTSIDE_GRID_MARGIN = 1.2f
     }
 }
