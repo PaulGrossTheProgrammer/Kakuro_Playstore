@@ -81,15 +81,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     fun setGameState(newestGameState: KakuroGameplayDefinition.StateVariables) {
         var needNewSizes = (gameState == null)
 
-        // FIXME - this doesn't work when changing to some puzzles...
         var oldWidth = 0
         if (gameState != null) {
-            oldWidth =  gameState!!.puzzleWidth
+            oldWidth = gameState!!.puzzleWidth
         }
-        Log.d(TAG, "oldWidth = $oldWidth")
 
         gameState = newestGameState
-        Log.d(TAG, "New Width = ${gameState!!.puzzleWidth}")
 
         if (oldWidth != gameState!!.puzzleWidth) {
             needNewSizes = true
@@ -97,9 +94,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         if (needNewSizes || lastKnownWidth == 0 || lastKnownHeight == 0 || lastKnownWidth != measuredWidth || lastKnownHeight != measuredHeight) {
             Log.d(TAG, "setGameState calling setScreenSizes()")
-
-            // FIXME - set something in setScreenSizes() to make sure it didn;t abort and fail to set the sizes anyway,
-            // so we can try again ...?
             setScreenSizes()
         } else {
             Log.d(TAG, "setGameState SKIPPING setScreenSizes()")
@@ -130,6 +124,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         override fun onTouch(view: View, event: MotionEvent): Boolean {
             when(event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    // TODO - replace this with a call to lookupTouchedId.
                     gridView.selectedIndex = lookupTouchedGuessId(event.x, event.y)
 
                     // Autoscroll to square if required
@@ -211,6 +206,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         setScreenSizes()  // This also forces a redraw
     }
 
+    fun resetTouchAreas() {
+        playSquareTouchLookUpId.clear()
+    }
+
     fun scrollGrid(xDeltaSquares: Int, yDeltaSquares: Int) {
         if (xSquaresOffset + xDeltaSquares > 0) {
             return
@@ -229,7 +228,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         ySquaresOffset += yDeltaSquares
 
         // The current touch areas are invalid after scrolling
-        playSquareTouchLookUpId.clear()
+        resetTouchAreas()
 
         invalidate()  // Force the grid to be redrawn
     }
@@ -269,12 +268,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             return
         }
 
-/*        // This optimisation doesn't work at all!!!
-        if (lastKnownWidth != 0 && lastKnownHeight != 0 && lastKnownWidth == measuredWidth && lastKnownHeight == measuredHeight) {
-            Log.d(TAG, "setScreenSizes EXITING WITHOUT ANY CHANGES: w = $measuredWidth, h = $measuredHeight")
-            return
-        }*/
-
         Log.d(TAG, "setScreenSizes using w = $measuredWidth, h = $measuredHeight")
         lastKnownWidth = measuredWidth
         lastKnownHeight = measuredHeight
@@ -282,7 +275,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         // TODO - pre-allocate the TouchArea for each on screen index.
         // So that we can remove the allocation code and boundary intersect code from onDraw().
 
-        playSquareTouchLookUpId.clear()
+//        playSquareTouchLookUpId.clear()
+        resetTouchAreas()
 
         currViewWidth = measuredWidth
         currViewHeight = measuredHeight
@@ -557,7 +551,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             selectedIndex = nextSquare
             checkAutoscrollForDpad()
 
-            // FIXME - if we stop on a leftmost or topmost square, scroll once more to show top hints
             if (selectedIndex < gameState!!.puzzleWidth) {
                 // Scroll up above top row
                 scrollGrid(0, 1)
@@ -568,8 +561,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             }
             invalidate()
         }
-
-        // FIXME - need to autoscroll the grid if the navigated square is not visible or only partly visible.
     }
 
     private fun searchForNextSquare(startIndex: Int, direction: KakuroGameplayActivity.NavDirection): Int {
@@ -617,6 +608,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     companion object {
         private val TAG = PlayingGridView::class.java.simpleName
 
-        const val OUTSIDE_GRID_MARGIN = 1.2f
+        const val OUTSIDE_GRID_MARGIN = 1.4f
     }
 }

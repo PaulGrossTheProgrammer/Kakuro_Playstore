@@ -541,11 +541,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private fun prevPuzzle() {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).resetTouchAreas()
         engine?.queueMessageFromActivity(GameEngine.Message("PrevPuzzle"), ::queueMessage)
     }
 
     private fun nextPuzzle() {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
+        findViewById<PlayingGridView>(R.id.viewPlayGrid).resetTouchAreas()
         engine?.queueMessageFromActivity(GameEngine.Message("NextPuzzle"), ::queueMessage)
     }
 
