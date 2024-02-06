@@ -31,11 +31,7 @@ fun getResizedBitmap(bitmap: Bitmap , newWidth: Int , newHeight: Int ): Bitmap {
  */
 class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
 
-    private var gameState: KakuroGameplayDefinition.StateVariables? = null // TODO: Get a copy of the latest gamestate
-
-    // TODO: Move some of these to companion object as const
-    private val maxDisplayRows = 10
-    private val minDisplayRows = 5
+    private var gameState: KakuroGameplayDefinition.StateVariables? = null
 
     private var currViewWidth = 1
     private var currViewHeight = 1
@@ -45,7 +41,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var possiblesTextSize = 1f
     private var borderThickness =1f
 
-    private var currDisplayRows = maxDisplayRows
+    private var currDisplayRows = MAX_DISPLAY_ROWS
     private var displayZoom = 0
     private var xSquaresOffset = 0
     private var ySquaresOffset = 0
@@ -109,43 +105,34 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     var playSquareTouchLookUpId: MutableMap<TouchArea, Int> = mutableMapOf()
 
-    // TODO - add a scroll lookup to automatically scroll the grid when boundary squares are selected
     var boundaryLeftTouchLookupId: MutableMap<TouchArea, Int> = mutableMapOf()
     var boundaryRightTouchLookupId: MutableMap<TouchArea, Int> = mutableMapOf()
     var boundaryTopTouchLookupId: MutableMap<TouchArea, Int> = mutableMapOf()
     var boundaryBottomTouchLookupId: MutableMap<TouchArea, Int> = mutableMapOf()
 
     /**
-     * This CustomListener uses areas defined in the playSquareTouchLookUpId: Map
-     * to determine the Id of the square that the user touched.
+     * This CustomListener uses TouchAreas in several lookup: Maps to determine what to do with the touched area.
      */
     class CustomListener(private val gridView: PlayingGridView):
         View.OnTouchListener {
         override fun onTouch(view: View, event: MotionEvent): Boolean {
             when(event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    // TODO - replace this with a call to lookupTouchedId.
-                    gridView.selectedIndex = lookupTouchedGuessId(event.x, event.y)
+                    gridView.selectedIndex = lookupTouchedId(gridView.playSquareTouchLookUpId, event.x, event.y)
 
-                    // Autoscroll to square if required
+                    // Also autoscroll if a special square was selected
                     if (lookupTouchedId(gridView.boundaryLeftTouchLookupId, event.x, event.y) != -1) {
-                        gridView.scrollGrid(1, 0)
-                        gridView.scrollGrid(1, 0)
-//                        gridView.scrollGridLeft(2)
+                        gridView.scrollGridLeft(2)
                     }
                     if (lookupTouchedId(gridView.boundaryRightTouchLookupId, event.x, event.y) != -1) {
-                        gridView.scrollGrid(-1, 0)
-                        gridView.scrollGrid(-1, 0)
-//                        gridView.scrollGridRight(2)
+                        gridView.scrollGridRight(2)
                     }
 
                     if (lookupTouchedId(gridView.boundaryTopTouchLookupId, event.x, event.y) != -1) {
-                        gridView.scrollGrid(0, 1)
-                        gridView.scrollGrid(0, 1)
+                        gridView.scrollGridUp(2)
                     }
                     if (lookupTouchedId(gridView.boundaryBottomTouchLookupId, event.x, event.y) != -1) {
-                        gridView.scrollGrid(0, -1)
-                        gridView.scrollGrid(0, -1)
+                        gridView.scrollGridDown(2)
                     }
 
                     gridView.invalidate()  // Force the grid to be redrawn
@@ -155,19 +142,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         /**
-         * Search through all the TouchArea entries in the playSquareTouchLookUpId: Map to find the Id located at x, y.
+         * Search through all the TouchArea entries in the lookup: Map to find the Id located at x, y.
          * Returns -1 if the touch isn't inside any of the defined TouchArea entries.
          */
-        private fun lookupTouchedGuessId(x: Float, y: Float): Int {
-            for (entry in gridView.playSquareTouchLookUpId.entries.iterator()) {
-                if (x >= entry.key.xMin && x <= entry.key.xMax && y >= entry.key.yMin && y <= entry.key.yMax) {
-                    return entry.value
-                }
-            }
-            return -1
-        }
-
-        private fun lookupTouchedId(lookup: Map<PlayingGridView.TouchArea, Int>, x: Float, y: Float): Int {
+        private fun lookupTouchedId(lookup: Map<TouchArea, Int>, x: Float, y: Float): Int {
             for (entry in lookup.entries.iterator()) {
                 if (x >= entry.key.xMin && x <= entry.key.xMax && y >= entry.key.yMin && y <= entry.key.yMax) {
                     return entry.value
@@ -193,7 +171,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     fun zoomGrid(changeZoom: Int) {
-        if (currDisplayRows + changeZoom < minDisplayRows || currDisplayRows + changeZoom > maxDisplayRows) {
+        if (currDisplayRows + changeZoom < MIN_DISPLAY_ROWS || currDisplayRows + changeZoom > MAX_DISPLAY_ROWS) {
             return
         }
         if (currDisplayRows + displayZoom + changeZoom > gameState!!.puzzleWidth + 1 ) {
@@ -216,7 +194,40 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         playSquareTouchLookUpId.clear()
     }
 
-    fun scrollGrid(xDeltaSquares: Int, yDeltaSquares: Int) {
+    fun scrollGridDir(dir: KakuroGameplayActivity.NavDirection, repeats: Int) {
+        when (dir) {
+            KakuroGameplayActivity.NavDirection.CURSOR_LEFT -> scrollGridLeft(repeats)
+            KakuroGameplayActivity.NavDirection.CURSOR_RIGHT -> scrollGridRight(repeats)
+            KakuroGameplayActivity.NavDirection.CURSOR_UP -> scrollGridUp(repeats)
+            KakuroGameplayActivity.NavDirection.CURSOR_DOWN -> scrollGridDown(repeats)
+        }
+    }
+
+    fun scrollGridLeft(repeats: Int) {
+        for (i in 1..repeats) {
+            scrollGridGeneral(1,0)
+        }
+    }
+
+    fun scrollGridRight(repeats: Int) {
+        for (i in 1..repeats) {
+            scrollGridGeneral(-1,0)
+        }
+    }
+
+    fun scrollGridUp(repeats: Int) {
+        for (i in 1..repeats) {
+            scrollGridGeneral(0,1)
+        }
+    }
+
+    fun scrollGridDown(repeats: Int) {
+        for (i in 1..repeats) {
+            scrollGridGeneral(0,-1)
+        }
+    }
+
+    private fun scrollGridGeneral(xDeltaSquares: Int, yDeltaSquares: Int) {
         if (xSquaresOffset + xDeltaSquares > 0) {
             return
         }
@@ -241,24 +252,20 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private fun checkAutoscrollForDpad() {
         if (boundaryLeftTouchLookupId.containsValue(selectedIndex)) {
-            scrollGrid(1, 0)
-            scrollGrid(1, 0)
+            scrollGridLeft(2)
             invalidate()  // Force the grid to be redrawn
         }
         if (boundaryRightTouchLookupId.containsValue(selectedIndex)) {
-            scrollGrid(-1, 0)
-            scrollGrid(-1, 0)
+            scrollGridRight(2)
             invalidate()  // Force the grid to be redrawn
         }
 
         if (boundaryTopTouchLookupId.containsValue(selectedIndex)) {
-            scrollGrid(0, 1)
-            scrollGrid(0, 1)
+            scrollGridUp(2)
             invalidate()  // Force the grid to be redrawn
         }
         if (boundaryBottomTouchLookupId.containsValue(selectedIndex)) {
-            scrollGrid(0, -1)
-            scrollGrid(0, -1)
+            scrollGridDown(2)
             invalidate()  // Force the grid to be redrawn
         }
     }
@@ -295,11 +302,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             gameState!!.puzzleWidth } else {gameState!!.puzzleHeight}
 
         currDisplayRows = maxGridDimension + 1 + displayZoom
-        if (currDisplayRows > maxDisplayRows) {
-            currDisplayRows = maxDisplayRows
+        if (currDisplayRows > MAX_DISPLAY_ROWS) {
+            currDisplayRows = MAX_DISPLAY_ROWS
         }
-        if (currDisplayRows < minDisplayRows) {
-            currDisplayRows = minDisplayRows
+        if (currDisplayRows < MIN_DISPLAY_ROWS) {
+            currDisplayRows = MIN_DISPLAY_ROWS
         }
 
         squareWidth = (currViewWidth/(currDisplayRows + OUTSIDE_GRID_MARGIN)).toFloat()
@@ -358,11 +365,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         var cols = gameState!!.playerGrid.size.div(gameState!!.puzzleWidth) + 1
 
         // Assume a square display area.
-        if (rows > maxDisplayRows) {
-            rows = maxDisplayRows
+        if (rows > MAX_DISPLAY_ROWS) {
+            rows = MAX_DISPLAY_ROWS
         }
-        if (cols > maxDisplayRows) {
-            cols = maxDisplayRows
+        if (cols > MAX_DISPLAY_ROWS) {
+            cols = MAX_DISPLAY_ROWS
         }
 
         var index = 0
@@ -550,31 +557,21 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         canvas.drawText(hintString, x + squareWidth * 0.56f  - squareWidth, y + squareWidth * 0.45f, paint)
     }
 
-    // FIXME - navogation and auotscroll just broke!!!!
-
     fun navigateGrid(dir: KakuroGameplayActivity.NavDirection) {
+        Log.d(TAG, "navigateGrid $dir")
         if (selectedIndex == -1) {
             selectedIndex = defaultIndex
             invalidate()
         }
 
         val nextSquare = searchForNextSquare(selectedIndex, dir)
+        Log.d(TAG, "navigateGrid: New index $nextSquare")
         if (nextSquare != -1) {
             selectedIndex = nextSquare
             checkAutoscrollForDpad()
-
-/*
-            // These are no longer needed.
-            if (selectedIndex < gameState!!.puzzleWidth) {
-                // Scroll up above top row
-                scrollGrid(0, 1)
-            }
-            if (selectedIndex.mod(gameState!!.puzzleWidth) == 0) {
-                // Scroll left past left row
-                scrollGrid(1, 0)
-            }
             invalidate()
-*/
+        } else {
+            scrollGridDir(dir, 1)
         }
     }
 
@@ -624,5 +621,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         private val TAG = PlayingGridView::class.java.simpleName
 
         const val OUTSIDE_GRID_MARGIN = 1.4f
+        const val MAX_DISPLAY_ROWS = 10
+        const val MIN_DISPLAY_ROWS = 5
     }
 }

@@ -418,23 +418,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
     // User touch controls
     //
 
-    // TODO - remove these four touched button scrollers.
-    fun onClickScrollUp(view: View) {
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).scrollGrid(0, 1)
-    }
-
-    fun onClickScrollDown(view: View) {
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).scrollGrid(0, -1)
-    }
-
-    fun onClickScrollLeft(view: View) {
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).scrollGrid(1, 0)
-    }
-
-    fun onClickScrollRight(view: View) {
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).scrollGrid(-1, 0)
-    }
-
     fun onClickZoomIn(view: View) {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).zoomGrid(-1)
     }
