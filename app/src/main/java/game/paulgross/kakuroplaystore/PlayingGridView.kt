@@ -129,17 +129,19 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                     // Autoscroll to square if required
                     if (lookupTouchedId(gridView.boundaryLeftTouchLookupId, event.x, event.y) != -1) {
-                        gridView.scrollGrid(1, 0)
+//                        gridView.scrollGrid(2, 0)
+                        gridView.scrollGridLeft(2)
                     }
                     if (lookupTouchedId(gridView.boundaryRightTouchLookupId, event.x, event.y) != -1) {
-                        gridView.scrollGrid(-1, 0)
+//                        gridView.scrollGrid(-2, 0)
+                        gridView.scrollGridRight(2)
                     }
 
                     if (lookupTouchedId(gridView.boundaryTopTouchLookupId, event.x, event.y) != -1) {
-                        gridView.scrollGrid(0, 1)
+                        gridView.scrollGrid(0, 2)
                     }
                     if (lookupTouchedId(gridView.boundaryBottomTouchLookupId, event.x, event.y) != -1) {
-                        gridView.scrollGrid(0, -1)
+                        gridView.scrollGrid(0, -2)
                     }
 
                     gridView.invalidate()  // Force the grid to be redrawn
@@ -210,7 +212,38 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         playSquareTouchLookUpId.clear()
     }
 
+    // TODO -replace scrollGrid with scrollGridLeft etc...
+    fun scrollGridLeft(delta: Int) {
+        for (i in 1..delta) {
+
+            if (xSquaresOffset + 1 > 0) {
+                return
+            }
+            xSquaresOffset += 1
+            resetTouchAreas()
+            invalidate()
+        }
+    }
+
+    fun scrollGridRight(delta: Int) {
+        for (i in 1..delta) {
+
+            // FIXME - doesn't stop early enough...
+            if (xSquaresOffset + 1 < currDisplayRows - gameState!!.puzzleWidth - 1) {
+                return
+            }
+            xSquaresOffset -= 1
+            resetTouchAreas()
+            invalidate()
+        }
+    }
+
     fun scrollGrid(xDeltaSquares: Int, yDeltaSquares: Int) {
+        // FIXME - make sure we do this in single steps ... otherwise the delta fails.
+
+//        for (i in 1..xDeltaSquares) {
+//            println(i)
+//        }
         if (xSquaresOffset + xDeltaSquares > 0) {
             return
         }
@@ -235,20 +268,20 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private fun checkAutoscrollForDpad() {
         if (boundaryLeftTouchLookupId.containsValue(selectedIndex)) {
-            scrollGrid(1, 0)
+            scrollGrid(2, 0)
             invalidate()  // Force the grid to be redrawn
         }
         if (boundaryRightTouchLookupId.containsValue(selectedIndex)) {
-            scrollGrid(-1, 0)
+            scrollGrid(-2, 0)
             invalidate()  // Force the grid to be redrawn
         }
 
         if (boundaryTopTouchLookupId.containsValue(selectedIndex)) {
-            scrollGrid(0, 1)
+            scrollGrid(0, 2)
             invalidate()  // Force the grid to be redrawn
         }
         if (boundaryBottomTouchLookupId.containsValue(selectedIndex)) {
-            scrollGrid(0, -1)
+            scrollGrid(0, -2)
             invalidate()  // Force the grid to be redrawn
         }
     }
@@ -540,6 +573,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         canvas.drawText(hintString, x + squareWidth * 0.56f  - squareWidth, y + squareWidth * 0.45f, paint)
     }
 
+    // FIXME - navogation and auotscroll just broke!!!!
+
     fun navigateGrid(dir: KakuroGameplayActivity.NavDirection) {
         if (selectedIndex == -1) {
             selectedIndex = defaultIndex
@@ -551,6 +586,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             selectedIndex = nextSquare
             checkAutoscrollForDpad()
 
+/*
+            // These are no longer needed.
             if (selectedIndex < gameState!!.puzzleWidth) {
                 // Scroll up above top row
                 scrollGrid(0, 1)
@@ -560,6 +597,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                 scrollGrid(1, 0)
             }
             invalidate()
+*/
         }
     }
 
