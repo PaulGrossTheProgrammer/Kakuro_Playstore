@@ -608,20 +608,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         sendBroadcast(intent)
     }
 
-    private fun debugMessageHandler(text: String) {
-        findViewById<TextView>(R.id.textViewDebug).text = text
-    }
-
     companion object {
         private val TAG = KakuroGameplayActivity::class.java.simpleName
 
         var singleton: KakuroGameplayActivity? = null
-
-        /**
-         * This function is used to display debug messages on the screen.
-         */
-        fun displayDebugMessage(text: String) {
-            singleton?.debugMessageHandler(text)
-        }
    }
 }

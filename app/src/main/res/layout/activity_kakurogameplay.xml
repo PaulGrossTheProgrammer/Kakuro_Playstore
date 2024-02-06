@@ -49,38 +49,6 @@
         app:layout_constraintBottom_toBottomOf="@+id/textViewPrevPuzzle"
         app:layout_constraintStart_toEndOf="@+id/textViewPrevPuzzle" />
 
-    <ImageButton
-        android:id="@+id/imageButtonScrollRight"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginTop="16dp"
-        android:onClick="onClickScrollRight"
-        android:rotation="-90"
-        app:layout_constraintStart_toEndOf="@+id/imageButtonScrollUp"
-        app:layout_constraintTop_toTopOf="@+id/imageButtonScrollUp"
-        app:srcCompat="@android:drawable/arrow_down_float" />
-
-    <ImageButton
-        android:id="@+id/imageButtonScrollDown"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:onClick="onClickScrollDown"
-        app:layout_constraintEnd_toEndOf="@+id/imageButtonScrollUp"
-        app:layout_constraintStart_toStartOf="@+id/imageButtonScrollUp"
-        app:layout_constraintTop_toBottomOf="@+id/imageButtonScrollUp"
-        app:srcCompat="@android:drawable/arrow_down_float" />
-
-    <ImageButton
-        android:id="@+id/imageButtonScrollUp"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginTop="8dp"
-        android:onClick="onClickScrollUp"
-        app:layout_constraintEnd_toStartOf="@+id/textViewPossible4"
-        app:layout_constraintStart_toEndOf="@+id/textViewDigit6"
-        app:layout_constraintTop_toBottomOf="@+id/viewPlayGrid"
-        app:srcCompat="@android:drawable/arrow_up_float" />
-
 
     <TextView
         android:id="@+id/textViewPossible1"
@@ -405,25 +373,13 @@
         app:layout_constraintTop_toTopOf="@+id/textViewDigit1" />
 
     <ImageButton
-        android:id="@+id/imageButtonScrollLeft"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginTop="16dp"
-        android:onClick="onClickScrollLeft"
-        android:rotation="90"
-        app:layout_constraintEnd_toStartOf="@+id/imageButtonScrollDown"
-        app:layout_constraintTop_toTopOf="@+id/imageButtonScrollUp"
-        app:srcCompat="@android:drawable/arrow_down_float" />
-
-    <ImageButton
         android:id="@+id/imageButtonZoomOut"
         android:layout_width="78dp"
         android:layout_height="46dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
         android:onClick="onClickZoomOut"
-        app:layout_constraintStart_toStartOf="@+id/imageButtonScrollDown"
-        app:layout_constraintTop_toBottomOf="@+id/textViewPossible7"
+        app:layout_constraintStart_toEndOf="@+id/imageButtonZoomIn"
+        app:layout_constraintTop_toTopOf="@+id/imageButtonZoomIn"
         app:srcCompat="@android:drawable/btn_minus" />
 
     <ImageButton
@@ -431,18 +387,10 @@
         android:layout_width="78dp"
         android:layout_height="46dp"
         android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
         android:onClick="onClickZoomIn"
-        app:layout_constraintEnd_toEndOf="@+id/imageButtonScrollDown"
-        app:layout_constraintTop_toBottomOf="@+id/textViewDigit9"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewDigitClear"
         app:srcCompat="@android:drawable/btn_plus" />
-
-    <TextView
-        android:id="@+id/textViewDebug"
-        android:layout_width="match_parent"
-        android:layout_height="27dp"
-        app:layout_constraintBottom_toTopOf="@+id/textViewReset"
-        app:layout_constraintStart_toStartOf="parent" />
 
     <ImageButton
         android:id="@+id/imageButtonSettings"
