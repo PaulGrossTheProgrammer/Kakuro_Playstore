@@ -39,21 +39,21 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         val isGoogleTv = applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")
         // FIXME: Until I figure out how to correctly detect Google TV, force landscape mode and setup TV navigation.
-        setContentView(R.layout.activity_kakurogameplay_landscape)
-        setupTvNav()
+//        setContentView(R.layout.activity_kakurogameplay_landscape)
 
         if (applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")) {
-            Log.d(TAG, "GOOGLE TV DETECTED")
-//            setContentView(R.layout.activity_kakurogameplay_landscape)
-//            setupTvNav()
+            Log.d(TAG, "TV DETECTED")
+            setContentView(R.layout.activity_kakurogameplay_landscape)
+            setupTvNav()
         } else {
-            Log.d(TAG, "THIS NOT A GOOGLE TV")
-//            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-//                setContentView(R.layout.activity_kakurogameplay)
-//            } else {
-//                setContentView(R.layout.activity_kakurogameplay_landscape)
-//            }
+            Log.d(TAG, "THIS NOT A TV")
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setContentView(R.layout.activity_kakurogameplay)
+            } else {
+                setContentView(R.layout.activity_kakurogameplay_landscape)
+            }
         }
+        setupTvNav()
 
         engine = GameEngine.activate(KakuroGameplayDefinition, this)
 
