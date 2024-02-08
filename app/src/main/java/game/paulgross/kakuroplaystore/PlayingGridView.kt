@@ -35,12 +35,14 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private var currViewWidth = 1
     private var currViewHeight = 1
+
     private var squareWidth = 1f
     private var slashMargin = 1f
     private var squareTextSize = 1f
     private var possiblesTextSize = 1f
     private var borderThickness =1f
 
+    // TODO - stores these so that restarts and screen rotations will preserve the settings.
     private var currDisplayRows = MAX_DISPLAY_ROWS
     private var displayZoom = 0
     private var xSquaresOffset = 0
@@ -64,6 +66,32 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     init {
         if (context is KakuroGameplayActivity) {
             gameplayActivity = context
+        }
+
+        val preferences = gameplayActivity.getPreferences(Context.MODE_PRIVATE)
+        val zoom = preferences.getString("UI.grid.zoom", null)
+        if (zoom != null) {
+            // FIXME - handle invalid string.
+            displayZoom = zoom.toInt()
+        }
+        val xOffset = preferences.getString("UI.grid.xOffset", null)
+        if (xOffset != null) {
+            // FIXME - handle invalid string.
+            xSquaresOffset = xOffset.toInt()
+        }
+        val yOffset = preferences.getString("UI.grid.yOffset", null)
+        if (yOffset != null) {
+            // FIXME - handle invalid string.
+            ySquaresOffset = yOffset.toInt()
+        }
+
+        // FIXME - this doesn't seem to load the current selected index.
+        // Perhaps it wasn't saved???
+        val index = preferences.getString("UI.grid.selectedIndex", null)
+        if (index != null) {
+            // FIXME - handle invalid string.
+            selectedIndex = index.toInt()
+            invalidate()
         }
 
         // Setup Paint objects for drawing the grid.
@@ -135,6 +163,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                         gridView.scrollGridDown(2)
                     }
 
+                    gridView.saveUIState()
+
                     gridView.invalidate()  // Force the grid to be redrawn
                 }
             }
@@ -187,7 +217,20 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             ySquaresOffset++
         }
 
+        // TODO - -save zoom and offsets
+        saveUIState()
+
         setScreenSizes()  // This also forces a redraw
+    }
+
+    private fun saveUIState() {
+        val preferences = gameplayActivity.getPreferences(Context.MODE_PRIVATE)
+        val editor = preferences.edit()
+        editor.putString("UI.grid.zoom", displayZoom.toString())
+        editor.putString("UI.grid.xOffset", xSquaresOffset.toString())
+        editor.putString("UI.grid.yOffset", ySquaresOffset.toString())
+        editor.putString("UI.grid.selectedIndex", selectedIndex.toString())
+        editor.apply()
     }
 
     fun resetTouchAreas() {
@@ -243,6 +286,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         xSquaresOffset += xDeltaSquares
         ySquaresOffset += yDeltaSquares
+
+        saveUIState()
 
         // The current touch areas are invalid after scrolling
         resetTouchAreas()
@@ -332,6 +377,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         defaultIndex = -1
         xSquaresOffset = 0
         ySquaresOffset = 0
+
+        saveUIState()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -573,6 +620,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         } else {
             scrollGridDir(dir, 1)
         }
+
+        saveUIState()
     }
 
     private fun searchForNextSquare(startIndex: Int, direction: KakuroGameplayActivity.NavDirection): Int {

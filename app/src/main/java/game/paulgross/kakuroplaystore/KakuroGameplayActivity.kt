@@ -32,11 +32,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         singleton = this
 
-        // Test code to see what available features there are for each system:
-//        applicationContext.packageManager.systemAvailableFeatures.forEach {
-//            Log.d(TAG, "Feature: ${it}")
-//        }
-
         val isGoogleTv = applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")
         // FIXME: Until I figure out how to correctly detect Google TV, force landscape mode and setup TV navigation.
 //        setContentView(R.layout.activity_kakurogameplay_landscape)
@@ -321,8 +316,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-//        Log.d(TAG, "KeyEvent: $event")
-
         if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
             // NOTE: TV apps are not permitted to "gate" the back button from the main screen.
             // The back button must always return the TV "Live" page, so exitApp() is called.
@@ -375,6 +368,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
         return true
     }
 
+    /**
+     * Cache for navigation highlight. The cache stores the original background
+     * for when the View is no longer the navigation focus.
+     */
     private val cachedBackgroundLookup: MutableMap<View, Drawable> = mutableMapOf()
 
     private fun navOnto(view: View?) {
