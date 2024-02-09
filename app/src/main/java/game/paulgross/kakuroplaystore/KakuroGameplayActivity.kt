@@ -22,12 +22,13 @@ import com.google.android.material.shape.MaterialShapeDrawable
 class KakuroGameplayActivity : AppCompatActivity() {
 
     var engine: GameEngine? = null
+    var versionName = "Working..."
 
     @SuppressLint("ClickableViewAccessibility")  // Why do I need this??? Something to do with setOnTouchListener()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val versionName = packageManager.getPackageInfo(packageName, 0).versionName
+        versionName = "V" + packageManager.getPackageInfo(packageName, 0).versionName
         Log.d(TAG, "Version $versionName")
 
         val packageInfo = applicationContext.packageManager.getPackageInfo(packageName, 0)
@@ -36,8 +37,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         singleton = this
 
         val isGoogleTv = applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")
-        // FIXME: Until I figure out how to correctly detect Google TV, force landscape mode and setup TV navigation.
-//        setContentView(R.layout.activity_kakurogameplay_landscape)
 
         if (applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")) {
             Log.d(TAG, "TV DETECTED")
@@ -52,6 +51,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
         }
         setupTvNav()
+
+        findViewById<TextView>(R.id.textViewVersion).text = versionName
 
         engine = GameEngine.activate(KakuroGameplayDefinition, this)
 

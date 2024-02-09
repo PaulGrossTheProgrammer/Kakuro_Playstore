@@ -396,9 +396,20 @@
         android:id="@+id/imageButtonSettings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="32dp"
         android:onClick="onClickGotoSettings"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@android:drawable/ic_menu_manage" />
+
+    <TextView
+        android:id="@+id/textViewVersion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="Version"
+        app:layout_constraintEnd_toEndOf="@+id/imageButtonSettings"
+        app:layout_constraintTop_toBottomOf="@+id/imageButtonSettings" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
