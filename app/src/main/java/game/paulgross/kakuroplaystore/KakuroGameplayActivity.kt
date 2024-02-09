@@ -36,12 +36,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         singleton = this
 
-        val isGoogleTv = applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")
+        val isTv = applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")
 
-        if (applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")) {
+        if (isTv) {
             Log.d(TAG, "TV DETECTED")
             setContentView(R.layout.activity_kakurogameplay_landscape)
-            setupTvNav()
         } else {
             Log.d(TAG, "THIS NOT A TV")
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
