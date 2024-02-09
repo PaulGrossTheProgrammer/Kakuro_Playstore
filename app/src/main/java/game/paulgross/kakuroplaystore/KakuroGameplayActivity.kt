@@ -27,6 +27,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val versionName = packageManager.getPackageInfo(packageName, 0).versionName
+        Log.d(TAG, "Version $versionName")
+
         val packageInfo = applicationContext.packageManager.getPackageInfo(packageName, 0)
         Log.d(TAG, "onCreate() starting version: " + packageInfo.versionName)
 

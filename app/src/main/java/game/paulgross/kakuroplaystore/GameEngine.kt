@@ -19,12 +19,17 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
     private val cm: ConnectivityManager
     private val preferences: SharedPreferences
     val assets: AssetManager
+    private var gameDefVersion = ""
 
     init {
         cm = activity.applicationContext.getSystemService(ConnectivityManager::class.java)  // Used for Internet access.
         preferences = activity.getPreferences(MODE_PRIVATE)  // Use to save and load the game state.
 
         assets = activity.applicationContext.assets // Used to access files in the assets directory
+
+        gameDefVersion = activity.applicationContext.packageManager.getPackageInfo(activity.applicationContext.packageName, 0).versionName
+
+        Log.d(TAG, "Engine initialised with ${definition::class.java.simpleName}, version $gameDefVersion")
     }
 
 
