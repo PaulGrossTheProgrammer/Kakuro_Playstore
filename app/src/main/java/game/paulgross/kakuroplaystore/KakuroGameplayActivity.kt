@@ -153,7 +153,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
         (generalBackgroundSelected as MaterialShapeDrawable).setStroke(strokeWidth, ContextCompat.getColor(this, R.color.white))
 
         gridView = findViewById(R.id.viewPlayGrid)
-        gridView!!.setIndexToDefault()
+
+        if (gridView!!.getSelectedIndex() == -1) {
+            gridView!!.setIndexToDefault()
+        }
         currSelectedView = gridView
         navOnto(gridView)
 

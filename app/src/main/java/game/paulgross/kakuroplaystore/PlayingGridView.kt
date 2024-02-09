@@ -85,13 +85,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             ySquaresOffset = yOffset.toInt()
         }
 
-        // FIXME - this doesn't seem to load the current selected index.
-        // Perhaps it wasn't saved???
         val index = preferences.getString("UI.grid.selectedIndex", null)
         if (index != null) {
             // FIXME - handle invalid string.
             selectedIndex = index.toInt()
-            invalidate()
         }
 
         // Setup Paint objects for drawing the grid.
@@ -453,7 +450,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                             visible = false
                         }
 
-                        if (defaultIndex == -1 && visible) {
+                        if (selectedIndex == -1 && defaultIndex == -1 && visible) {
                             defaultIndex = index
                             Log.d(TAG, "Setting default index to $defaultIndex")
                             selectedIndex = index // Is this OK for both TV and phone/tablet???
