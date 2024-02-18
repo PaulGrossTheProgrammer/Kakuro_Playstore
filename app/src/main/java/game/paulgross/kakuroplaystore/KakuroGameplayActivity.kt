@@ -301,6 +301,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_LEFT)] = nextPuzzleView!!
     }
 
+    /**
+     * This turns D-pad commands into navigation direction commands.'
+     *
+     * https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
+     */
     private fun getNavDirection(event: KeyEvent): NavDirection? {
         // TODO: Aggregate all scrollable keycodes into a scroll action, including joysticks.
 
@@ -321,6 +326,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         return null
     }
 
+    /**
+     * This handles the TV navigation controller's commands.
+     */
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
             // NOTE: TV apps are not permitted to "gate" the back button from the main screen.
