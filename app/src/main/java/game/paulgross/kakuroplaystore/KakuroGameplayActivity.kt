@@ -193,8 +193,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         nextPuzzleView = findViewById(R.id.textViewNextPuzzle)
         prevPuzzleView = findViewById(R.id.textViewPrevPuzzle)
 
-//        digitBackground_NotSelected = (digit1View as TextView?)?.background  // TODO: DO I still need this???
-
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_RIGHT)] = digit2View!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_DOWN)] = digit4View!!
 
@@ -328,9 +326,19 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     /**
      * This handles the TV navigation controller's commands.
+     *
+     * https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
      */
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        var backPressed = false
         if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
+            backPressed = true
+        }
+        if (event.keyCode == KeyEvent.KEYCODE_BUTTON_A && event.action == KeyEvent.ACTION_DOWN) {
+            backPressed = true
+        }
+
+        if (backPressed) {
             // NOTE: TV apps are not permitted to "gate" the back button from the main screen.
             // The back button must always return the TV "Live" page, so exitApp() is called.
             if (currSelectedView == gridView) {
@@ -348,7 +356,16 @@ class KakuroGameplayActivity : AppCompatActivity() {
             navOnto(currSelectedView)
         }
 
+        var selectPressed = false
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
+            selectPressed = true
+        }
+
+        if (event.keyCode == KeyEvent.KEYCODE_BUTTON_X && event.action == KeyEvent.ACTION_DOWN) {
+            selectPressed = true
+        }
+
+        if (selectPressed) {
             if (currSelectedView == gridView) {
                 navAwayFrom(gridView)
                 currSelectedView = digit5View
