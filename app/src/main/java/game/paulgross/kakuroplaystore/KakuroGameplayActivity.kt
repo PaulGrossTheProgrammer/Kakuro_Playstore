@@ -360,10 +360,17 @@ class KakuroGameplayActivity : AppCompatActivity() {
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER && event.action == KeyEvent.ACTION_DOWN) {
             selectPressed = true
         }
-
         if (event.keyCode == KeyEvent.KEYCODE_BUTTON_X && event.action == KeyEvent.ACTION_DOWN) {
             selectPressed = true
         }
+        if (event.keyCode == KeyEvent.KEYCODE_BUTTON_THUMBL && event.action == KeyEvent.ACTION_DOWN) {
+            selectPressed = true
+        }
+        if (event.keyCode == KeyEvent.KEYCODE_BUTTON_THUMBR && event.action == KeyEvent.ACTION_DOWN) {
+            selectPressed = true
+        }
+
+        //
 
         if (selectPressed) {
             if (currSelectedView == gridView) {
