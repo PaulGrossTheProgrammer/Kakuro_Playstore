@@ -15,6 +15,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private var currPuzzleIndex = 0
 
     private val builtinPuzzles: MutableList<String> = mutableListOf()
+    private val puzzleKeys: MutableMap<String, String> = mutableMapOf()
 
     private var currPuzzle = ""
     private var puzzleWidth = 1
@@ -48,6 +49,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 val currPuzzleString = it.replace("\\s".toRegex(), "")
                 if (currPuzzleString.isNotEmpty()) {
                     builtinPuzzles.add(currPuzzleString)
+                    val puzzleKey = obfuscatePuzzleString(currPuzzleString)
+                    puzzleKeys[currPuzzleString] = puzzleKey
+                    // TODO - use the keys as a string to store info about each puzzle.
                 }
             }
         }
@@ -75,9 +79,31 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun obfuscatePuzzleString(puzzleString: String) : String {
-        // TODO
+        // Pair up the string into decimal pairs (0 - 99), with a zero-pad if there is an odd string length.
+        // convert each decimal pair to HEX (0 - 63) and add one by one to a string
+        // then reverse the HEX digits.
 
-        return ""
+        var hexString = ""
+        var index = 0
+
+        while (index < puzzleString.length) {
+            var pairDecimal = 0
+            val digit1 = puzzleString[index]
+            if (digit1 != null) {
+                pairDecimal = 10 * digit1.toString().toInt()
+            }
+            if (index + 1 < puzzleString.length) {
+                val digit2 = puzzleString[index + 1]
+                pairDecimal += digit2.toString().toInt()
+            }
+            val hex = Integer.toHexString(pairDecimal)
+            hexString += hex
+
+            index += 2
+        }
+        Log.d(TAG, "Puzzle Key: ${hexString.reversed()}")
+
+        return hexString.reversed()
     }
 
     private fun restartPuzzle(message: GameEngine.Message): Boolean {
