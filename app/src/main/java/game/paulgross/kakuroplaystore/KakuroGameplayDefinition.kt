@@ -74,6 +74,12 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine.pluginRestoreState(::restoreState)
     }
 
+    private fun obfuscatePuzzleString(puzzleString: String) : String {
+        // TODO
+
+        return ""
+    }
+
     private fun restartPuzzle(message: GameEngine.Message): Boolean {
         for (i in 0 until playerGuesses.size) {
             if (playerGuesses[i] != -1) {
