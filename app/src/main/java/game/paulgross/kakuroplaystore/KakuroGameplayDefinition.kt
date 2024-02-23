@@ -343,10 +343,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine?.saveDataString("CurrPuzzleIndex", currPuzzleIndex.toString())
 
         val guessesToSave = encodePlayerGuesses(playerGuesses)
-        engine?.saveDataString("Guesses", guessesToSave)
+        engine?.saveDataString("$currPuzzle.Guesses", guessesToSave)
 
         val possiblesToSave = encodePossibles(playerPossibles)
-        engine?.saveDataString("Possibles", possiblesToSave)
+        engine?.saveDataString("$currPuzzle.Possibles", possiblesToSave)
         Log.d(TAG, "Saved game state.")
     }
 
@@ -374,8 +374,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         startPuzzleFromString(currPuzzle)
 
-        val guessesString = engine?.loadDataString("Guesses", "")
-
+        val guessesString = engine?.loadDataString("$currPuzzle.Guesses", "")
         Log.d(TAG, "guessesString = $guessesString")
 
         playerGuesses.clear()
@@ -395,7 +394,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
         Log.d(TAG, "Size of play grid = ${playerGuesses.size}")
 
-        val possiblesString = engine?.loadDataString("Possibles", "")
+        val possiblesString = engine?.loadDataString("$currPuzzle.Possibles", "")
         playerPossibles = decodePossibles(possiblesString!!)
 
         markPlayerErrors()
