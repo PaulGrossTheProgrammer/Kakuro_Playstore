@@ -305,8 +305,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
      * https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
      */
     private fun getNavDirection(event: KeyEvent): NavDirection? {
-        // TODO: Aggregate all scrollable keycodes into a scroll action, including joysticks.
-
         if (event.action == KeyEvent.ACTION_DOWN) {
             if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
                 return NavDirection.CURSOR_UP
@@ -326,6 +324,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     /**
      * This handles the TV navigation controller's commands.
+     *
+     * The standard remote control buttons, as well as a game-pad, are supported here.
      *
      * https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
      */
@@ -370,8 +370,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             selectPressed = true
         }
 
-        //
-
         if (selectPressed) {
             if (currSelectedView == gridView) {
                 navAwayFrom(gridView)
@@ -385,14 +383,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 if (currSelectedView != null) {
                     currSelectedView!!.callOnClick()
 
-                    // TODO - if this is a number guess, switch back to the grid.
-                    // FIXME - this doesn't work. I think some views don;t have a TAG defined.
-                    // FIXME - also Guess0 is an exception.
-/*                    if (currSelectedView!!.tag.toString().startsWith("Guess")) {
+                    // A puzzle reset will automatically switch back to the grid.
+                    if (currSelectedView == findViewById(R.id.textViewReset)) {
                         navAwayFrom(currSelectedView)
                         currSelectedView = gridView
                         navOnto(gridView)
-                    }*/
+                    }
+
+                    // A guess digit will automatically switch back to the grid.
                     if (currSelectedView!!.tag != null) {
                         val tag = currSelectedView!!.tag.toString()
                         if (tag.startsWith("Guess") && tag != "Guess0") {
@@ -522,6 +520,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         builder.setMessage("Are you sure you want to restart?")
         builder.setPositiveButton("Reset") { _, _ ->
             findViewById<PlayingGridView>(R.id.viewPlayGrid).clearSelectedIndex()
+            findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
             engine?.queueMessageFromActivity(GameEngine.Message("RestartPuzzle"), ::queueMessage)
         }
         builder.setNegativeButton("Back") { _, _ -> }
