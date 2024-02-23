@@ -388,10 +388,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
                     // TODO - if this is a number guess, switch back to the grid.
                     // FIXME - this doesn't work. I think some views don;t have a TAG defined.
                     // FIXME - also Guess0 is an exception.
-                    if (currSelectedView!!.tag.toString().startsWith("Guess")) {
+/*                    if (currSelectedView!!.tag.toString().startsWith("Guess")) {
                         navAwayFrom(currSelectedView)
                         currSelectedView = gridView
                         navOnto(gridView)
+                    }*/
+                    if (currSelectedView!!.tag != null) {
+                        val tag = currSelectedView!!.tag.toString()
+                        if (tag.startsWith("Guess") && tag != "Guess0") {
+                            navAwayFrom(currSelectedView)
+                            currSelectedView = gridView
+                            navOnto(gridView)
+                        }
                     }
                 }
             }
