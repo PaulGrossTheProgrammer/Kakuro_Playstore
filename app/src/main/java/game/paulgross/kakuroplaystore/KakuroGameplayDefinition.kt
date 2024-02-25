@@ -12,7 +12,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     // From there, 0 is for non-playable squares, and any digit from 1..9 is for solution squares.
     private const val builtinPuzzlesFilename = "builtin_puzzles.txt"
 
-    private var currPuzzleIndex = 0
+//    private var currPuzzleIndex = 0
 
     private val builtinPuzzles: MutableList<String> = mutableListOf()
     private val puzzleKeys: MutableMap<String, String> = mutableMapOf()
@@ -209,7 +209,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private fun encodeState(): GameEngine.Message {
         val message = GameEngine.Message("State")
-        message.setKeyString("i", currPuzzleIndex.toString())
+//        message.setKeyString("i", currPuzzleIndex.toString())
         message.setKeyString("w", puzzleWidth.toString())
         message.setKeyString("g", encodePlayerGuesses(playerGuesses))
         message.setKeyString("h", encodeHints(puzzleHints))
@@ -233,11 +233,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
             return StateVariables(mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf(), false)
         }
 
-        var puzzleIndex = message.getString("i")?.toInt()
+/*        var puzzleIndex = message.getString("i")?.toInt()
         if (puzzleIndex == null) {
             puzzleIndex = 0
         }
-        currPuzzleIndex = puzzleIndex
+        currPuzzleIndex = puzzleIndex*/
 
         val width = message.getString("w")?.toInt()
         if (width == null || width < 1) {
@@ -340,7 +340,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
      */
     private fun saveState() {
         engine?.saveDataString("CurrPuzzle", currPuzzle)
-        engine?.saveDataString("CurrPuzzleIndex", currPuzzleIndex.toString())
+//        engine?.saveDataString("CurrPuzzleIndex", currPuzzleIndex.toString())
 
         val guessesToSave = encodePlayerGuesses(playerGuesses)
         engine?.saveDataString("$currPuzzle.Guesses", guessesToSave)
@@ -355,18 +355,19 @@ object KakuroGameplayDefinition: GameplayDefinition {
             Log.d(TAG, "ERROR - no engine...")
             return
         }
+        Log.d(TAG, "Restoring State...")
 
-        val restoredPuzzleIndex = engine?.loadDataString("CurrPuzzleIndex", "").toString()
+/*        val restoredPuzzleIndex = engine?.loadDataString("CurrPuzzleIndex", "").toString()
         currPuzzleIndex = if (restoredPuzzleIndex == "") {
             0
         } else {
             restoredPuzzleIndex.toInt()
-        }
+        }*/
 
         val restoredGame = engine?.loadDataString("CurrPuzzle", "").toString()
         currPuzzle = if (restoredGame == "") {
             Log.d(TAG, "USING DEFAULT PUZZLE!!!!")
-            builtinPuzzles[currPuzzleIndex]
+            builtinPuzzles[0]
         } else {
             restoredGame
         }
@@ -401,25 +402,41 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun prevPuzzle(message: GameEngine.Message): Boolean {
-
+        for (index in 1..< builtinPuzzles.size) {
+            if (currPuzzle == builtinPuzzles[index]) {
+                startPuzzleFromString(builtinPuzzles[index - 1])
+                return true
+            }
+        }
+/*
         if (currPuzzleIndex > 0) {
             currPuzzleIndex--
             startPuzzleFromString(builtinPuzzles[currPuzzleIndex])
             return true
         }
+*/
         return false
     }
     private fun nextPuzzle(message: GameEngine.Message): Boolean {
+        for (index in 0..< builtinPuzzles.size-1) {
+            if (currPuzzle == builtinPuzzles[index]) {
+                startPuzzleFromString(builtinPuzzles[index + 1])
+                return true
+            }
+        }
+/*
         if (currPuzzleIndex < builtinPuzzles.size - 1) {
             currPuzzleIndex++
             startPuzzleFromString(builtinPuzzles[currPuzzleIndex])
             return true
         }
+*/
         return false
     }
 
     private fun startPuzzleFromString(puzzleString: String) {
         currPuzzle = puzzleString
+
         puzzleWidth = puzzleString.substring(0, 2).toInt()
 
         playerGuesses.clear()  // need to set this up as for the new puzzle case...
