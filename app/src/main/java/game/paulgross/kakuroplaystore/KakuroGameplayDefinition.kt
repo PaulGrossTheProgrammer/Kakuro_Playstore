@@ -343,7 +343,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
 //        engine?.saveDataString("CurrPuzzleIndex", currPuzzleIndex.toString())
 
         val guessesToSave = encodePlayerGuesses(playerGuesses)
-        engine?.saveDataString("$currPuzzle.Guesses", guessesToSave)
+        val guessesToSaveString = "$currPuzzle.Guesses = $guessesToSave"
+        Log.d(TAG, "Saving guesses: $guessesToSaveString")
+        engine?.saveDataString(guessesToSaveString, guessesToSave)
 
         val possiblesToSave = encodePossibles(playerPossibles)
         engine?.saveDataString("$currPuzzle.Possibles", possiblesToSave)

@@ -529,7 +529,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     fun onClickPrevPuzzle(view: View) {
         // Determine if there are user guesses.
-        var guesses = false
+/*        var guesses = false
         gameState?.playerGrid?.forEach {
             if (it > 0) {
                 guesses = true
@@ -547,13 +547,15 @@ class KakuroGameplayActivity : AppCompatActivity() {
             prevPuzzle()
         }
         builder.setNegativeButton("Back") { _, _ -> }
-        builder.show()
+        builder.show()*/
+
+        prevPuzzle()
     }
 
     fun onClickNextPuzzle(view: View) {
         Log.d(TAG, "Clicked Puzzle Next")
         // Determine if there are user guesses.
-        var guesses = false
+/*        var guesses = false
         gameState?.playerGrid?.forEach {
             if (it > 0) {
                 guesses = true
@@ -571,7 +573,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
             nextPuzzle()
         }
         builder.setNegativeButton("Back") { _, _ -> }
-        builder.show()
+        builder.show()*/
+
+        nextPuzzle()
     }
 
     private fun prevPuzzle() {
