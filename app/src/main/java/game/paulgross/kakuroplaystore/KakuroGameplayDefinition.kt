@@ -343,7 +343,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 //        engine?.saveDataString("CurrPuzzleIndex", currPuzzleIndex.toString())
 
         val guessesToSave = encodePlayerGuesses(playerGuesses)
-        val guessesToSaveString = "$currPuzzle.Guesses = $guessesToSave"
+        val guessesToSaveString = "$currPuzzle.Guesses"
         Log.d(TAG, "SAVING GUESSES: $guessesToSaveString = $guessesToSave")
         engine?.saveDataString(guessesToSaveString, guessesToSave)
 
@@ -357,7 +357,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
             Log.d(TAG, "ERROR - no engine...")
             return
         }
-        Log.d(TAG, "Restoring State...")
+        Log.d(TAG, "restoreState() running...")
 
         /*        val restoredPuzzleIndex = engine?.loadDataString("CurrPuzzleIndex", "").toString()
         currPuzzleIndex = if (restoredPuzzleIndex == "") {
@@ -373,7 +373,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         } else {
             restoredGame
         }
-        Log.d(TAG, "currPuzzle = $currPuzzle")
+        Log.d(TAG, "restoreState(): currPuzzle = $currPuzzle")
 
         startPuzzleFromString(currPuzzle)
 //        restoreCurrentPuzzleState()
@@ -381,8 +381,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private fun restoreCurrentPuzzleState() {
 
-        val guessesString = engine?.loadDataString("$currPuzzle.Guesses", "")
-        Log.d(TAG, "guessesString = $guessesString")
+        val guessesKeyString = "$currPuzzle.Guesses"
+        Log.d(TAG, "restoreCurrentPuzzleState(): guessesKeyString = $guessesKeyString")
+        val guessesString = engine?.loadDataString(guessesKeyString, "")
+        Log.d(TAG, "restoreCurrentPuzzleState(): guessesString = $guessesString")
 
         playerGuesses.clear()
         if (guessesString == "") {
