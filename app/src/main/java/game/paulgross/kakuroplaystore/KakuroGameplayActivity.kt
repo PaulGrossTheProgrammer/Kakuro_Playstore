@@ -528,53 +528,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     fun onClickPrevPuzzle(view: View) {
-        // Determine if there are user guesses.
-/*        var guesses = false
-        gameState?.playerGrid?.forEach {
-            if (it > 0) {
-                guesses = true
-            }
-        }
-        if (guesses == false) {
-            prevPuzzle()
-            return
-        }
-
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Change Puzzle")
-        builder.setMessage("Are you sure you want to change puzzle?")
-        builder.setPositiveButton("Change") { _, _ ->
-            prevPuzzle()
-        }
-        builder.setNegativeButton("Back") { _, _ -> }
-        builder.show()*/
-
         prevPuzzle()
     }
 
     fun onClickNextPuzzle(view: View) {
-        Log.d(TAG, "Clicked Puzzle Next")
-        // Determine if there are user guesses.
-/*        var guesses = false
-        gameState?.playerGrid?.forEach {
-            if (it > 0) {
-                guesses = true
-            }
-        }
-        if (guesses == false) {
-            nextPuzzle()
-            return
-        }
-
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Change Puzzle")
-        builder.setMessage("Are you sure you want to change puzzle?")
-        builder.setPositiveButton("Change") { _, _ ->
-            nextPuzzle()
-        }
-        builder.setNegativeButton("Back") { _, _ -> }
-        builder.show()*/
-
         nextPuzzle()
     }
 
