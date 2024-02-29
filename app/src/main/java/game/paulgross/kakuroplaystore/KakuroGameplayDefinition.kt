@@ -344,7 +344,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         val guessesToSave = encodePlayerGuesses(playerGuesses)
         val guessesToSaveString = "$currPuzzle.Guesses = $guessesToSave"
-        Log.d(TAG, "Saving guesses: $guessesToSaveString")
+        Log.d(TAG, "SAVING GUESSES: $guessesToSaveString = $guessesToSave")
         engine?.saveDataString(guessesToSaveString, guessesToSave)
 
         val possiblesToSave = encodePossibles(playerPossibles)
@@ -359,7 +359,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
         Log.d(TAG, "Restoring State...")
 
-/*        val restoredPuzzleIndex = engine?.loadDataString("CurrPuzzleIndex", "").toString()
+        /*        val restoredPuzzleIndex = engine?.loadDataString("CurrPuzzleIndex", "").toString()
         currPuzzleIndex = if (restoredPuzzleIndex == "") {
             0
         } else {
@@ -376,6 +376,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
         Log.d(TAG, "currPuzzle = $currPuzzle")
 
         startPuzzleFromString(currPuzzle)
+//        restoreCurrentPuzzleState()
+    }
+
+    private fun restoreCurrentPuzzleState() {
 
         val guessesString = engine?.loadDataString("$currPuzzle.Guesses", "")
         Log.d(TAG, "guessesString = $guessesString")
@@ -407,6 +411,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         for (index in 1..< builtinPuzzles.size) {
             if (currPuzzle == builtinPuzzles[index]) {
                 startPuzzleFromString(builtinPuzzles[index - 1])
+//                restoreCurrentPuzzleState()
                 return true
             }
         }
@@ -423,6 +428,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         for (index in 0..< builtinPuzzles.size-1) {
             if (currPuzzle == builtinPuzzles[index]) {
                 startPuzzleFromString(builtinPuzzles[index + 1])
+//                restoreCurrentPuzzleState()
                 return true
             }
         }
@@ -460,6 +466,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         playerErrors.clear()
         playerPossibles.clear()
+
+        restoreCurrentPuzzleState()
     }
 
     private fun encodeErrors(playerErrors: Any): String {
