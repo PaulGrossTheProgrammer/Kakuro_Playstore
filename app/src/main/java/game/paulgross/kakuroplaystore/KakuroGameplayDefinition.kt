@@ -408,6 +408,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun prevPuzzle(message: GameEngine.Message): Boolean {
+        Log.d(TAG, "prevPuzzle() running")
         for (index in 1..< builtinPuzzles.size) {
             if (currPuzzle == builtinPuzzles[index]) {
                 startPuzzleFromString(builtinPuzzles[index - 1])
@@ -415,6 +416,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 return true
             }
         }
+        // TODO - If no puzzle found, use default puzzle
 /*
         if (currPuzzleIndex > 0) {
             currPuzzleIndex--
@@ -425,6 +427,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         return false
     }
     private fun nextPuzzle(message: GameEngine.Message): Boolean {
+        Log.d(TAG, "nextPuzzle() running")
         for (index in 0..< builtinPuzzles.size-1) {
             if (currPuzzle == builtinPuzzles[index]) {
                 startPuzzleFromString(builtinPuzzles[index + 1])
@@ -432,6 +435,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 return true
             }
         }
+        // TODO - If no puzzle found, use default puzzle
 /*
         if (currPuzzleIndex < builtinPuzzles.size - 1) {
             currPuzzleIndex++
