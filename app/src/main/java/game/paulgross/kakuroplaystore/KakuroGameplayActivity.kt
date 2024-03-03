@@ -34,8 +34,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val packageInfo = applicationContext.packageManager.getPackageInfo(packageName, 0)
         Log.d(TAG, "onCreate() starting version: " + packageInfo.versionName)
 
-        singleton = this
-
         val isTv = applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")
 
         if (isTv) {
@@ -85,6 +83,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         // Maybe cache non-zero measuredWidth values and compare???
         // NOTE: setScreenSizes() also forces a redraw.
     }
+
 
     //
     // Controller handling: D-pad used by Google TV
@@ -519,7 +518,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         builder.setTitle("Restart Puzzle")
         builder.setMessage("Are you sure you want to restart?")
         builder.setPositiveButton("Reset") { _, _ ->
-            findViewById<PlayingGridView>(R.id.viewPlayGrid).clearSelectedIndex()
             findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
             engine?.queueMessageFromActivity(GameEngine.Message("RestartPuzzle"), ::queueMessage)
         }
@@ -537,13 +535,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private fun prevPuzzle() {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).resetTouchAreas()
         engine?.queueMessageFromActivity(GameEngine.Message("PrevPuzzle"), ::queueMessage)
     }
 
     private fun nextPuzzle() {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
-        findViewById<PlayingGridView>(R.id.viewPlayGrid).resetTouchAreas()
         engine?.queueMessageFromActivity(GameEngine.Message("NextPuzzle"), ::queueMessage)
     }
 
@@ -605,7 +601,5 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     companion object {
         private val TAG = KakuroGameplayActivity::class.java.simpleName
-
-        var singleton: KakuroGameplayActivity? = null
-   }
+  }
 }

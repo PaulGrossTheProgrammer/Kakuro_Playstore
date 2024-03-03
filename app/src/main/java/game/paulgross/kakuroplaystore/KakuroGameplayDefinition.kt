@@ -207,7 +207,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private fun encodeState(): GameEngine.Message {
         val message = GameEngine.Message("State")
-//        message.setKeyString("i", currPuzzleIndex.toString())
         message.setKeyString("w", puzzleWidth.toString())
         message.setKeyString("g", encodePlayerGuesses(playerGuesses))
         message.setKeyString("h", encodeHints(puzzleHints))
@@ -230,12 +229,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
             Log.d(TAG, "Missing width, grid and and/or hints.")
             return StateVariables(mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf(), false)
         }
-
-/*        var puzzleIndex = message.getString("i")?.toInt()
-        if (puzzleIndex == null) {
-            puzzleIndex = 0
-        }
-        currPuzzleIndex = puzzleIndex*/
 
         val width = message.getString("w")?.toInt()
         if (width == null || width < 1) {

@@ -42,7 +42,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var possiblesTextSize = 1f
     private var borderThickness =1f
 
-    // TODO - stores these so that restarts and screen rotations will preserve the settings.
+    // TODO - store these so that restarts and screen rotations will preserve the settings.
     private var currDisplayRows = MAX_DISPLAY_ROWS
     private var displayZoom = 0
     private var xSquaresOffset = 0
@@ -59,7 +59,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private lateinit var gameplayActivity: KakuroGameplayActivity
 
-    // TODO: Make a bunch of paint objects to execute onDraw() faster...
+    // TODO: Make a bunch of paint objects here to execute onDraw() faster...
     private val paint = Paint()
     private val selectedByNavPaint = Paint()
 
@@ -95,7 +95,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         selectedByNavPaint.style = Paint.Style.STROKE
         selectedByNavPaint.color = Color.CYAN
 
-        // Attach the custom TouchListener
         setOnTouchListener(CustomListener(this))
     }
 
@@ -182,17 +181,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
     }
 
-    fun clearSelectedIndex() {
-        selectedIndex = -1
-        invalidate()  // Force the grid to be redrawn
-    }
-
     fun getSelectedIndex(): Int {
         return selectedIndex
     }
 
     fun setIndexToDefault() {
-        Log.d(TAG, "setIndexToDefault(): Setting selectedIndex to the default of $defaultIndex")
         selectedIndex = defaultIndex
         invalidate()
     }
@@ -214,7 +207,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             ySquaresOffset++
         }
 
-        // TODO - -save zoom and offsets
         saveUIState()
 
         setScreenSizes()  // This also forces a redraw
@@ -230,7 +222,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         editor.apply()
     }
 
-    fun resetTouchAreas() {
+    private fun resetTouchAreas() {
         playSquareTouchLookUpId.clear()
     }
 
@@ -334,7 +326,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         // TODO - pre-allocate the TouchArea for each on screen index.
         // So that we can remove the allocation code and boundary intersect code from onDraw().
 
-//        playSquareTouchLookUpId.clear()
         resetTouchAreas()
 
         currViewWidth = measuredWidth
@@ -375,6 +366,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         xSquaresOffset = 0
         ySquaresOffset = 0
 
+        resetTouchAreas()
         saveUIState()
     }
 
