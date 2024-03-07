@@ -226,7 +226,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         playSquareTouchLookUpId.clear()
     }
 
-    fun scrollGridDir(dir: KakuroGameplayActivity.NavDirection, repeats: Int) {
+    private fun scrollGridDir(dir: KakuroGameplayActivity.NavDirection, repeats: Int) {
         when (dir) {
             KakuroGameplayActivity.NavDirection.CURSOR_LEFT -> scrollGridLeft(repeats)
             KakuroGameplayActivity.NavDirection.CURSOR_RIGHT -> scrollGridRight(repeats)
@@ -307,7 +307,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var lastKnownWidth = 0
     private var lastKnownHeight = 0
 
-    fun setScreenSizes() {
+    private fun setScreenSizes() {
         Log.d("PlayingGridView", "setScreenSizes(): Width = $measuredWidth, height = $measuredHeight")
         if (gameState == null) {
             Log.d("PlayingGridView", "setScreenSizes() exiting because there is not yet a gameState.")
