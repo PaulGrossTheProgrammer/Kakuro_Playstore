@@ -38,6 +38,17 @@ object KakuroGameplayDefinition: GameplayDefinition {
     enum class Direction {ACROSS, DOWN}
     data class Hint(val index: Int, val direction: Direction, var total: Int)
 
+    // TODO: An undo/redo buffer that saves the game state.
+    // TODO: Should we allow this buffer to be saved between game loads?
+    // Not for the moment. Just clear the buffer on change of puzzle.
+    // So startPuzzle clears these buffers???
+    // Add to the undo buffer on submitGuess and togglePossible. (Anything else?)
+    // Redo is allowed until a new move is made, then the redo states are cleared.
+    // Put the undone moves onto a redo buffer, which is cleared once a move is made.
+    // Redo transfers states from the redo buffer to the undo buffer.
+    private val undoBuffer = mutableListOf<GameEngine.Message>()
+    private val redoBuffer = mutableListOf<GameEngine.Message>()
+
     override fun setEngine(engine: GameEngine) {
         this.engine = engine
 
@@ -58,6 +69,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         Log.d(TAG, "Plugin the gameplay functions ...")
         engine.registerHandler("Guess", ::submitGuess)
         engine.registerHandler("Possible", ::togglePossible)
+        engine.registerHandler("Undo", ::undo)
+        engine.registerHandler("Redo", ::redo)
         engine.registerHandler("RestartPuzzle", ::restartPuzzle)
 
         engine.registerHandler("PrevPuzzle", ::prevPuzzle)
@@ -112,6 +125,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
         playerPossibles.clear()
         playerErrors.clear()
+        undoBuffer.clear()
+        redoBuffer.clear()
         return true
     }
 
@@ -141,6 +156,12 @@ object KakuroGameplayDefinition: GameplayDefinition {
             Log.d(TAG, "Digit must be from 0 to 9.")
             return false
         }
+
+        val currentState = encodeState()
+        Log.d(TAG,"Saving the current state to the UNDO buffer before applying change...")
+        Log.d(TAG,"SAVING GUESSES: ${currentState.getString("g")}")
+        undoBuffer.add(currentState)
+        redoBuffer.clear()
 
         playerGuesses[index] = value
         playerPossibles.remove(index)
@@ -179,6 +200,12 @@ object KakuroGameplayDefinition: GameplayDefinition {
             return false
         }
 
+        // Below here we know we have a valid selection from the user.
+        val currentState = encodeState()
+        Log.d(TAG,"Saving the current state to the UNDO buffer before applying change...")
+        undoBuffer.add(currentState)
+        redoBuffer.clear()
+
         // determine the current possibles for the index
         var possible = playerPossibles[index]
         if (possible == null) {
@@ -202,6 +229,54 @@ object KakuroGameplayDefinition: GameplayDefinition {
             playerPossibles[index] = possible
         }
 
+        return true
+    }
+
+    private fun undo(message: GameEngine.Message): Boolean {
+
+        if (undoBuffer.isEmpty()) {
+            return false
+        }
+
+        // Save the current state for the redo buffer
+        redoBuffer.add(encodeState())
+
+        val prevState = undoBuffer.removeLast()
+        var guesses = prevState.getString("g")
+        var possibles = prevState.getString("p")
+
+        if (guesses == null) {
+            guesses  = ""
+        }
+        if (possibles == null) {
+            possibles  = ""
+        }
+
+        setPuzzleState(guesses, possibles)
+
+        return true
+    }
+
+    private fun redo(message: GameEngine.Message): Boolean {
+        if (redoBuffer.isEmpty()) {
+            return false
+        }
+
+        // Save the current state for the redo buffer
+        undoBuffer.add(encodeState())
+
+        val redoState = redoBuffer.removeLast()
+        var guesses = redoState.getString("g")
+        var possibles = redoState.getString("p")
+
+        if (guesses == null) {
+            guesses  = ""
+        }
+        if (possibles == null) {
+            possibles  = ""
+        }
+
+        setPuzzleState(guesses, possibles)
         return true
     }
 
@@ -358,7 +433,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         startPuzzleFromString(currPuzzle)
     }
 
-    private fun restoreCurrentPuzzleState() {
+    private fun restoreSavedPuzzleState() {
 
         val guessesKeyString = "$currPuzzle.Guesses"
         val guessesString = engine?.loadDataString(guessesKeyString, "")
@@ -381,6 +456,34 @@ object KakuroGameplayDefinition: GameplayDefinition {
         Log.d(TAG, "Size of play grid = ${playerGuesses.size}")
 
         val possiblesString = engine?.loadDataString("$currPuzzle.Possibles", "")
+        playerPossibles = decodePossibles(possiblesString!!)
+
+        markPlayerErrors()
+    }
+
+    private fun setPuzzleState(guessesString: String, possiblesString: String) {
+
+//        val guessesKeyString = "$currPuzzle.Guesses"
+//        val guessesString = engine?.loadDataString(guessesKeyString, "")
+
+        playerGuesses.clear()
+        if (guessesString == "") {
+            puzzleSolution.forEach { square ->
+                if (square == -1) {
+                    playerGuesses.add(-1)
+                } else {
+                    playerGuesses.add(0)
+                }
+            }
+        } else {
+            val guessList = guessesString?.split(":")
+            guessList?.forEach {guessString ->
+                playerGuesses.add(guessString.toInt())
+            }
+        }
+        Log.d(TAG, "Size of play grid = ${playerGuesses.size}")
+
+//        val possiblesString = engine?.loadDataString("$currPuzzle.Possibles", "")
         playerPossibles = decodePossibles(possiblesString!!)
 
         markPlayerErrors()
@@ -427,14 +530,18 @@ object KakuroGameplayDefinition: GameplayDefinition {
             }
         }
         puzzleHeight = puzzleSolution.size / puzzleWidth
-        Log.d(TAG, "Puzzle height = $puzzleHeight")
+//        Log.d(TAG, "Puzzle height = $puzzleHeight")
         puzzleHints.clear()
         generateHints()
 
         playerErrors.clear()
         playerPossibles.clear()
 
-        restoreCurrentPuzzleState()
+        restoreSavedPuzzleState()
+
+        // TODO: Remove this in the future when we put the buffers in the saved state.
+        undoBuffer.clear()
+        redoBuffer.clear()
     }
 
     private fun encodeErrors(playerErrors: Any): String {

@@ -126,6 +126,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private var zoomInView: View? = null
     private var zoomOutView: View? = null
 
+    private var undoView: View? = null
+    private var redoView: View? = null
+
     private var settingsView: View? = null
     private var resetView: View? = null
     private var prevPuzzleView: View? = null
@@ -187,10 +190,15 @@ class KakuroGameplayActivity : AppCompatActivity() {
         zoomInView = findViewById(R.id.imageButtonZoomIn)
         zoomOutView = findViewById(R.id.imageButtonZoomOut)
 
+        undoView = findViewById(R.id.imageButtonUndo)
+        redoView = findViewById(R.id.imageButtonRedo)
+
         settingsView = findViewById(R.id.imageButtonSettings)
         resetView = findViewById(R.id.textViewReset)
         nextPuzzleView = findViewById(R.id.textViewNextPuzzle)
         prevPuzzleView = findViewById(R.id.textViewPrevPuzzle)
+
+        // Row 1 navigation - digits for guesses and possibles.
 
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_RIGHT)] = digit2View!!
         dpadNavLookup[NavCmd(digit1View!!, NavDirection.CURSOR_DOWN)] = digit4View!!
@@ -231,19 +239,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(digit9View!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
         dpadNavLookup[NavCmd(digit9View!!, NavDirection.CURSOR_DOWN)] = digitClearView!!
 
-        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_UP)] = digit8View!!
-        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
-        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_DOWN)] = zoomInView!!
-
-        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_UP)] = digitClearView!!
-        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_RIGHT)] = zoomOutView!!
-        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_DOWN)] = resetView!!
-
-        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_UP)] = digitClearView!!
-        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_LEFT)] = zoomInView!!
-        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
-        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_DOWN)] = prevPuzzleView!!
-
         dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_LEFT)] = digit3View!!
         dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_RIGHT)] = possible2View!!
         dpadNavLookup[NavCmd(possible1View!!, NavDirection.CURSOR_DOWN)] = possible4View!!
@@ -272,16 +267,44 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(possible7View!!, NavDirection.CURSOR_UP)] = possible4View!!
         dpadNavLookup[NavCmd(possible7View!!, NavDirection.CURSOR_LEFT)] = digit9View!!
         dpadNavLookup[NavCmd(possible7View!!, NavDirection.CURSOR_RIGHT)] = possible8View!!
-        dpadNavLookup[NavCmd(possible7View!!, NavDirection.CURSOR_DOWN)] = prevPuzzleView!!
+        dpadNavLookup[NavCmd(possible7View!!, NavDirection.CURSOR_DOWN)] = undoView!!
 
         dpadNavLookup[NavCmd(possible8View!!, NavDirection.CURSOR_UP)] = possible5View!!
         dpadNavLookup[NavCmd(possible8View!!, NavDirection.CURSOR_LEFT)] = possible7View!!
         dpadNavLookup[NavCmd(possible8View!!, NavDirection.CURSOR_RIGHT)] = possible9View!!
-        dpadNavLookup[NavCmd(possible8View!!, NavDirection.CURSOR_DOWN)] = nextPuzzleView!!
+        dpadNavLookup[NavCmd(possible8View!!, NavDirection.CURSOR_DOWN)] = undoView!!
 
         dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_UP)] = possible6View!!
         dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_LEFT)] = possible8View!!
-        dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_DOWN)] = nextPuzzleView!!
+        dpadNavLookup[NavCmd(possible9View!!, NavDirection.CURSOR_DOWN)] = redoView!!
+
+        // Row 2 navigation - digit clear.
+
+        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_UP)] = digit8View!!
+        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_RIGHT)] = possible7View!!
+        dpadNavLookup[NavCmd(digitClearView!!, NavDirection.CURSOR_DOWN)] = zoomInView!!
+
+        // Row 3 navigation - zoom in/out and undo.
+
+        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_UP)] = digitClearView!!
+        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_RIGHT)] = zoomOutView!!
+        dpadNavLookup[NavCmd(zoomInView!!, NavDirection.CURSOR_DOWN)] = resetView!!
+
+        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_UP)] = digitClearView!!
+        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_LEFT)] = zoomInView!!
+        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_RIGHT)] = undoView!!
+        dpadNavLookup[NavCmd(zoomOutView!!, NavDirection.CURSOR_DOWN)] = prevPuzzleView!!
+
+        dpadNavLookup[NavCmd(undoView!!, NavDirection.CURSOR_UP)] = possible8View!!
+        dpadNavLookup[NavCmd(undoView!!, NavDirection.CURSOR_LEFT)] = zoomOutView!!
+        dpadNavLookup[NavCmd(undoView!!, NavDirection.CURSOR_RIGHT)] = redoView!!
+        dpadNavLookup[NavCmd(undoView!!, NavDirection.CURSOR_DOWN)] = settingsView!!
+
+        dpadNavLookup[NavCmd(redoView!!, NavDirection.CURSOR_UP)] = possible9View!!
+        dpadNavLookup[NavCmd(redoView!!, NavDirection.CURSOR_LEFT)] = undoView!!
+        dpadNavLookup[NavCmd(redoView!!, NavDirection.CURSOR_DOWN)] = settingsView!!
+
+        // Row 4 navigation - reset, puzzle control and settings.
 
         dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_UP)] = zoomInView!!
         dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_RIGHT)] = prevPuzzleView!!
@@ -294,7 +317,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_LEFT)] = prevPuzzleView!!
         dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_RIGHT)] = settingsView!!
 
-        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_UP)] = possible9View!!
+        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_UP)] = redoView!!
         dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_LEFT)] = nextPuzzleView!!
     }
 
@@ -523,6 +546,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
+    }
+
+    fun onClickUndo(view: View) {
+        Log.d("TAG", "Undo was clicked....")
+        val message = GameEngine.Message("Undo")
+        engine?.queueMessageFromActivity(message, ::queueMessage)
+    }
+
+    fun onClickRedo(view: View) {
+        Log.d("TAG", "Redo was clicked....")
+        val message = GameEngine.Message("Redo")
+        engine?.queueMessageFromActivity(message, ::queueMessage)
     }
 
     fun onClickPrevPuzzle(view: View) {

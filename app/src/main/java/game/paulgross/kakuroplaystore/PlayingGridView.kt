@@ -659,7 +659,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         private val TAG = PlayingGridView::class.java.simpleName
 
         const val OUTSIDE_GRID_MARGIN = 1.4f
-        const val MAX_DISPLAY_ROWS = 10
+        const val MAX_DISPLAY_ROWS = 14
         const val MIN_DISPLAY_ROWS = 5
     }
 }
