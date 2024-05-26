@@ -414,6 +414,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         val possiblesToSave = encodePossibles(playerPossibles)
         engine?.saveDataString("$currPuzzle.Possibles", possiblesToSave)
         Log.d(TAG, "Saved game state.")
+
+        // TODO - also save the undo and redo buffer.
     }
 
     private fun restoreState() {
