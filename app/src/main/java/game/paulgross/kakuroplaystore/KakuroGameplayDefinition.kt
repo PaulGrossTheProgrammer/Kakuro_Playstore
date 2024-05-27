@@ -46,8 +46,12 @@ object KakuroGameplayDefinition: GameplayDefinition {
     // Redo is allowed until a new move is made, then the redo states are cleared.
     // Put the undone moves onto a redo buffer, which is cleared once a move is made.
     // Redo transfers states from the redo buffer to the undo buffer.
-    private val undoBuffer = mutableListOf<GameEngine.Message>()
-    private val redoBuffer = mutableListOf<GameEngine.Message>()
+    // FIXME: Do I need to change this to Strings with guesses and possibles???
+
+    data class PlayState(val guesses: MutableList<Int>, val possibles: MutableMap<Int, String>)
+
+    private val undoBuffer = mutableListOf<PlayState>()
+    private val redoBuffer = mutableListOf<PlayState>()
 
     override fun setEngine(engine: GameEngine) {
         this.engine = engine
@@ -157,8 +161,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
             return false
         }
 
-        val currentState = encodeState()
-        undoBuffer.add(currentState)
+        val currentPlayState = PlayState(playerGuesses.toMutableList(), playerPossibles.toMutableMap())
+        undoBuffer.add(currentPlayState)
         redoBuffer.clear()
 
         playerGuesses[index] = value
@@ -199,8 +203,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
 
         // Below here we know we have a valid selection from the user.
-        val currentState = encodeState()
-        undoBuffer.add(currentState)
+        val currentPlayState = PlayState(playerGuesses.toMutableList(), playerPossibles.toMutableMap())
+        undoBuffer.add(currentPlayState)
         redoBuffer.clear()
 
         // determine the current possibles for the index
@@ -230,26 +234,21 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun undo(message: GameEngine.Message): Boolean {
-
+        Log.d(TAG, "Gameplay - undo")
         if (undoBuffer.isEmpty()) {
+            Log.d(TAG, "undo buffer is empty.")
             return false
         }
 
         // Save the current state for the redo buffer
-        redoBuffer.add(encodeState())
+        redoBuffer.add(PlayState(playerGuesses.toMutableList(), playerPossibles.toMutableMap()))
 
         val prevState = undoBuffer.removeLast()
-        var guesses = prevState.getString("g")
-        var possibles = prevState.getString("p")
+        Log.d(TAG, "From buffer: guesses = ${prevState.guesses}")
+        playerGuesses = prevState.guesses
+        playerPossibles = prevState.possibles
 
-        if (guesses == null) {
-            guesses  = ""
-        }
-        if (possibles == null) {
-            possibles  = ""
-        }
-
-        setPuzzleFromState(guesses, possibles)
+        markPlayerErrors()
 
         return true
     }
@@ -260,20 +259,15 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
 
         // Save the current state for the redo buffer
-        undoBuffer.add(encodeState())
+        undoBuffer.add(PlayState(playerGuesses.toMutableList(), playerPossibles.toMutableMap()))
+        markPlayerErrors()
 
         val redoState = redoBuffer.removeLast()
-        var guesses = redoState.getString("g")
-        var possibles = redoState.getString("p")
+        playerGuesses = redoState.guesses
+        playerPossibles = redoState.possibles
 
-        if (guesses == null) {
-            guesses  = ""
-        }
-        if (possibles == null) {
-            possibles  = ""
-        }
+        markPlayerErrors()
 
-        setPuzzleFromState(guesses, possibles)
         return true
     }
 
@@ -361,9 +355,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
         var hints = ""
         puzzleHints.forEachIndexed { index, hint ->
             if (hint is Hint) {
-                hint.index
-                hint.direction
-                hint.total
                 hints += "${hint.index}${hint.direction}${hint.total}"
                 if (index < puzzleHints.size - 1) {
                     hints += ":"
@@ -413,6 +404,19 @@ object KakuroGameplayDefinition: GameplayDefinition {
         Log.d(TAG, "Saved game state.")
 
         // TODO - also save the undo and redo buffer.
+        val undoBufferAsString = StringBuilder()
+        undoBuffer.forEach { state ->
+            if (undoBufferAsString.isNotEmpty()) {
+                undoBufferAsString.append("<STATE>")
+            }
+            undoBufferAsString.append("g=")
+            undoBufferAsString.append(encodePlayerGuesses(state.guesses))
+            undoBufferAsString.append(",p=")
+            undoBufferAsString.append(encodePossibles(state.possibles))
+        }
+        Log.d(TAG, "TODO: Write undo buffer: $undoBufferAsString")
+        val undoBufferSaveNameString = "$currPuzzle.Undo"
+//        engine?.saveDataString(undoBufferSaveNameString, undoBufferAsString.toString())
     }
 
     private fun restoreState() {
@@ -430,6 +434,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
         Log.d(TAG, "restoreState(): currPuzzle = $currPuzzle")
 
         startPuzzleFromString(currPuzzle)
+
+        // TODO: Also restore the undo and redo buffers
+        val undoBufferSaveNameString = "$currPuzzle.Undo"
+//        val undoBufferString = engine?.loadDataString(undoBufferSaveNameString, "")
+
     }
 
     private fun restoreSavedPuzzleState() {
@@ -460,7 +469,19 @@ object KakuroGameplayDefinition: GameplayDefinition {
         markPlayerErrors()
     }
 
-    private fun setPuzzleFromState(guessesString: String, possiblesString: String) {
+    private fun prevPuzzle(message: GameEngine.Message): Boolean {
+        for (index in 1..< builtinPuzzles.size) {
+            if (currPuzzle == builtinPuzzles[index]) {
+                startPuzzleFromString(builtinPuzzles[index - 1])
+                return true
+            }
+        }
+        // TODO - If no puzzle found, use default puzzle
+
+        return false
+    }
+
+/*    private fun setPuzzleFromState(guessesString: String, possiblesString: String) {
 
         playerGuesses.clear()
         if (guessesString == "") {
@@ -480,19 +501,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         playerPossibles = decodePossibles(possiblesString!!)
 
         markPlayerErrors()
-    }
+    }*/
 
-    private fun prevPuzzle(message: GameEngine.Message): Boolean {
-        for (index in 1..< builtinPuzzles.size) {
-            if (currPuzzle == builtinPuzzles[index]) {
-                startPuzzleFromString(builtinPuzzles[index - 1])
-                return true
-            }
-        }
-        // TODO - If no puzzle found, use default puzzle
-
-        return false
-    }
     private fun nextPuzzle(message: GameEngine.Message): Boolean {
         for (index in 0..< builtinPuzzles.size-1) {
             if (currPuzzle == builtinPuzzles[index]) {
