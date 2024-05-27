@@ -158,8 +158,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
 
         val currentState = encodeState()
-        Log.d(TAG,"Saving the current state to the UNDO buffer before applying change...")
-        Log.d(TAG,"SAVING GUESSES: ${currentState.getString("g")}")
         undoBuffer.add(currentState)
         redoBuffer.clear()
 
@@ -202,7 +200,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         // Below here we know we have a valid selection from the user.
         val currentState = encodeState()
-        Log.d(TAG,"Saving the current state to the UNDO buffer before applying change...")
         undoBuffer.add(currentState)
         redoBuffer.clear()
 
@@ -252,7 +249,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
             possibles  = ""
         }
 
-        setPuzzleState(guesses, possibles)
+        setPuzzleFromState(guesses, possibles)
 
         return true
     }
@@ -276,7 +273,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
             possibles  = ""
         }
 
-        setPuzzleState(guesses, possibles)
+        setPuzzleFromState(guesses, possibles)
         return true
     }
 
@@ -463,10 +460,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         markPlayerErrors()
     }
 
-    private fun setPuzzleState(guessesString: String, possiblesString: String) {
-
-//        val guessesKeyString = "$currPuzzle.Guesses"
-//        val guessesString = engine?.loadDataString(guessesKeyString, "")
+    private fun setPuzzleFromState(guessesString: String, possiblesString: String) {
 
         playerGuesses.clear()
         if (guessesString == "") {
@@ -483,9 +477,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 playerGuesses.add(guessString.toInt())
             }
         }
-        Log.d(TAG, "Size of play grid = ${playerGuesses.size}")
-
-//        val possiblesString = engine?.loadDataString("$currPuzzle.Possibles", "")
         playerPossibles = decodePossibles(possiblesString!!)
 
         markPlayerErrors()
