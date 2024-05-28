@@ -390,6 +390,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     /**
      * Saves the current Game state.
+     *
+     * FIXME: When the puzzle is changed, the undo and redo buffers get cleared, which is NOT what was intended.
      */
     private fun saveState() {
         engine?.saveDataString("CurrPuzzle", currPuzzle)
@@ -400,33 +402,25 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         val possiblesToSave = encodePossibles(playerPossibles)
         engine?.saveDataString("$currPuzzle.Possibles", possiblesToSave)
+
+        saveUserBuffer("$currPuzzle.Undo", undoBuffer)
+        saveUserBuffer("$currPuzzle.Redo", redoBuffer)
+
         Log.d(TAG, "Saved game state.")
+    }
 
-        val undoBufferAsString = StringBuilder()
-        undoBuffer.forEach { state ->
-            if (undoBufferAsString.isNotEmpty()) {
-                undoBufferAsString.append("<STATE>")
+    private fun saveUserBuffer(saveName: String, buffer:  MutableList<KakuroGameplayDefinition.PlayState>) {
+        val bufferAsString = StringBuilder()
+        buffer.forEach { state ->
+            if (bufferAsString.isNotEmpty()) {
+                bufferAsString.append("<STATE>")
             }
-            undoBufferAsString.append("g=")
-            undoBufferAsString.append(encodePlayerGuesses(state.guesses))
-            undoBufferAsString.append(",p=")
-            undoBufferAsString.append(encodePossibles(state.possibles))
+            bufferAsString.append("g=")
+            bufferAsString.append(encodePlayerGuesses(state.guesses))
+            bufferAsString.append(",p=")
+            bufferAsString.append(encodePossibles(state.possibles))
         }
-        val undoBufferSaveNameString = "$currPuzzle.Undo"
-        engine?.saveDataString(undoBufferSaveNameString, undoBufferAsString.toString())
-
-        val redoBufferAsString = StringBuilder()
-        redoBuffer.forEach { state ->
-            if (redoBufferAsString.isNotEmpty()) {
-                redoBufferAsString.append("<STATE>")
-            }
-            redoBufferAsString.append("g=")
-            redoBufferAsString.append(encodePlayerGuesses(state.guesses))
-            redoBufferAsString.append(",p=")
-            redoBufferAsString.append(encodePossibles(state.possibles))
-        }
-        val redoBufferSaveNameString = "$currPuzzle.Redo"
-        engine?.saveDataString(redoBufferSaveNameString, redoBufferAsString.toString())
+        engine?.saveDataString(saveName, bufferAsString.toString())
     }
 
     private fun restoreState() {
@@ -444,25 +438,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
         Log.d(TAG, "restoreState(): currPuzzle = $currPuzzle")
 
         startPuzzleFromString(currPuzzle)
-
-        val undoBufferSaveNameString = "$currPuzzle.Undo"
-        val redoBufferSaveNameString = "$currPuzzle.Redo"
-
-        val undoBufferString = engine?.loadDataString(undoBufferSaveNameString, "")
-        if (!undoBufferString.isNullOrEmpty()) {
-            val bufferSplit = undoBufferString?.split("<STATE>")
-            bufferSplit?.forEach { state ->
-                undoBuffer.add(convertBufferStateStringToState(state))
-            }
-        }
-
-        val redoBufferString = engine?.loadDataString(redoBufferSaveNameString, "")
-        if (!redoBufferString.isNullOrEmpty()) {
-            val bufferSplit = redoBufferString?.split("<STATE>")
-            bufferSplit?.forEach { state ->
-                redoBuffer.add(convertBufferStateStringToState(state))
-            }
-        }
     }
 
     private fun convertBufferStateStringToState(stateString: String): PlayState {
@@ -513,8 +488,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun prevPuzzle(message: GameEngine.Message): Boolean {
+        println("Change to PREV puzzle.")
         for (index in 1..< builtinPuzzles.size) {
             if (currPuzzle == builtinPuzzles[index]) {
+                undoBuffer.clear()
+                redoBuffer.clear()
                 startPuzzleFromString(builtinPuzzles[index - 1])
                 return true
             }
@@ -525,8 +503,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun nextPuzzle(message: GameEngine.Message): Boolean {
+        println("Change to NEXT puzzle.")
         for (index in 0..< builtinPuzzles.size-1) {
             if (currPuzzle == builtinPuzzles[index]) {
+                undoBuffer.clear()
+                redoBuffer.clear()
                 startPuzzleFromString(builtinPuzzles[index + 1])
                 return true
             }
@@ -562,9 +543,26 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         restoreSavedPuzzleState()
 
-        // TODO: Remove this in the future when we put the buffers in the saved state.
-        undoBuffer.clear()
-        redoBuffer.clear()
+        // Load the saved undo and redo buffers.
+        val undoBufferSaveNameString = "$currPuzzle.Undo"
+        val redoBufferSaveNameString = "$currPuzzle.Redo"
+
+        val undoBufferString = engine?.loadDataString(undoBufferSaveNameString, "")
+        if (!undoBufferString.isNullOrEmpty()) {
+            val bufferSplit = undoBufferString?.split("<STATE>")
+            bufferSplit?.forEach { state ->
+                undoBuffer.add(convertBufferStateStringToState(state))
+            }
+        }
+
+        val redoBufferString = engine?.loadDataString(redoBufferSaveNameString, "")
+        if (!redoBufferString.isNullOrEmpty()) {
+            val bufferSplit = redoBufferString?.split("<STATE>")
+            bufferSplit?.forEach { state ->
+                redoBuffer.add(convertBufferStateStringToState(state))
+            }
+        }
+
     }
 
     private fun encodeErrors(playerErrors: Any): String {
