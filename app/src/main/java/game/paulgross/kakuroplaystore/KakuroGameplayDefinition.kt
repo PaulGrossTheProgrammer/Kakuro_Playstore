@@ -234,7 +234,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun undo(message: GameEngine.Message): Boolean {
-        Log.d(TAG, "Gameplay - undo")
         if (undoBuffer.isEmpty()) {
             Log.d(TAG, "undo buffer is empty.")
             return false
@@ -244,7 +243,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
         redoBuffer.add(PlayState(playerGuesses.toMutableList(), playerPossibles.toMutableMap()))
 
         val prevState = undoBuffer.removeLast()
-        Log.d(TAG, "From buffer: guesses = ${prevState.guesses}")
         playerGuesses = prevState.guesses
         playerPossibles = prevState.possibles
 
@@ -486,7 +484,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun prevPuzzle(message: GameEngine.Message): Boolean {
-        println("Change to PREV puzzle.")
         for (index in 1..< builtinPuzzles.size) {
             if (currPuzzle == builtinPuzzles[index]) {
                 undoBuffer.clear()
@@ -501,7 +498,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun nextPuzzle(message: GameEngine.Message): Boolean {
-        println("Change to NEXT puzzle.")
         for (index in 0..< builtinPuzzles.size-1) {
             if (currPuzzle == builtinPuzzles[index]) {
                 undoBuffer.clear()
