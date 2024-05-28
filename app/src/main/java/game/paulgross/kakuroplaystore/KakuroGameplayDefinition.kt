@@ -94,9 +94,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun obfuscatePuzzleString(puzzleString: String) : String {
-        // Pair up the string into decimal pairs (0 - 99), with a zero-pad if there is an odd string length.
-        // convert each decimal pair to HEX (0 - 63) and add one by one to a string
-        // then reverse the HEX digits.
+        // Group the string into decimal pairs (00 - 99), with a zero-pad if there is an odd string length.
+        // Convert each decimal pair to HEX (00 - 63) and append these hex digits to a string.
+        // Then reverse the HEX digits.
 
         var hexString = ""
         var index = 0
@@ -258,9 +258,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
             return false
         }
 
-        // Save the current state for the redo buffer
+        // Save the current state for the undo buffer
         undoBuffer.add(PlayState(playerGuesses.toMutableList(), playerPossibles.toMutableMap()))
-        markPlayerErrors()
 
         val redoState = redoBuffer.removeLast()
         playerGuesses = redoState.guesses
@@ -403,7 +402,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine?.saveDataString("$currPuzzle.Possibles", possiblesToSave)
         Log.d(TAG, "Saved game state.")
 
-        // TODO - also save the undo and redo buffer.
         val undoBufferAsString = StringBuilder()
         undoBuffer.forEach { state ->
             if (undoBufferAsString.isNotEmpty()) {
@@ -414,9 +412,21 @@ object KakuroGameplayDefinition: GameplayDefinition {
             undoBufferAsString.append(",p=")
             undoBufferAsString.append(encodePossibles(state.possibles))
         }
-        Log.d(TAG, "TODO: Write undo buffer: $undoBufferAsString")
         val undoBufferSaveNameString = "$currPuzzle.Undo"
-//        engine?.saveDataString(undoBufferSaveNameString, undoBufferAsString.toString())
+        engine?.saveDataString(undoBufferSaveNameString, undoBufferAsString.toString())
+
+        val redoBufferAsString = StringBuilder()
+        redoBuffer.forEach { state ->
+            if (redoBufferAsString.isNotEmpty()) {
+                redoBufferAsString.append("<STATE>")
+            }
+            redoBufferAsString.append("g=")
+            redoBufferAsString.append(encodePlayerGuesses(state.guesses))
+            redoBufferAsString.append(",p=")
+            redoBufferAsString.append(encodePossibles(state.possibles))
+        }
+        val redoBufferSaveNameString = "$currPuzzle.Redo"
+        engine?.saveDataString(redoBufferSaveNameString, redoBufferAsString.toString())
     }
 
     private fun restoreState() {
@@ -435,10 +445,43 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         startPuzzleFromString(currPuzzle)
 
-        // TODO: Also restore the undo and redo buffers
         val undoBufferSaveNameString = "$currPuzzle.Undo"
-//        val undoBufferString = engine?.loadDataString(undoBufferSaveNameString, "")
+        val redoBufferSaveNameString = "$currPuzzle.Redo"
 
+        val undoBufferString = engine?.loadDataString(undoBufferSaveNameString, "")
+        if (!undoBufferString.isNullOrEmpty()) {
+            val bufferSplit = undoBufferString?.split("<STATE>")
+            bufferSplit?.forEach { state ->
+                undoBuffer.add(convertBufferStateStringToState(state))
+            }
+        }
+
+        val redoBufferString = engine?.loadDataString(redoBufferSaveNameString, "")
+        if (!redoBufferString.isNullOrEmpty()) {
+            val bufferSplit = redoBufferString?.split("<STATE>")
+            bufferSplit?.forEach { state ->
+                redoBuffer.add(convertBufferStateStringToState(state))
+            }
+        }
+    }
+
+    private fun convertBufferStateStringToState(stateString: String): PlayState {
+        val stateSplit = stateString.split(",")
+        var guessesString = ""
+        var possiblesString = ""
+        stateSplit.forEach { item ->
+            val keyValue = item.split("=")
+            val key = keyValue[0]
+            val value = keyValue[1].trim()
+            if (key == "g") {
+                guessesString = value
+            }
+            if (key == "p") {
+                possiblesString = value
+            }
+        }
+
+        return PlayState(decodePlayerGuesses(guessesString), decodePossibles(possiblesString))
     }
 
     private fun restoreSavedPuzzleState() {
@@ -481,28 +524,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
         return false
     }
 
-/*    private fun setPuzzleFromState(guessesString: String, possiblesString: String) {
-
-        playerGuesses.clear()
-        if (guessesString == "") {
-            puzzleSolution.forEach { square ->
-                if (square == -1) {
-                    playerGuesses.add(-1)
-                } else {
-                    playerGuesses.add(0)
-                }
-            }
-        } else {
-            val guessList = guessesString?.split(":")
-            guessList?.forEach {guessString ->
-                playerGuesses.add(guessString.toInt())
-            }
-        }
-        playerPossibles = decodePossibles(possiblesString!!)
-
-        markPlayerErrors()
-    }*/
-
     private fun nextPuzzle(message: GameEngine.Message): Boolean {
         for (index in 0..< builtinPuzzles.size-1) {
             if (currPuzzle == builtinPuzzles[index]) {
@@ -533,7 +554,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
             }
         }
         puzzleHeight = puzzleSolution.size / puzzleWidth
-//        Log.d(TAG, "Puzzle height = $puzzleHeight")
         puzzleHints.clear()
         generateHints()
 

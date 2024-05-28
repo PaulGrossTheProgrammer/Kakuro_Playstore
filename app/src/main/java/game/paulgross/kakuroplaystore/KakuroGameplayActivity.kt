@@ -549,13 +549,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     fun onClickUndo(view: View) {
-        Log.d("TAG", "Undo was clicked....")
         val message = GameEngine.Message("Undo")
         engine?.queueMessageFromActivity(message, ::queueMessage)
     }
 
     fun onClickRedo(view: View) {
-        Log.d("TAG", "Redo was clicked....")
         val message = GameEngine.Message("Redo")
         engine?.queueMessageFromActivity(message, ::queueMessage)
     }
