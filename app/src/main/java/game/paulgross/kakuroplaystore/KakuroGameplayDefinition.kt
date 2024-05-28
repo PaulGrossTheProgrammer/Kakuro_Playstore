@@ -390,8 +390,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     /**
      * Saves the current Game state.
-     *
-     * FIXME: When the puzzle is changed, the undo and redo buffers get cleared, which is NOT what was intended.
      */
     private fun saveState() {
         engine?.saveDataString("CurrPuzzle", currPuzzle)
