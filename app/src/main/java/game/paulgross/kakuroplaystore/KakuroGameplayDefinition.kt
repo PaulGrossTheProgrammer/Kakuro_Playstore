@@ -38,16 +38,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
     enum class Direction {ACROSS, DOWN}
     data class Hint(val index: Int, val direction: Direction, var total: Int)
 
-    // TODO: An undo/redo buffer that saves the game state.
-    // TODO: Should we allow this buffer to be saved between game loads?
-    // Not for the moment. Just clear the buffer on change of puzzle.
-    // So startPuzzle clears these buffers???
-    // Add to the undo buffer on submitGuess and togglePossible. (Anything else?)
-    // Redo is allowed until a new move is made, then the redo states are cleared.
-    // Put the undone moves onto a redo buffer, which is cleared once a move is made.
-    // Redo transfers states from the redo buffer to the undo buffer.
-    // FIXME: Do I need to change this to Strings with guesses and possibles???
-
     data class PlayState(val guesses: MutableList<Int>, val possibles: MutableMap<Int, String>)
 
     private val undoBuffer = mutableListOf<PlayState>()
@@ -64,7 +54,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
                     builtinPuzzles.add(currPuzzleString)
                     val puzzleKey = obfuscatePuzzleString(currPuzzleString)
                     puzzleKeys[currPuzzleString] = puzzleKey
-                    // TODO - use the keys as a string to store info about each puzzle.
                 }
             }
         }
@@ -79,8 +68,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         engine.registerHandler("PrevPuzzle", ::prevPuzzle)
         engine.registerHandler("NextPuzzle", ::nextPuzzle)
-
-        // TODO - implement an undo button...
 
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
         // TODO - BUT decodeState returns StateVariables from this class, which isn't generic.

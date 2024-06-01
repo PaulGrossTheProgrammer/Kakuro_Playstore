@@ -42,9 +42,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var possiblesTextSize = 1f
     private var borderThickness =1f
 
-    // TODO - store these so that restarts and screen rotations will preserve the settings.
     private var currDisplayRows = MAX_DISPLAY_ROWS
-    private var displayZoom = 0
+    private var displayZoom = 0  // FIXME - a new puzzle may not start in a valid zoom state.
     private var xSquaresOffset = 0
     private var ySquaresOffset = 0
 
@@ -99,6 +98,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     fun setGameState(newestGameState: KakuroGameplayDefinition.StateVariables) {
+        // FIXME: If the current zoom state isn't valid for the current puzzle, set it to a valid value.
+
         var needNewSizes = (gameState == null)
 
         var oldWidth = 0
@@ -331,15 +332,22 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         currViewWidth = measuredWidth
         currViewHeight = measuredHeight
 
+        // maxGridDimension is the larger of either puzzleWidth or puzzleHeight
         val maxGridDimension = if (gameState!!.puzzleWidth > gameState!!.puzzleHeight) {
             gameState!!.puzzleWidth } else {gameState!!.puzzleHeight}
 
         currDisplayRows = maxGridDimension + 1 + displayZoom
+        if (currDisplayRows > maxGridDimension + 1) {
+            currDisplayRows = maxGridDimension + 1
+            displayZoom = 0
+        }
         if (currDisplayRows > MAX_DISPLAY_ROWS) {
             currDisplayRows = MAX_DISPLAY_ROWS
+            displayZoom = currDisplayRows - maxGridDimension - 1
         }
         if (currDisplayRows < MIN_DISPLAY_ROWS) {
             currDisplayRows = MIN_DISPLAY_ROWS
+            displayZoom = currDisplayRows - maxGridDimension - 1
         }
 
         squareWidth = (currViewWidth/(currDisplayRows + OUTSIDE_GRID_MARGIN)).toFloat()
