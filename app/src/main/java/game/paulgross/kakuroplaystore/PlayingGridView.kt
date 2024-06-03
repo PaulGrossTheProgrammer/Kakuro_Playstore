@@ -60,6 +60,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     // TODO: Make a bunch of paint objects here to execute onDraw() faster...
     private val paint = Paint()
+
     private val selectedByNavPaint = Paint()
 
     init {
@@ -362,7 +363,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         // scale the paperTexture
         paperTexture = getResizedBitmap(paperTexture, measuredWidth, measuredHeight)
 
-        selectedByNavPaint.strokeWidth = squareWidth * 0.18f
+        selectedByNavPaint.strokeWidth = squareWidth * 0.1f
 
         invalidate()  // Force a redraw
     }
@@ -417,6 +418,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         var index = 0
+        var selectedX: Float? = null
+        var selectedY: Float? = null
 
         for (row in (1..gameState!!.puzzleHeight + 1)) {
             for (col in (1..gameState!!.puzzleWidth + 1)) {
@@ -456,6 +459,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                             selectedIndex = index // Is this OK for both TV and phone/tablet???
                         }
                         val selected = (index == selectedIndex)
+                        if (selected) {
+                            selectedX = currX
+                            selectedY = currY
+                        }
 
                         var possiblesString = gameState!!.possibles[index]
                         if (gridValue != 0) {
@@ -464,16 +471,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                         val error = gameState!!.playerErrors.contains(index)
 
-                        // TODO: Draw the selected border only AFTER everything else.
                         // So at this point, if we have the selected square, just store the currX and currY.
                         drawGuessSquare(index, gridValue.toString(), possiblesString, selected, visible, error,
                             gameState!!.solved, addTouchAreas, currX, currY, canvas, paint)
                     } else {
                         drawBlankSquare(currX, currY, canvas, paint)
                     }
-
-                    // TODO: add scroll touch areas for boundary squares.
-                    // Any square that is partially on the visible area can be used to scroll.
 
                     gameState!!.playerHints.forEach { hint ->
                         if (index == hint.index) {
@@ -499,9 +502,16 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             currY += squareWidth
         }
 
-        // TODO: Move the drawing of the selected square border to here.
+        // Drawing the selected square border.
+        if (navigatedByDpad && selectedX != null && selectedY != null) {
+            drawSelectionSquare(selectedX, selectedY, canvas, selectedByNavPaint)
+        }
 
         Log.d(TAG, "End of onDraw(), now defaultIndex = $defaultIndex")
+    }
+
+    private fun drawSelectionSquare(x: Float, y: Float, canvas: Canvas, paint: Paint) {
+        canvas.drawRect(x, y, x + squareWidth, y + squareWidth, paint)
     }
 
     private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean,
@@ -531,9 +541,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
         canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )
 
-        if (navigatedByDpad && selected) {
-            canvas.drawRect(x, y, x + squareWidth, y + squareWidth, selectedByNavPaint)
-        }
+//        if (navigatedByDpad && selected) {
+//            canvas.drawRect(x, y, x + squareWidth, y + squareWidth, selectedByNavPaint)
+//        }
 
         if (content != "0") {
             // Display the player's guess.
