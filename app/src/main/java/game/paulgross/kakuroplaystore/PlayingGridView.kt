@@ -351,7 +351,15 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             displayZoom = currDisplayRows - maxGridDimension - 1
         }
 
-        squareWidth = (currViewWidth/(currDisplayRows + OUTSIDE_GRID_MARGIN)).toFloat()
+        val borderOffset = (GRID_LEFT_MARGIN + GRID_RIGHT_MARGIN)/2
+
+        // TODO: Determine squareWidth from max of row vs. columns.
+        if (gameState!!.puzzleWidth > gameState!!.puzzleHeight) {
+            squareWidth = (currViewWidth/(gameState!!.puzzleWidth + 1 + displayZoom + borderOffset)).toFloat()
+        } else {
+            squareWidth = (currViewWidth/(gameState!!.puzzleHeight + 1 + displayZoom + borderOffset)).toFloat()
+        }
+
         Log.d("PlayingGridView", "squareWidth = $squareWidth")
         borderThickness = squareWidth * 0.06f
 
@@ -397,11 +405,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             boundaryLeftTouchLookupId.clear()
         }
 
+        // TODO - Draw the combinations in the margins if the user chooses...
 
         paint.color = Color.WHITE
 
-        val xStart = (squareWidth * OUTSIDE_GRID_MARGIN)/2 + xSquaresOffset * squareWidth
-        val yStart = (squareWidth * OUTSIDE_GRID_MARGIN)/2 + ySquaresOffset * squareWidth
+        val xStart = (squareWidth * GRID_LEFT_MARGIN)/2 + xSquaresOffset * squareWidth
+        val yStart = (squareWidth * GRID_TOP_MARGIN)/2 + ySquaresOffset * squareWidth
 
         var currX = xStart
         var currY = yStart
@@ -541,10 +550,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
         canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )
 
-//        if (navigatedByDpad && selected) {
-//            canvas.drawRect(x, y, x + squareWidth, y + squareWidth, selectedByNavPaint)
-//        }
-
         if (content != "0") {
             // Display the player's guess.
             paint.color = Color.BLUE
@@ -679,7 +684,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     companion object {
         private val TAG = PlayingGridView::class.java.simpleName
 
-        const val OUTSIDE_GRID_MARGIN = 1.4f
+        const val GRID_TOP_MARGIN = 2.0f
+        const val GRID_BOTTOM_MARGIN = 0.8f
+        const val GRID_LEFT_MARGIN = 2.0f
+        const val GRID_RIGHT_MARGIN = 0.8f
         const val MAX_DISPLAY_ROWS = 14
         const val MIN_DISPLAY_ROWS = 5
     }
