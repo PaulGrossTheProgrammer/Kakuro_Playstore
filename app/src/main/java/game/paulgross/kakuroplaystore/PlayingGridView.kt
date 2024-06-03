@@ -43,7 +43,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var borderThickness =1f
 
     private var currDisplayRows = MAX_DISPLAY_ROWS
-    private var displayZoom = 0  // FIXME - a new puzzle may not start in a valid zoom state.
+    private var displayZoom = 0
     private var xSquaresOffset = 0
     private var ySquaresOffset = 0
 
@@ -58,9 +58,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private lateinit var gameplayActivity: KakuroGameplayActivity
 
-    // TODO: Make a bunch of paint objects here to execute onDraw() faster...
     private val paint = Paint()
-
     private val selectedByNavPaint = Paint()
 
     init {
@@ -71,24 +69,36 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         val preferences = gameplayActivity.getPreferences(Context.MODE_PRIVATE)
         val zoom = preferences.getString("UI.grid.zoom", null)
         if (zoom != null) {
-            // FIXME - handle invalid string.
-            displayZoom = zoom.toInt()
+            val converted = zoom.toIntOrNull()
+            displayZoom = when (converted) {
+                null -> 0
+                else -> converted
+            }
         }
         val xOffset = preferences.getString("UI.grid.xOffset", null)
         if (xOffset != null) {
-            // FIXME - handle invalid string.
-            xSquaresOffset = xOffset.toInt()
+            val converted = xOffset.toIntOrNull()
+            xSquaresOffset = when (converted) {
+                null -> 0
+                else -> converted
+            }
         }
         val yOffset = preferences.getString("UI.grid.yOffset", null)
         if (yOffset != null) {
-            // FIXME - handle invalid string.
-            ySquaresOffset = yOffset.toInt()
+            val converted = yOffset.toIntOrNull()
+            ySquaresOffset = when (converted) {
+                null -> 0
+                else -> converted
+            }
         }
 
         val index = preferences.getString("UI.grid.selectedIndex", null)
         if (index != null) {
-            // FIXME - handle invalid string.
-            selectedIndex = index.toInt()
+            val converted = index.toIntOrNull()
+            selectedIndex = when (converted) {
+                null -> 0
+                else -> converted
+            }
         }
 
         // Setup Paint objects for drawing the grid.
@@ -99,8 +109,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     fun setGameState(newestGameState: KakuroGameplayDefinition.StateVariables) {
-        // FIXME: If the current zoom state isn't valid for the current puzzle, set it to a valid value.
-
         var needNewSizes = (gameState == null)
 
         var oldWidth = 0
@@ -397,7 +405,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             boundaryLeftTouchLookupId.clear()
         }
 
-
         paint.color = Color.WHITE
 
         val xStart = (squareWidth * OUTSIDE_GRID_MARGIN)/2 + xSquaresOffset * squareWidth
@@ -506,8 +513,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         if (navigatedByDpad && selectedX != null && selectedY != null) {
             drawSelectionSquare(selectedX, selectedY, canvas, selectedByNavPaint)
         }
-
-        Log.d(TAG, "End of onDraw(), now defaultIndex = $defaultIndex")
     }
 
     private fun drawSelectionSquare(x: Float, y: Float, canvas: Canvas, paint: Paint) {
@@ -540,10 +545,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             }
         }
         canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )
-
-//        if (navigatedByDpad && selected) {
-//            canvas.drawRect(x, y, x + squareWidth, y + squareWidth, selectedByNavPaint)
-//        }
 
         if (content != "0") {
             // Display the player's guess.
