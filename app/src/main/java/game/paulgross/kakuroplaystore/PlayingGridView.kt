@@ -464,8 +464,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                         val error = gameState!!.playerErrors.contains(index)
 
-                        // TODO: Use navigatedByDpad to add a selected border if true.
-
+                        // TODO: Draw the selected border only AFTER everything else.
+                        // So at this point, if we have the selected square, just store the currX and currY.
                         drawGuessSquare(index, gridValue.toString(), possiblesString, selected, visible, error,
                             gameState!!.solved, addTouchAreas, currX, currY, canvas, paint)
                     } else {
@@ -498,6 +498,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             currX = xStart
             currY += squareWidth
         }
+
+        // TODO: Move the drawing of the selected square border to here.
+
         Log.d(TAG, "End of onDraw(), now defaultIndex = $defaultIndex")
     }
 
