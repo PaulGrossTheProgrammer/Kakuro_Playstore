@@ -66,8 +66,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             gameplayActivity = context
         }
 
-        // TODO - find out why this rounding doesn't work!
+        paint.strokeJoin = Paint.Join.ROUND
         paint.strokeCap = Paint.Cap.ROUND
+
+        selectedByNavPaint.strokeJoin = Paint.Join.ROUND
         selectedByNavPaint.strokeCap = Paint.Cap.ROUND
 
         val preferences = gameplayActivity.getPreferences(Context.MODE_PRIVATE)
