@@ -409,6 +409,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             return
         }
 
+        // FIXME - get the puzzle key...
+//        println("Drawing for puzzle key ${gameState.}")
+
         canvas.drawBitmap(paperTexture, 0f, 0f, paint)
 
         // Add new touch areas if there are currently none.

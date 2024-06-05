@@ -16,6 +16,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private val puzzleKeys: MutableMap<String, String> = mutableMapOf()
 
     private var currPuzzle = ""
+    private var currPuzzleKey = ""
     private var puzzleWidth = 1
     private var puzzleHeight = 1
     private var puzzleSolution: MutableList<Int> = mutableListOf()
@@ -257,6 +258,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private fun encodeState(): GameEngine.Message {
         val message = GameEngine.Message("State")
+        message.setKeyString("k", currPuzzleKey)
         message.setKeyString("w", puzzleWidth.toString())
         message.setKeyString("g", encodePlayerGuesses(playerGuesses))
         message.setKeyString("h", encodeHints(puzzleHints))
@@ -500,6 +502,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private fun startPuzzleFromString(puzzleString: String) {
         currPuzzle = puzzleString
+        currPuzzleKey = puzzleKeys[currPuzzle].toString()
 
         puzzleWidth = puzzleString.substring(0, 2).toInt()
 
