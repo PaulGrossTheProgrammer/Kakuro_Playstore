@@ -26,6 +26,24 @@ fun getResizedBitmap(bitmap: Bitmap , newWidth: Int , newHeight: Int ): Bitmap {
     return resizedBitmap
 }
 
+// The helpers map the number of squares and the total to the row and column for every puzzle square.
+// http://www.puzzles.grosse.is-a-geek.com/kaklista.html
+data class HelpCombination(val size: Int, val total: Int)
+
+val helpCombinationsLookup = mapOf<HelpCombination, List<Int>> (
+    // ... 2s first
+    HelpCombination(3, 6) to listOf(1, 2, 3),
+    HelpCombination(3, 7) to listOf(1, 2, 4),
+    HelpCombination(3, 8) to listOf(1, 2, 5),
+    HelpCombination(3, 8) to listOf(1, 3, 4),
+    // ... and the rest
+    HelpCombination(3, 24) to listOf(7, 8, 9),
+    HelpCombination(3, 23) to listOf(6, 8, 9),
+    // ... etc
+    HelpCombination(9, 45) to listOf(1, 2, 3, 4, 5, 6, 7, 8, 9)
+)
+
+
 /**
  * The custom View to draw the playing grid.
  */
@@ -419,7 +437,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             boundaryLeftTouchLookupId.clear()
         }
 
-
         paint.color = Color.WHITE
 
         val xStart = (squareWidth * GRID_LEFT_MARGIN)/2 + xSquaresOffset * squareWidth
@@ -442,6 +459,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         var index = 0
         var selectedX: Float? = null
         var selectedY: Float? = null
+        var showHelp = false
 
         for (row in (1..gameState!!.puzzleHeight + 1)) {
             for (col in (1..gameState!!.puzzleWidth + 1)) {
@@ -484,6 +502,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                         if (selected) {
                             selectedX = currX
                             selectedY = currY
+
+                            // TODO - Determine if the user needs help here.
+                            showHelp = true
                         }
 
                         var possiblesString = gameState!!.possibles[index]
@@ -527,6 +548,13 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         // Drawing the selected square border.
         if (navigatedByDpad && selectedX != null && selectedY != null) {
             drawSelectionSquare(selectedX, selectedY, canvas, selectedByNavPaint)
+        }
+
+        // TODO - draw the row and column help if the selected square doesn't yet have a guess.
+        if (showHelp) {
+            println("TODO - show row and column help in the grid")
+            // TODO - determine the size and total for both row and colum.
+            // This should be pre-allocated because it is fixed for each puzzle.
         }
     }
 
