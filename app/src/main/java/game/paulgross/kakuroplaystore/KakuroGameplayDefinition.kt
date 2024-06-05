@@ -519,6 +519,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         puzzleHints.clear()
         generateHints()
 
+        // TODO: For each hint, add the applicable HelpSets...
+
         playerErrors.clear()
         playerPossibles.clear()
 
@@ -666,6 +668,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
     }
 
+    var acrossHelpSets = mutableMapOf<Int, List<List<Int>>>()
+    var downHelpSets = mutableMapOf<Int, List<List<Int>>>()
+
     /**
      * Create all the ACROSS and DOWN hints based on the puzzleSolution.
      */
@@ -682,6 +687,17 @@ object KakuroGameplayDefinition: GameplayDefinition {
                     var sum = 0
                     squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
                     puzzleHints.add(Hint(index, Direction.ACROSS, sum))
+
+                    // TODO - also add the HelpSets
+                    // Just implement [2 squares, sum of 3] with 1, 2 and see how that goes...
+                    if (squares.size == 2 && sum == 3) {
+                        squares.forEach { puzzleIndex ->
+                            val helpers = mutableListOf<List<Int>>()
+                            // TODO: Get these from a predefined helper list
+                            helpers.add(listOf(1, 2))
+                            acrossHelpSets[puzzleIndex] = helpers
+                        }
+                    }
                 }
 
                 // Check for DOWN hints (don't check last row)
@@ -692,6 +708,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
                     var sum = 0
                     squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
                     puzzleHints.add(Hint(index, Direction.DOWN, sum))
+
+                    // TODO - also add the HelpSets
                 }
             }
         }

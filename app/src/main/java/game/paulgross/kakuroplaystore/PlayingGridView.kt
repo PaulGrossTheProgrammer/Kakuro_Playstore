@@ -26,24 +26,6 @@ fun getResizedBitmap(bitmap: Bitmap , newWidth: Int , newHeight: Int ): Bitmap {
     return resizedBitmap
 }
 
-// The helpers map the number of squares and the total to the row and column for every puzzle square.
-// http://www.puzzles.grosse.is-a-geek.com/kaklista.html
-data class HelpCombination(val size: Int, val total: Int)
-
-val helpCombinationsLookup = mapOf<HelpCombination, List<Int>> (
-    // ... 2s first
-    HelpCombination(3, 6) to listOf(1, 2, 3),
-    HelpCombination(3, 7) to listOf(1, 2, 4),
-    HelpCombination(3, 8) to listOf(1, 2, 5),
-    HelpCombination(3, 8) to listOf(1, 3, 4),
-    // ... and the rest
-    HelpCombination(3, 24) to listOf(7, 8, 9),
-    HelpCombination(3, 23) to listOf(6, 8, 9),
-    // ... etc
-    HelpCombination(9, 45) to listOf(1, 2, 3, 4, 5, 6, 7, 8, 9)
-)
-
-
 /**
  * The custom View to draw the playing grid.
  */
