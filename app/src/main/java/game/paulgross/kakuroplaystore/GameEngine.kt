@@ -85,7 +85,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
     private val allIpAddresses: MutableList<String> = mutableListOf()
 
-    private data class MessageHandler(val type: String, val handlerFunction: (message: Message) -> Boolean)
+    private data class MessageHandler(val type: String, val handlerFunction: (message: Message) -> Message)
     private data class SystemMessageHandler(val type: String,
                                             val handlerFunction: (message: Message, source: InboundMessageSource, ((message: Message) -> Unit)?) -> Changes)
 
@@ -97,12 +97,12 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
     private val listOfDataHandlers: MutableList<MessageHandler> = mutableListOf()
 
     // TODO change the return type to Message and prefer returning messageNoStateChange or messageStateChange
-    fun registerHandler(type: String, handlerFunction: (message: Message) -> Boolean) {
+    fun registerHandler(type: String, handlerFunction: (message: Message) -> Message) {
         // TODO - throw exceptions for overwriting existing types.
         listOfGameHandlers.add(MessageHandler(type, handlerFunction))
     }
 
-    fun registerDataHandler(type: String, handlerFunction: (message: Message) -> Boolean) {
+    fun registerDataHandler(type: String, handlerFunction: (message: Message) -> Message) {
         // TODO - throw exceptions for overwriting existing types.
         listOfDataHandlers.add(MessageHandler(type, handlerFunction))
     }
@@ -173,8 +173,8 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                     if (handler.type == im.message.type) {
                         // TODO - declare the handlers to return a Message,
                         // And predefine a "CHANGED" and "UNCHANGED" message to handle the most common responses to a state change.
-                        val changed = handler.handlerFunction.invoke(im.message)
-                        if (changed) {
+                        val message = handler.handlerFunction.invoke(im.message)
+                        if (message == messageStateChange) {
                             gameStateChanged = true
                         }
                     }

@@ -70,7 +70,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine.registerHandler("PrevPuzzle", ::prevPuzzle)
         engine.registerHandler("NextPuzzle", ::nextPuzzle)
 
-        engine.registerDataHandler("RequestHelperSets", ::getHelperSets) // TODO...
+        engine.registerHandler("RequestHelperSets", ::getHelperSets) // TODO...
 
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
         // TODO - BUT decodeState returns StateVariables from this class, which isn't generic.
@@ -111,7 +111,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         return hexString.reversed()
     }
 
-    private fun restartPuzzle(message: GameEngine.Message): Boolean {
+    private fun restartPuzzle(message: GameEngine.Message): GameEngine.Message {
         for (i in 0 until playerGuesses.size) {
             if (playerGuesses[i] != -1) {
                 playerGuesses[i] = 0
@@ -121,15 +121,15 @@ object KakuroGameplayDefinition: GameplayDefinition {
         playerErrors.clear()
         undoBuffer.clear()
         redoBuffer.clear()
-        return true
+        return GameEngine.messageStateChange
     }
 
-    private fun submitGuess(message: GameEngine.Message): Boolean {
+    private fun submitGuess(message: GameEngine.Message): GameEngine.Message {
         Log.d(TAG, "The user sent a guess: $message")
 
         if (!message.hasString("Index") || !message.hasString("Value")) {
             Log.d(TAG, "Missing [Index] or [Value].")
-            return false
+            return GameEngine.messageNoStateChange
         }
 
         var index = -1
@@ -139,16 +139,16 @@ object KakuroGameplayDefinition: GameplayDefinition {
             value = message.getString("Value")?.toInt()!!
         } catch (e: NumberFormatException) {
             Log.d(TAG, "Invalid [Index] or [Value].")
-            return false
+            return GameEngine.messageNoStateChange
         }
 
         if (index < 0 || index >= playerGuesses.size) {
             Log.d(TAG, "Index is outside of grid boundary.")
-            return false
+            return GameEngine.messageNoStateChange
         }
         if (value < 0 || value > 9) {
             Log.d(TAG, "Digit must be from 0 to 9.")
-            return false
+            return GameEngine.messageNoStateChange
         }
 
         val currentPlayState = PlayState(playerGuesses.toMutableList(), playerPossibles.toMutableMap())
@@ -159,15 +159,15 @@ object KakuroGameplayDefinition: GameplayDefinition {
         playerPossibles.remove(index)
 
         markPlayerErrors()
-        return true
+        return GameEngine.messageStateChange
     }
 
-    private fun togglePossible(message: GameEngine.Message): Boolean {
+    private fun togglePossible(message: GameEngine.Message): GameEngine.Message {
         Log.d(TAG, "The user sent a possible: $message")
 
         if (message.missingString("Index") || message.missingString("Value")) {
             Log.d(TAG, "Missing [Index] or [Value].")
-            return false
+            return GameEngine.messageNoStateChange
         }
 
         var index = -1
@@ -177,19 +177,19 @@ object KakuroGameplayDefinition: GameplayDefinition {
             value = message.getString("Value")?.toInt()!!
         } catch (e: NumberFormatException) {
             Log.d(TAG, "Invalid [Index] or [Value].")
-            return false
+            return GameEngine.messageNoStateChange
         }
 
         if (index < 0 || index >= playerGuesses.size) {
-            return false
+            return GameEngine.messageNoStateChange
         }
         if (value < 1 || value > 9) {
-            return false
+            return GameEngine.messageNoStateChange
         }
 
         // Don't allow possibles if there is currently a guess
         if (playerGuesses[index] > 0) {
-            return false
+            return GameEngine.messageNoStateChange
         }
 
         // Below here we know we have a valid selection from the user.
@@ -220,13 +220,13 @@ object KakuroGameplayDefinition: GameplayDefinition {
             playerPossibles[index] = possible
         }
 
-        return true
+        return GameEngine.messageStateChange
     }
 
-    private fun undo(message: GameEngine.Message): Boolean {
+    private fun undo(message: GameEngine.Message): GameEngine.Message {
         if (undoBuffer.isEmpty()) {
             Log.d(TAG, "undo buffer is empty.")
-            return false
+            return GameEngine.messageNoStateChange
         }
 
         // Save the current state for the redo buffer
@@ -238,12 +238,12 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         markPlayerErrors()
 
-        return true
+        return GameEngine.messageStateChange
     }
 
-    private fun redo(message: GameEngine.Message): Boolean {
+    private fun redo(message: GameEngine.Message): GameEngine.Message {
         if (redoBuffer.isEmpty()) {
-            return false
+            return GameEngine.messageNoStateChange
         }
 
         // Save the current state for the undo buffer
@@ -255,7 +255,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         markPlayerErrors()
 
-        return true
+        return GameEngine.messageStateChange
     }
 
     private fun encodeState(): GameEngine.Message {
@@ -477,50 +477,50 @@ object KakuroGameplayDefinition: GameplayDefinition {
         markPlayerErrors()
     }
 
-    private fun prevPuzzle(message: GameEngine.Message): Boolean {
+    private fun prevPuzzle(message: GameEngine.Message): GameEngine.Message {
         for (index in 1..< builtinPuzzles.size) {
             if (currPuzzle == builtinPuzzles[index]) {
                 undoBuffer.clear()
                 redoBuffer.clear()
                 startPuzzleFromString(builtinPuzzles[index - 1])
-                return true
+                return GameEngine.messageStateChange
             }
         }
         // TODO - If no puzzle found, use default puzzle
 
-        return false
+        return GameEngine.messageNoStateChange
     }
 
-    private fun nextPuzzle(message: GameEngine.Message): Boolean {
+    private fun nextPuzzle(message: GameEngine.Message): GameEngine.Message {
         for (index in 0..< builtinPuzzles.size-1) {
             if (currPuzzle == builtinPuzzles[index]) {
                 undoBuffer.clear()
                 redoBuffer.clear()
                 startPuzzleFromString(builtinPuzzles[index + 1])
-                return true
+                return GameEngine.messageStateChange
             }
         }
         // TODO - If no puzzle found, use default puzzle
 
-        return false
+        return GameEngine.messageNoStateChange
     }
 
     /**
      * Returns all the helper sets for the given puzzle key.
      *
-     * FIXME - trurn a message withe datam not a boolean
+     * FIXME - return a message with the data, not a boolean.
      */
-    private fun getHelperSets(message: GameEngine.Message): Boolean {
+    private fun getHelperSets(message: GameEngine.Message): GameEngine.Message {
         val selectedKey = message.getString("k").toString()
 
         if (puzzleKeys.contains(selectedKey)) {
-            return false
+            return GameEngine.messageNoStateChange
         }
 
         // TODO - send a return message with the encoded HelperSets.
 
 
-        return true
+        return GameEngine.Message("HelperSets")
     }
 
     private fun startPuzzleFromString(puzzleString: String) {
