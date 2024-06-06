@@ -76,6 +76,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             println("#### Puzzle has changed - need to blank helpsets and request new ones.")
             // TODO - for new puzzles (key has changed), blank the grid's helpsets
             //  and send a request to the engine for the current key's helpsets.
+            engine?.queueMessageFromActivity(GameEngine.Message("RequestHelperSets"), ::queueMessage)
         }
 
         if (checkForSolved == true) {

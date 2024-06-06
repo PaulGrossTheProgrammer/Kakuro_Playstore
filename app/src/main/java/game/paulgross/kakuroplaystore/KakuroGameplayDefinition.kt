@@ -70,6 +70,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine.registerHandler("PrevPuzzle", ::prevPuzzle)
         engine.registerHandler("NextPuzzle", ::nextPuzzle)
 
+        engine.registerDataHandler("RequestHelperSets", ::getHelperSets) // TODO...
+
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
         // TODO - BUT decodeState returns StateVariables from this class, which isn't generic.
         // Maybe a Map is generic???
@@ -501,6 +503,24 @@ object KakuroGameplayDefinition: GameplayDefinition {
         // TODO - If no puzzle found, use default puzzle
 
         return false
+    }
+
+    /**
+     * Returns all the helper sets for the given puzzle key.
+     *
+     * FIXME - trurn a message withe datam not a boolean
+     */
+    private fun getHelperSets(message: GameEngine.Message): Boolean {
+        val selectedKey = message.getString("k").toString()
+
+        if (puzzleKeys.contains(selectedKey)) {
+            return false
+        }
+
+        // TODO - send a return message with the encoded HelperSets.
+
+
+        return true
     }
 
     private fun startPuzzleFromString(puzzleString: String) {
