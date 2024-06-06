@@ -18,3 +18,14 @@ val helpCombinationsLookup = mapOf<HelpCombination, List<Int>> (
     // ... etc
     HelpCombination(9, 45) to listOf(1, 2, 3, 4, 5, 6, 7, 8, 9)
 )
+
+data class HelpSet(var indexLookup: MutableMap<Int, List<List<Int>>> = mutableMapOf())
+
+fun encodeHelpSet(helpSet: HelpSet): String {
+    return "TODO..."
+}
+
+// TODO:
+fun decodeHelpSet(helpSetString: String): HelpSet {
+    return HelpSet()
+}

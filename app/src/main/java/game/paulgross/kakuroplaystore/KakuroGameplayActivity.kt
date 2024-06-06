@@ -68,7 +68,15 @@ class KakuroGameplayActivity : AppCompatActivity() {
      * Update the custom playGridView with the new state and request a redraw.
      */
     private fun displayGrid(newestGameState: KakuroGameplayDefinition.StateVariables) {
+        val prevKey = gameState?.puzzleKey
         gameState = newestGameState
+        val newKey = gameState?.puzzleKey
+
+        if (prevKey != newKey) {
+            println("#### Puzzle has changed - need to blank helpsets and request new ones.")
+            // TODO - for new puzzles (key has changed), blank the grid's helpsets
+            //  and send a request to the engine for the current key's helpsets.
+        }
 
         if (checkForSolved == true) {
             if (gameState!!.solved) {
@@ -79,9 +87,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.setGameState(newestGameState)
-//        playGridView.setScreenSizes()  // TODO: Is there a way to avoid redundant calls to setScreenSizes()???
-        // Maybe cache non-zero measuredWidth values and compare???
-        // NOTE: setScreenSizes() also forces a redraw.
     }
 
 
@@ -607,6 +612,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 if (newState is KakuroGameplayDefinition.StateVariables) {
                     displayGrid(newState)
                 }
+            }
+            if (message.type == "HelpSets") {
+                // TODO... decode the helpsets and send to the grid of display
+                // updateGridHelpSets()
             }
         }
     }

@@ -32,7 +32,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     // Possibles are user defined, and coded as 9-digit Strings, with each digit position matching the possible value.
     private var playerPossibles: MutableMap<Int, String> = mutableMapOf()
 
-    data class StateVariables(var playerGrid: MutableList<Int>, var puzzleWidth:Int, var puzzleHeight:Int,
+    data class StateVariables(val puzzleKey: String, var playerGrid: MutableList<Int>, var puzzleWidth:Int, var puzzleHeight:Int,
                               var playerHints:MutableList<Hint>, var possibles: MutableMap<Int, String>,
                                 var playerErrors: MutableSet<Int> ,var solved: Boolean)
 
@@ -279,19 +279,23 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         if (message.missingString("w") || message.missingString("g") || message.missingString("h") ) {
             Log.d(TAG, "Missing width, grid and and/or hints.")
-            return StateVariables(mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf(), false)
+            return StateVariables("", mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf(), false)
         }
+
+        val key = message.getString("k").toString()
 
         val width = message.getString("w")?.toInt()
         if (width == null || width < 1) {
             Log.d(TAG, "Invalid width ${message.getString("w")}.")
-            return StateVariables(mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf(), false)
+            return StateVariables("", mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf(), false)
         }
 
         var possibles: MutableMap<Int, String> = mutableMapOf()
         if (message.hasString("p")) {
             possibles = decodePossibles(message.getString("p")!!)
         }
+
+        val hints = decodeHints(message.getString("h")!!)
 
         var playerErrors: MutableSet<Int> = mutableSetOf()
         if (message.hasString("e")) {
@@ -303,8 +307,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         val solved = message.getString("s") != null
 
-        return StateVariables(guesses, width, height,
-            decodeHints(message.getString("h")!!), possibles, playerErrors, solved)
+        return StateVariables(key, guesses, width, height, hints, possibles, playerErrors, solved)
     }
 
     private fun encodePlayerGuesses(playerGuesses: Any): String {
@@ -671,8 +674,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
     }
 
-    var acrossHelpSets = mutableMapOf<Int, List<List<Int>>>()
-    var downHelpSets = mutableMapOf<Int, List<List<Int>>>()
+    var acrossHelpLookup = HelpSet()
+    var downHelpLookup = HelpSet()
 
     /**
      * Create all the ACROSS and DOWN hints based on the puzzleSolution.
@@ -698,7 +701,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
                             val helpers = mutableListOf<List<Int>>()
                             // TODO: Get these from a predefined helper list
                             helpers.add(listOf(1, 2))
-                            acrossHelpSets[puzzleIndex] = helpers
+                            acrossHelpLookup.indexLookup[puzzleIndex] = helpers
                         }
                     }
                 }
