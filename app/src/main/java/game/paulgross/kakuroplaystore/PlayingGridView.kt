@@ -51,6 +51,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var selectedIndex: Int = -1
     private var defaultIndex = -1
 
+    private val downHelpSet = HelpSet()
+    private val acrossHelpSet = HelpSet()
+
     private var paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
     private val colourNonPlaySquareInside = Color.argb(180, 40, 71, 156)
@@ -122,7 +125,13 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             oldWidth = gameState!!.puzzleWidth
         }
 
+        val prevKey = gameState?.puzzleKey
         gameState = newestGameState
+        val currKey = gameState?.puzzleKey
+        if (currKey != prevKey) {
+            acrossHelpSet.indexLookup.clear()
+            downHelpSet.indexLookup.clear()
+        }
 
         if (oldWidth != gameState!!.puzzleWidth) {
             needNewSizes = true
@@ -135,6 +144,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             Log.d(TAG, "setGameState SKIPPING setScreenSizes()")
         }
         invalidate()
+    }
+
+    // TODO - call this from the activity.
+    fun setHelpSets(newDownHelpSet: HelpSet, newAcrossHelpSet: HelpSet ) {
+        downHelpSet.indexLookup = newDownHelpSet.indexLookup
+        acrossHelpSet.indexLookup = newAcrossHelpSet.indexLookup
     }
 
     /**
