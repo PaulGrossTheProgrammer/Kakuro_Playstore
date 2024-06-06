@@ -168,6 +168,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                         }
 
                         // Handle custom messages, which will be passed back to the caller.
+                        println("#### A custom message was received...")
                         if (message != messageStateChange && message != messageNoStateChange) {
                             if (message.getString("StateChanged").toString().equals("true", ignoreCase = true)) {
                                 gameStateChanged = true
@@ -248,18 +249,6 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
         gameMode = GameMode.LOCAL
     }
-
-/*    private data class MessageTypeSpec(val messageType: String, val partName: String)
-    private data class MessageCodec(
-                       val encoderFunc: (Any) -> String,
-                       val decoderFunc: (String) -> Any) {}
-
-    private val messageCodecs: MutableMap<MessageTypeSpec, MessageCodec> = mutableMapOf()
-
-    fun pluginMessageCodec(messageType: String, partName: String,
-                             encoderFunc: (Any) -> String, decoderFunc: (String) -> Any) {
-        messageCodecs[MessageTypeSpec(messageType, partName)] = MessageCodec(encoderFunc, decoderFunc)
-    }*/
 
     class Message(val type: String) {
         // TODO - MAYBE add standard encoders and decoders to convert to and from Strings.

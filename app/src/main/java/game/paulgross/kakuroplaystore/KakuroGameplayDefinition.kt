@@ -519,9 +519,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
 
         // TODO - send a return message with the encoded HelperSets.
+        val helperSetMessage = GameEngine.Message("HelperSets")
 
-
-        return GameEngine.Message("HelperSets")
+        return helperSetMessage
     }
 
     private fun startPuzzleFromString(puzzleString: String) {
