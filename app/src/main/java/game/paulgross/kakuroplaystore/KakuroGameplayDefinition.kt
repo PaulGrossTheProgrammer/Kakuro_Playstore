@@ -511,6 +511,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
      * FIXME - return a message with the data, not a boolean.
      */
     private fun getHelperSets(message: GameEngine.Message): GameEngine.Message {
+        println("#### Handling a request for helper sets...")
         val selectedKey = message.getString("k").toString()
 
         if (puzzleKeys.contains(selectedKey)) {

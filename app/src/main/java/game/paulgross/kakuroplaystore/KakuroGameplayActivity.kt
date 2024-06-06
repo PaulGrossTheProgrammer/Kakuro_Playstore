@@ -617,6 +617,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (message.type == "HelpSets") {
                 // TODO... decode the helpsets and send to the grid of display
                 // updateGridHelpSets()
+                println("#### Recieved helpsets...")
             }
         }
     }

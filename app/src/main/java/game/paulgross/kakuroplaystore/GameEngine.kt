@@ -8,6 +8,7 @@ import android.content.res.AssetManager
 import android.net.ConnectivityManager
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.text.toUpperCase
 import java.lang.Exception
 import java.util.Queue
 import java.util.concurrent.BlockingQueue
@@ -92,19 +93,9 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
     private val listOfSystemHandlers: MutableList<SystemMessageHandler> = mutableListOf()
     private val listOfGameHandlers: MutableList<MessageHandler> = mutableListOf()
 
-    // These are for data request unrelated to game state changes.
-    // This can to reduce the bandwidth needed for large data and states that are rarely needed,
-    private val listOfDataHandlers: MutableList<MessageHandler> = mutableListOf()
-
-    // TODO change the return type to Message and prefer returning messageNoStateChange or messageStateChange
     fun registerHandler(type: String, handlerFunction: (message: Message) -> Message) {
         // TODO - throw exceptions for overwriting existing types.
         listOfGameHandlers.add(MessageHandler(type, handlerFunction))
-    }
-
-    fun registerDataHandler(type: String, handlerFunction: (message: Message) -> Message) {
-        // TODO - throw exceptions for overwriting existing types.
-        listOfDataHandlers.add(MessageHandler(type, handlerFunction))
     }
 
     private fun determineIpAddresses() {
@@ -171,21 +162,18 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                 // Check game messages.
                 listOfGameHandlers.forEach { handler ->
                     if (handler.type == im.message.type) {
-                        // TODO - declare the handlers to return a Message,
-                        // And predefine a "CHANGED" and "UNCHANGED" message to handle the most common responses to a state change.
                         val message = handler.handlerFunction.invoke(im.message)
                         if (message == messageStateChange) {
                             gameStateChanged = true
                         }
-                    }
-                }
 
-                // TODO - put the data handlers here so that we can invoke im.responseFunction
-                listOfDataHandlers.forEach { handler ->
-                    if (handler.type == im.message.type) {
-                        val changed = handler.handlerFunction.invoke(im.message)
-
-//                        im.responseFunction // Send back the response data.
+                        // Handle custom messages, which will be passed back to the caller.
+                        if (message != messageStateChange && message != messageNoStateChange) {
+                            if (message.getString("StateChanged").toString().equals("true", ignoreCase = true)) {
+                                gameStateChanged = true
+                            }
+                            im.responseFunction?.invoke(message)
+                        }
                     }
                 }
             }
