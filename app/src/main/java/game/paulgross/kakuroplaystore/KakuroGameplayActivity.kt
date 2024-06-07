@@ -90,6 +90,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         playGridView.setGameState(newestGameState)
     }
 
+    fun updateGridHelpSets(helpSets: HelpSet) {
+
+    }
 
     //
     // Controller handling: D-pad used by Google TV
@@ -615,9 +618,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 }
             }
             if (message.type == "HelperSets") {
-                // TODO... decode the helpsets and send to the grid of display
-                // updateGridHelpSets()
                 println("#### Recieved helpsets...")
+                // TODO... decode the helpsets and send to the grid of display
+                val helpSetString = message.getString("helpset").toString()
+                println(helpSetString)
+                val helpSets = decodeHelpSet(helpSetString)
+                updateGridHelpSets(helpSets)
             }
         }
     }

@@ -23,14 +23,22 @@ val helpCombinationsLookup = mapOf<HelpCombination, List<Int>> (
 data class HelpSet(var indexLookup: MutableMap<Int, List<List<Int>>> = mutableMapOf())
 
 fun encodeHelpSet(helpSet: HelpSet): String {
-    // TODO - this is just a fillin for now
-    return "0-1:2:5|1:3:4"
+    // The dividers:
+    // "/" between each index
+    // "-" between the index and its list
+    // "|" between each group
+    // ":" between each number in the group.
+    // TODO - this is just a fill-in for now. Replace with actual code later.
+    return "0-1:2:5|1:3:4/1-1:2:5|1:3:4"
 }
 
 // TODO:
 fun decodeHelpSet(helpSetString: String): HelpSet {
     val helpSet = HelpSet()
+
+    // TODO - this is just a fill-in for now. Replace with actual code later.
     helpSet.indexLookup[0] = listOf(listOf(1,2,5), listOf(1,3,4))
+    helpSet.indexLookup[1] = listOf(listOf(1,2,5), listOf(1,3,4))
 
     return helpSet
 }
