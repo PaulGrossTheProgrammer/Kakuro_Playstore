@@ -51,8 +51,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var selectedIndex: Int = -1
     private var defaultIndex = -1
 
-    private val downHelpSet = HelpSet()
-    private val acrossHelpSet = HelpSet()
+    private val downHelpSets = HelpSets()
+    private val acrossHelpSets = HelpSets()
 
     private var paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
@@ -129,8 +129,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         gameState = newestGameState
         val currKey = gameState?.puzzleKey
         if (currKey != prevKey) {
-            acrossHelpSet.indexLookup.clear()
-            downHelpSet.indexLookup.clear()
+            acrossHelpSets.indexLookup.clear()
+            downHelpSets.indexLookup.clear()
         }
 
         if (oldWidth != gameState!!.puzzleWidth) {
@@ -147,9 +147,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     // TODO - call this from the activity.
-    fun setHelpSets(newDownHelpSet: HelpSet, newAcrossHelpSet: HelpSet ) {
-        downHelpSet.indexLookup = newDownHelpSet.indexLookup
-        acrossHelpSet.indexLookup = newAcrossHelpSet.indexLookup
+    fun setHelpSets(newDownHelpSet: HelpSets, newAcrossHelpSet: HelpSets ) {
+        downHelpSets.indexLookup = newDownHelpSet.indexLookup
+        acrossHelpSets.indexLookup = newAcrossHelpSet.indexLookup
+        invalidate()
     }
 
     /**
@@ -553,8 +554,14 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         // TODO - draw the row and column help if the selected square doesn't yet have a guess.
         if (showHelp) {
             println("TODO - show row and column help in the grid")
-            // TODO - determine the size and total for both row and colum.
-            // This should be pre-allocated because it is fixed for each puzzle.
+            if (downHelpSets.indexLookup[selectedIndex] != null) {
+                val helpSets = downHelpSets.indexLookup[selectedIndex]
+                println("TODO: Draw the DOWN helper sets: $helpSets")
+            }
+            if (acrossHelpSets.indexLookup[selectedIndex] != null) {
+                val helpSets = acrossHelpSets.indexLookup[selectedIndex]
+                println("TODO: Draw the ACROSS helper sets: $helpSets")
+            }
         }
     }
 

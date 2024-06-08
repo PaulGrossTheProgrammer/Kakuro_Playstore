@@ -90,8 +90,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         playGridView.setGameState(newestGameState)
     }
 
-    fun updateGridHelpSets(helpSets: HelpSet) {
-
+    fun updateGridHelpSets(downHelpSets: HelpSets, acrossHelpSets: HelpSets) {
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        playGridView.setHelpSets(downHelpSets, acrossHelpSets)
     }
 
     //
@@ -620,10 +621,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (message.type == "HelperSets") {
                 println("#### Recieved helpsets...")
                 // TODO... decode the helpsets and send to the grid of display
-                val helpSetString = message.getString("helpset").toString()
-                println(helpSetString)
-                val helpSets = decodeHelpSet(helpSetString)
-                updateGridHelpSets(helpSets)
+                val downhelpSetString = message.getString("down").toString()
+                val acrosshelpSetString = message.getString("across").toString()
+                println(downhelpSetString)
+                println(acrosshelpSetString)
+                val downHelpSets = decodeHelpSet(downhelpSetString)
+                val acrossHelpSets = decodeHelpSet(acrosshelpSetString)
+                updateGridHelpSets(downHelpSets, acrossHelpSets)
             }
         }
     }
