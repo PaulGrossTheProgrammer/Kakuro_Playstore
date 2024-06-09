@@ -31,8 +31,31 @@ fun encodeHelpSet(helpSet: HelpSets): String {
     // "-" between the index and its list
     // "|" between each group
     // ":" between each number in the group.
+    val builder = StringBuilder()
+
+    helpSet.indexLookup.forEach { index, lists ->
+        if (builder.isNotEmpty()) { builder.append("/") }
+        builder.append("$index-")
+
+        val listBuilder = StringBuilder()
+        lists.forEach { list ->
+            if (listBuilder.isNotEmpty()) { listBuilder.append("|") }
+
+            val itemListBuilder = StringBuilder()
+            list.forEach { number ->
+                if (itemListBuilder.isNotEmpty()) { itemListBuilder.append(":") }
+                itemListBuilder.append("$number")
+            }
+            listBuilder.append(itemListBuilder.toString())
+        }
+        builder.append(listBuilder.toString())
+    }
+
+    return builder.toString()
+
+
     // TODO - this is just a fill-in for now. Replace with actual code later.
-    return "0-1:2:5|1:3:4/1-1:2:5|1:3:4"
+//    return "0-1:2:5|1:3:4/1-1:2:5|1:3:4"
 }
 
 // TODO:

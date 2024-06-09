@@ -17,12 +17,22 @@ class KakuroHelpCombinationsKtTest {
     fun encodeHelpSet() {
     }
 
-    // TODO - make more decode test cases
+    @Test
+    fun encodeHelpSet_singleIndexSingleSet() {
+        val helpSet = HelpSets()
+        helpSet.indexLookup[0] = listOf(listOf(1,2))
+
+        encodeHelpSet()
+
+        val resultString = encodeHelpSet(helpSet)
+        assert(resultString == "0-1:2")
+    }
+
     @Test
     fun decodeHelpSet_singleIndexSingleSet() {
         val encodedString = "0-1,2"
 
-        val decodedSets = game.paulgross.kakuroplaystore.decodeHelpSet(encodedString)
+        val decodedSets = decodeHelpSet(encodedString)
         assert(decodedSets.indexLookup.size == 1)
         assert(decodedSets.indexLookup[0]?.size == 1)
         assert(decodedSets.indexLookup[0]?.get(0)?.get(0) == 1)
@@ -30,7 +40,18 @@ class KakuroHelpCombinationsKtTest {
     }
 
     @Test
-    fun decodeHelpSet_complex() {
+    fun encodeHelpSet_twoIndexSets() {
+        val helpSet = HelpSets()
+        helpSet.indexLookup[0] = listOf(listOf(1,2))
+        helpSet.indexLookup[1] = listOf(listOf(1,2,5), listOf(1,3,4))
+        encodeHelpSet()
+
+        val resultString = encodeHelpSet(helpSet)
+        assert(resultString == "0-1:2/1-1:2:5|1:3:4")
+    }
+
+    @Test
+    fun decodeHelpSet_twoSets() {
         val encodedString = "0-1,2/1-1:2:5|1:3:4"
 
         val decodedSets = game.paulgross.kakuroplaystore.decodeHelpSet(encodedString)
