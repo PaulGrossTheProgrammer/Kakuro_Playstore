@@ -26,11 +26,7 @@ fun getHelpSets(size: Int, total: Int): List<List<Int>>? {
 data class HelpSets(var indexLookup: MutableMap<Int, List<List<Int>>> = mutableMapOf())
 
 fun encodeHelpSet(helpSet: HelpSets): String {
-    // The dividers:
-    // "/" between each index
-    // "-" between the index and its list
-    // "|" between each group
-    // ":" between each number in the group.
+
     val builder = StringBuilder()
 
     helpSet.indexLookup.forEach { index, lists ->
@@ -52,19 +48,39 @@ fun encodeHelpSet(helpSet: HelpSets): String {
     }
 
     return builder.toString()
-
-
-    // TODO - this is just a fill-in for now. Replace with actual code later.
-//    return "0-1:2:5|1:3:4/1-1:2:5|1:3:4"
 }
 
 // TODO:
 fun decodeHelpSet(helpSetString: String): HelpSets {
     val helpSet = HelpSets()
+    // The dividers:
+    // "/" between each index
+    // "-" between the index and its list
+    // "|" between each group
+    // ":" between each number in the group.
+//    "0-1:2/1-1:2:5|1:3:4"
+
+    val indexList = helpSetString.split("/")
+    indexList.forEach { indexHelper ->
+        val indexSplit = indexHelper.split("-")
+        val index = indexSplit[0].toInt()
+        val allLists = indexSplit[1]
+        val listOfLists = allLists.split("|")
+        val allIndexLists = mutableListOf<List<Int>>()
+        listOfLists.forEach { list ->
+            val numberList = list.split(":")
+            val helpNumbers = mutableListOf<Int>()
+            numberList.forEach { numberString ->
+                helpNumbers.add(numberString.toInt())
+            }
+            allIndexLists.add(helpNumbers)
+        }
+        helpSet.indexLookup[index] = allIndexLists
+    }
 
     // TODO - this is just a fill-in for now. Replace with actual code later.
-    helpSet.indexLookup[0] = listOf(listOf(1,2,5), listOf(1,3,4))
-    helpSet.indexLookup[1] = listOf(listOf(1,2,5), listOf(1,3,4))
+//    helpSet.indexLookup[0] = listOf(listOf(1,2,5), listOf(1,3,4))
+//    helpSet.indexLookup[1] = listOf(listOf(1,2,5), listOf(1,3,4))
 
     return helpSet
 }
