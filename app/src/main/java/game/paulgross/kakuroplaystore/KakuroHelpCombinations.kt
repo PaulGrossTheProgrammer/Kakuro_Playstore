@@ -41,33 +41,44 @@ Decode strings to create all pre-built HelpCombinations
 eg: "2/5:1,4|2,3"
  */
 
-fun reateAllHelpCombinations(lineString: String) {
+fun createHelpCombinations(lineString: String) {
     // helpCombinationsLookup
 
     val entrySplit = lineString.split(":")
     val combination = entrySplit[0]
     val combinationSplit = combination.split("/")
-    val size = combinationSplit[0]
-    val total = combinationSplit[1]
+    val size = combinationSplit[0].toInt()
+    val total = combinationSplit[1].toInt()
+    val hc = HelpCombination(size, total)
 
-/*
-    indexList.forEach { indexHelper ->
-        val indexSplit = indexHelper.split("-")
-        val index = indexSplit[0].toInt()
-        val allLists = indexSplit[1]
-        val listOfLists = allLists.split("|")
-        val allIndexLists = mutableListOf<List<Int>>()
-        listOfLists.forEach { list ->
-            val numberList = list.split(":")
-            val helpNumbers = mutableListOf<Int>()
-            numberList.forEach { numberString ->
-                helpNumbers.add(numberString.toInt())
-            }
-            allIndexLists.add(helpNumbers)
+    val lists = entrySplit[1]
+    val groups = lists.split("|")
+    for (group in groups) {
+        val numbersList = group.split(",")
+        for (numberString in numbersList) {
+            val number = numberString.toInt()
+            // TODO - add to list
         }
-        helpSet.indexLookup[index] = allIndexLists
     }
-    return helpSet*/
+
+    /*
+        indexList.forEach { indexHelper ->
+            val indexSplit = indexHelper.split("-")
+            val index = indexSplit[0].toInt()
+            val allLists = indexSplit[1]
+            val listOfLists = allLists.split("|")
+            val allIndexLists = mutableListOf<List<Int>>()
+            listOfLists.forEach { list ->
+                val numberList = list.split(":")
+                val helpNumbers = mutableListOf<Int>()
+                numberList.forEach { numberString ->
+                    helpNumbers.add(numberString.toInt())
+                }
+                allIndexLists.add(helpNumbers)
+            }
+            helpSet.indexLookup[index] = allIndexLists
+        }
+        return helpSet*/
 }
 
 fun getHelpSets(size: Int, total: Int): List<List<Int>>? {
