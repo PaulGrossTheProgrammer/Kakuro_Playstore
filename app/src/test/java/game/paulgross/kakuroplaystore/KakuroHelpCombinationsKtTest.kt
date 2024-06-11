@@ -11,15 +11,51 @@ import org.junit.Test
 class KakuroHelpCombinationsKtTest {
 
     @Test
-    fun encodeHelpSet() {
+    fun getHelpSets_validate1() {
+        val size = 2
+        val total = 3
+        val sets = getHelpSets(size, total)
+        sets?.forEach { set ->
+            var totalCheck = 0
+            set.forEach { number ->
+                totalCheck += number
+            }
+            assert(totalCheck == total)
+        }
+    }
+
+    @Test
+    fun getHelpSets_validate2() {
+        val size = 9
+        val total = 45
+        val sets = getHelpSets(size, total)
+        sets?.forEach { set ->
+            var totalCheck = 0
+            set.forEach { number ->
+                totalCheck += number
+            }
+            assert(totalCheck == total)
+        }
+    }
+
+    @Test
+    fun getHelpSets_validate3() {
+        val size = 8
+        val total = 44
+        val sets = getHelpSets(size, total)
+        sets?.forEach { set ->
+            var totalCheck = 0
+            set.forEach { number ->
+                totalCheck += number
+            }
+            assert(totalCheck == total)
+        }
     }
 
     @Test
     fun encodeHelpSet_singleIndexSingleSet() {
         val helpSet = HelpSets()
         helpSet.indexLookup[0] = listOf(listOf(1,2))
-
-        encodeHelpSet()
 
         val resultString = encodeHelpSet(helpSet)
         assert(resultString == "0-1:2")
@@ -41,7 +77,6 @@ class KakuroHelpCombinationsKtTest {
         val helpSet = HelpSets()
         helpSet.indexLookup[0] = listOf(listOf(1,2))
         helpSet.indexLookup[1] = listOf(listOf(1,2,5), listOf(1,3,4))
-        encodeHelpSet()
 
         val resultString = encodeHelpSet(helpSet)
         assert(resultString == "0-1:2/1-1:2:5|1:3:4")

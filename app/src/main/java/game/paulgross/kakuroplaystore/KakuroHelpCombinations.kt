@@ -16,6 +16,7 @@ val helpCombinationsLookup = mapOf<HelpCombination, List<List<Int>>> (
     HelpCombination(3, 24) to listOf(listOf(7, 8, 9)),
     HelpCombination(3, 23) to listOf(listOf(6, 8, 9)),
     // ... etc
+    HelpCombination(8, 44) to listOf(listOf(2, 3, 4, 5, 6, 7, 8, 9)),
     HelpCombination(9, 45) to listOf(listOf(1, 2, 3, 4, 5, 6, 7, 8, 9))
 )
 
@@ -24,6 +25,17 @@ fun getHelpSets(size: Int, total: Int): List<List<Int>>? {
 }
 
 data class HelpSets(var indexLookup: MutableMap<Int, List<List<Int>>> = mutableMapOf())
+
+// String encoding/decoding dividers:
+// "/" between each index
+// "-" between the index and its list
+// "|" between each group
+// ":" between each number in the group.
+// Example:
+//      "0-1:2/1-1:2:5|1:3:4"
+// Meaning
+//      Index 0 can only have 1 and 2
+//      Index 1 can have 1, 2 and 5, or 1, 3 and 4
 
 fun encodeHelpSet(helpSet: HelpSets): String {
 
@@ -53,12 +65,6 @@ fun encodeHelpSet(helpSet: HelpSets): String {
 // TODO:
 fun decodeHelpSet(helpSetString: String): HelpSets {
     val helpSet = HelpSets()
-    // The dividers:
-    // "/" between each index
-    // "-" between the index and its list
-    // "|" between each group
-    // ":" between each number in the group.
-//    "0-1:2/1-1:2:5|1:3:4"
 
     val indexList = helpSetString.split("/")
     indexList.forEach { indexHelper ->
@@ -77,10 +83,5 @@ fun decodeHelpSet(helpSetString: String): HelpSets {
         }
         helpSet.indexLookup[index] = allIndexLists
     }
-
-    // TODO - this is just a fill-in for now. Replace with actual code later.
-//    helpSet.indexLookup[0] = listOf(listOf(1,2,5), listOf(1,3,4))
-//    helpSet.indexLookup[1] = listOf(listOf(1,2,5), listOf(1,3,4))
-
     return helpSet
 }
