@@ -86,7 +86,7 @@ class KakuroHelpCombinationsKtTest {
     fun decodeHelpSet_twoSets() {
         val encodedString = "0-1:2/1-1:2:5|1:3:4"
 
-        val decodedSets = game.paulgross.kakuroplaystore.decodeHelpSet(encodedString)
+        val decodedSets = decodeHelpSet(encodedString)
         assert(decodedSets.indexLookup.size == 2)
         assert(decodedSets.indexLookup[0]?.size == 1)
         assert(decodedSets.indexLookup[0]?.get(0)?.get(0) == 1)
