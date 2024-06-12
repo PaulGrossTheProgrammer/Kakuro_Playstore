@@ -47,6 +47,7 @@ private val helpCombinationsList = mutableListOf<String>()
 // by calling createAllHelpCombinations() on each line.
 
 fun createAllHelpCombinations() {
+    // TODO - can I just use File.forEachLine { println(it) } in the app at runtime???
     for (currString in helpCombinationsList) {
         // Split the combination from the number lists.
         val entrySplit = currString.split(":")
