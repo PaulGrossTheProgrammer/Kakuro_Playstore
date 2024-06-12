@@ -2,13 +2,44 @@ package game.paulgross.kakuroplaystore
 
 import org.junit.Test
 
-// The dividers:
-// "/" between each index
-// "-" between the index and its list
-// "|" between each group
-// ":" between each number in the group.
-
 class KakuroHelpCombinationsKtTest {
+
+    @Test
+    fun splitHelpCombinations_Example1() {
+        val lists = splitHelpCombinations("123456789")
+
+        assert(lists.size == 1)
+        val list1 = lists[0]
+
+        assert(list1.size == 9)
+        assert(list1[0] == 1)
+        assert(list1[1] == 2)
+        assert(list1[2] == 3)
+        assert(list1[3] == 4)
+        assert(list1[4] == 5)
+        assert(list1[5] == 6)
+        assert(list1[6] == 7)
+        assert(list1[7] == 8)
+        assert(list1[8] == 9)
+    }
+
+    @Test
+    fun splitHelpCombinations_Example2() {
+        val lists = splitHelpCombinations("14 23")
+
+        assert(lists.size == 2)
+
+        val list1 = lists[0]
+        val list2 = lists[1]
+
+        assert(list1.size == 2)
+        assert(list2.size == 2)
+
+        assert(list1[0] == 1)
+        assert(list1[1] == 4)
+        assert(list2[0] == 2)
+        assert(list2[1] == 3)
+    }
 
     @Test
     fun getHelpSets_validate1() {

@@ -4,9 +4,9 @@ package game.paulgross.kakuroplaystore
 // http://www.puzzles.grosse.is-a-geek.com/kaklista.html
 data class HelpCombination(val size: Int, val total: Int)
 
-val helpCombinationsLookup = mapOf<HelpCombination, List<List<Int>>> (
+var helpCombinationsLookup = mutableMapOf<HelpCombination, List<List<Int>>> (
     // ... 2s first
-    HelpCombination(2, 3) to listOf(listOf(1, 2)),
+/*    HelpCombination(2, 3) to listOf(listOf(1, 2)),
     HelpCombination(2, 4) to listOf(listOf(1, 3)),
     HelpCombination(2, 5) to listOf(listOf(1, 4), listOf(2, 3)),
     HelpCombination(2, 6) to listOf(listOf(1, 5), listOf(2, 4)),
@@ -31,54 +31,49 @@ val helpCombinationsLookup = mapOf<HelpCombination, List<List<Int>>> (
     HelpCombination(3, 23) to listOf(listOf(6, 8, 9)),
     // ... etc
     HelpCombination(8, 44) to listOf(listOf(2, 3, 4, 5, 6, 7, 8, 9)),
-    HelpCombination(9, 45) to listOf(listOf(1, 2, 3, 4, 5, 6, 7, 8, 9))
+    HelpCombination(9, 45) to listOf(listOf(1, 2, 3, 4, 5, 6, 7, 8, 9))*/
 )
 
 /*
 Decode strings to create all pre-built HelpCombinations
 "size/total:number,number...|number,number...|..."
 
-eg: "2/5:1,4|2,3"
+eg: "2/5:14 23"
  */
 
-fun createHelpCombinations(lineString: String) {
-    // helpCombinationsLookup
+private val helpCombinationsList = mutableListOf<String>()
 
-    val entrySplit = lineString.split(":")
-    val combination = entrySplit[0]
-    val combinationSplit = combination.split("/")
-    val size = combinationSplit[0].toInt()
-    val total = combinationSplit[1].toInt()
-    val hc = HelpCombination(size, total)
+// TODO - load asset HelpCombinations.txt and use to populate helpCombinationsList
+// by calling createAllHelpCombinations() on each line.
 
-    val lists = entrySplit[1]
-    val groups = lists.split("|")
-    for (group in groups) {
-        val numbersList = group.split(",")
-        for (numberString in numbersList) {
-            val number = numberString.toInt()
-            // TODO - add to list
-        }
+fun createAllHelpCombinations() {
+    for (currString in helpCombinationsList) {
+        // Split the combination from the number lists.
+        val entrySplit = currString.split(":")
+        val combination = entrySplit[0]
+        val combinationSplit = combination.split("/")
+        val size = combinationSplit[0].toInt()
+        val total = combinationSplit[1].toInt()
+        val hc = HelpCombination(size, total)
+
+        helpCombinationsLookup[hc] = splitHelpCombinations(entrySplit[1])
     }
+}
 
-    /*
-        indexList.forEach { indexHelper ->
-            val indexSplit = indexHelper.split("-")
-            val index = indexSplit[0].toInt()
-            val allLists = indexSplit[1]
-            val listOfLists = allLists.split("|")
-            val allIndexLists = mutableListOf<List<Int>>()
-            listOfLists.forEach { list ->
-                val numberList = list.split(":")
-                val helpNumbers = mutableListOf<Int>()
-                numberList.forEach { numberString ->
-                    helpNumbers.add(numberString.toInt())
-                }
-                allIndexLists.add(helpNumbers)
-            }
-            helpSet.indexLookup[index] = allIndexLists
+fun splitHelpCombinations(lineString: String): List<List<Int>> {
+    val lists = mutableListOf<List<Int>>()
+    val groups = lineString.split(" ")
+    for (group in groups) {
+        val numberList = mutableListOf<Int>()
+
+//        val numbersList = group.split(",")
+        for (digit in group) {
+            val number = digit.toString().toInt()
+            numberList.add(number)
         }
-        return helpSet*/
+        lists.add(numberList)
+    }
+    return lists
 }
 
 fun getHelpSets(size: Int, total: Int): List<List<Int>>? {
