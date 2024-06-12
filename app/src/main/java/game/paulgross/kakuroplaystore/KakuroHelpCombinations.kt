@@ -10,7 +10,7 @@ var helpCombinationsLookup = mutableMapOf<HelpCombination, List<List<Int>>> ()
 
 /*
 Decode strings in assets/HelpCombinations.txt to create all pre-built HelpCombinations
-"size/total:number,number...|number,number...|..."
+"size/total:digits<space>digits<space>..."
 
 eg: "2/5:14 23"
  */
@@ -87,7 +87,6 @@ fun encodeHelpSet(helpSet: HelpSets): String {
     return builder.toString()
 }
 
-// TODO:
 fun decodeHelpSet(helpSetString: String): HelpSets {
     val helpSet = HelpSets()
 

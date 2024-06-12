@@ -17,6 +17,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private val builtinPuzzles: MutableList<String> = mutableListOf()
     private val puzzleKeys: MutableMap<String, String> = mutableMapOf()
 
+    private var acrossHelpLookup = HelpSets()
+    private var downHelpLookup = HelpSets()
+
     private var currPuzzle = ""
     private var currPuzzleKey = ""
     private var puzzleWidth = 1
@@ -513,8 +516,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     /**
      * Returns all the helper sets for the given puzzle key.
-     *
-     * FIXME - return a message with the data, not a boolean.
      */
     private fun getHelperSets(message: GameEngine.Message): GameEngine.Message {
         println("#### Handling a request for helper sets...")
@@ -524,11 +525,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
             return GameEngine.messageNoStateChange
         }
 
-        // TODO - send a return message with the encoded HelperSets.
         val helperSetMessage = GameEngine.Message("HelperSets")
-        val helperSets = HelpSets()  // Dummy for testing. Later get from puzzle key lookup.
-        helperSetMessage.setKeyString("down", encodeHelpSet(helperSets))
-        helperSetMessage.setKeyString("across", encodeHelpSet(helperSets))
+        helperSetMessage.setKeyString("down", encodeHelpSet(downHelpLookup))
+        helperSetMessage.setKeyString("across", encodeHelpSet(acrossHelpLookup))
 
         return helperSetMessage
     }
@@ -554,8 +553,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
         puzzleHeight = puzzleSolution.size / puzzleWidth
         puzzleHints.clear()
         generateHints()
-
-        // TODO: For each hint, add the applicable HelpSets...
 
         playerErrors.clear()
         playerPossibles.clear()
@@ -704,11 +701,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
         }
     }
 
-    var acrossHelpLookup = HelpSets()
-    var downHelpLookup = HelpSets()
-
     /**
      * Create all the ACROSS and DOWN hints based on the puzzleSolution.
+     *
+     * FIXME: ALSO CALCS HELPSETS!!! Document this, and fix the naming...
      */
     private fun generateHints() {
         // Traverse the solution grid and create hints for any number squares with empty squares to the left and/or above.
@@ -724,14 +720,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
                     squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
                     puzzleHints.add(Hint(index, Direction.ACROSS, sum))
 
-                    // TODO - also add the HelpSets
-                    // Just implement [2 squares, sum of 3] with 1, 2 and see how that goes...
-                    if (squares.size == 2 && sum == 3) {
-                        squares.forEach { puzzleIndex ->
-                            val helpers = mutableListOf<List<Int>>()
-                            // TODO: Get these from a predefined helper list
-                            helpers.add(listOf(1, 2))
-                            acrossHelpLookup.indexLookup[puzzleIndex] = helpers
+                    // Add the help sets to each index.
+                    squares.forEach { puzzleIndex ->
+                        val helpSets = getHelpSets(squares.size, sum)
+                        if (helpSets != null) {
+                            acrossHelpLookup.indexLookup[puzzleIndex] = helpSets
                         }
                     }
                 }
@@ -745,7 +738,14 @@ object KakuroGameplayDefinition: GameplayDefinition {
                     squares.forEach { puzzleIndex -> sum += puzzleSolution[puzzleIndex] }
                     puzzleHints.add(Hint(index, Direction.DOWN, sum))
 
-                    // TODO - also add the HelpSets
+                    // Add the help sets to each index.
+                    squares.forEach { puzzleIndex ->
+                        val helpSets = getHelpSets(squares.size, sum)
+                        if (helpSets != null) {
+                            downHelpLookup.indexLookup[puzzleIndex] = helpSets
+                        }
+                    }
+
                 }
             }
         }

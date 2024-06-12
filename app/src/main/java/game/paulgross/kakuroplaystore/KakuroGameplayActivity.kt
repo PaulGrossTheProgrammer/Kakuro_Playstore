@@ -620,7 +620,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
             if (message.type == "HelperSets") {
                 println("#### Recieved helpsets...")
-                // TODO... decode the helpsets and send to the grid of display
                 val downhelpSetString = message.getString("down").toString()
                 val acrosshelpSetString = message.getString("across").toString()
                 if (downhelpSetString.isNotEmpty() && acrosshelpSetString.isNotEmpty()) {
