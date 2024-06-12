@@ -1,6 +1,7 @@
 package game.paulgross.kakuroplaystore
 
 import org.junit.Test
+import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -11,8 +12,10 @@ class KakuroHelpCombinationsKtTest {
 
     @Test
     fun testOpenProjectAsset() {
-        // TODO - load each line into
-        File("src/main/assets/HelpCombinations.txt").forEachLine { println(it) }
+        createAllHelpCombinations(File("src/main/assets/HelpCombinations.txt").bufferedReader())
+
+        assert(getHelpSets(2, 3)?.size == 1)
+        assert(getHelpSets(9, 45)?.size == 1)
     }
 
     @Test

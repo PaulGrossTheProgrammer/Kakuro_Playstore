@@ -1,6 +1,7 @@
 package game.paulgross.kakuroplaystore
 
 import android.util.Log
+import java.io.File
 
 object KakuroGameplayDefinition: GameplayDefinition {
 
@@ -11,6 +12,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     // First 2 digits is the puzzle width.
     // From there, 0 is for non-playable squares, and any digit from 1..9 is for solution squares.
     private const val builtinPuzzlesFilename = "builtin_puzzles.txt"
+    private const val builtinHelpCombinations = "HelpCombinations.txt"
 
     private val builtinPuzzles: MutableList<String> = mutableListOf()
     private val puzzleKeys: MutableMap<String, String> = mutableMapOf()
@@ -47,7 +49,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
     override fun setEngine(engine: GameEngine) {
         this.engine = engine
 
+        // Load the built-in HelpCombinations
+        createAllHelpCombinations(engine.assets.open(builtinHelpCombinations).bufferedReader())
+
         // Load the built-in puzzles.
+        // TODO - how do I close the file after reading?
         engine.assets.open(builtinPuzzlesFilename).bufferedReader().forEachLine () {
             if (!it.startsWith("#")) {
                 val currPuzzleString = it.replace("\\s".toRegex(), "")

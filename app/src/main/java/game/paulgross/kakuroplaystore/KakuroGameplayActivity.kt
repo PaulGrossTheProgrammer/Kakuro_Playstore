@@ -623,11 +623,15 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 // TODO... decode the helpsets and send to the grid of display
                 val downhelpSetString = message.getString("down").toString()
                 val acrosshelpSetString = message.getString("across").toString()
-                println(downhelpSetString)
-                println(acrosshelpSetString)
-                val downHelpSets = decodeHelpSet(downhelpSetString)
-                val acrossHelpSets = decodeHelpSet(acrosshelpSetString)
-                updateGridHelpSets(downHelpSets, acrossHelpSets)
+                if (downhelpSetString.isNotEmpty() && acrosshelpSetString.isNotEmpty()) {
+                    println(downhelpSetString)
+                    println(acrosshelpSetString)
+                    val downHelpSets = decodeHelpSet(downhelpSetString)
+                    val acrossHelpSets = decodeHelpSet(acrosshelpSetString)
+                    updateGridHelpSets(downHelpSets, acrossHelpSets)
+                } else {
+                    println("Empty HelpSets - skipping update.")
+                }
             }
         }
     }

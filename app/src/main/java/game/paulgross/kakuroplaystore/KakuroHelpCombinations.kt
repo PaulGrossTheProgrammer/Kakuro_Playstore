@@ -1,56 +1,23 @@
 package game.paulgross.kakuroplaystore
 
+import java.io.BufferedReader
+
 // The helpers map the number of squares and the total to the row and column for every puzzle square.
 // http://www.puzzles.grosse.is-a-geek.com/kaklista.html
 data class HelpCombination(val size: Int, val total: Int)
 
-var helpCombinationsLookup = mutableMapOf<HelpCombination, List<List<Int>>> (
-    // ... 2s first
-/*    HelpCombination(2, 3) to listOf(listOf(1, 2)),
-    HelpCombination(2, 4) to listOf(listOf(1, 3)),
-    HelpCombination(2, 5) to listOf(listOf(1, 4), listOf(2, 3)),
-    HelpCombination(2, 6) to listOf(listOf(1, 5), listOf(2, 4)),
-    HelpCombination(2, 7) to listOf(listOf(1, 6), listOf(2, 5), listOf(3, 4)),
-    HelpCombination(2, 8) to listOf(listOf(1, 7), listOf(2, 6), listOf(3, 5)),
-    HelpCombination(2, 9) to listOf(listOf(1, 8), listOf(2, 7), listOf(3, 6), listOf(4, 5)),
-    HelpCombination(2, 10) to listOf(listOf(1, 9), listOf(2, 8), listOf(3, 7), listOf(4, 6)),
-    HelpCombination(2, 11) to listOf(listOf(2, 9), listOf(3, 8), listOf(4, 7), listOf(5, 6)),
-    HelpCombination(2, 12) to listOf(listOf(3, 9), listOf(4, 8), listOf(5, 7)),
-    HelpCombination(2, 13) to listOf(listOf(4, 9), listOf(5, 8), listOf(6, 7)),
-    HelpCombination(2, 14) to listOf(listOf(5, 9), listOf(6, 8)),
-    HelpCombination(2, 15) to listOf(listOf(6, 9), listOf(7, 8)),
-    HelpCombination(2, 16) to listOf(listOf(7, 9)),
-    HelpCombination(2, 17) to listOf(listOf(8, 9)),
-
-    // ... and the rest
-    HelpCombination(3, 6) to listOf(listOf(1, 2, 3)),
-    HelpCombination(3, 7) to listOf(listOf(1, 2, 4)),
-    HelpCombination(3, 8) to listOf(listOf(1, 2, 5), listOf(1, 3, 4)),
-    // ... etc
-    HelpCombination(3, 24) to listOf(listOf(7, 8, 9)),
-    HelpCombination(3, 23) to listOf(listOf(6, 8, 9)),
-    // ... etc
-    HelpCombination(8, 44) to listOf(listOf(2, 3, 4, 5, 6, 7, 8, 9)),
-    HelpCombination(9, 45) to listOf(listOf(1, 2, 3, 4, 5, 6, 7, 8, 9))*/
-)
+var helpCombinationsLookup = mutableMapOf<HelpCombination, List<List<Int>>> ()
 
 /*
-Decode strings to create all pre-built HelpCombinations
+Decode strings in assets/HelpCombinations.txt to create all pre-built HelpCombinations
 "size/total:number,number...|number,number...|..."
 
 eg: "2/5:14 23"
  */
 
-private val helpCombinationsList = mutableListOf<String>()
-
-// TODO - load asset HelpCombinations.txt and use to populate helpCombinationsList
-// by calling createAllHelpCombinations() on each line.
-
-fun createAllHelpCombinations() {
-    // TODO - can I just use File.forEachLine { println(it) } in the app at runtime???
-    for (currString in helpCombinationsList) {
-        // Split the combination from the number lists.
-        val entrySplit = currString.split(":")
+fun createAllHelpCombinations(reader: BufferedReader) {
+    reader.forEachLine { line ->
+        val entrySplit = line.split(":")
         val combination = entrySplit[0]
         val combinationSplit = combination.split("/")
         val size = combinationSplit[0].toInt()
@@ -59,6 +26,8 @@ fun createAllHelpCombinations() {
 
         helpCombinationsLookup[hc] = splitHelpCombinations(entrySplit[1])
     }
+
+    println("Loaded ${helpCombinationsLookup.size} combinations with help sets")
 }
 
 fun splitHelpCombinations(lineString: String): List<List<Int>> {
