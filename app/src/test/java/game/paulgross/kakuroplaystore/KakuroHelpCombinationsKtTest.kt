@@ -1,8 +1,37 @@
 package game.paulgross.kakuroplaystore
 
 import org.junit.Test
+import java.io.IOException
+import java.io.InputStream
+import java.nio.file.Paths
+
 
 class KakuroHelpCombinationsKtTest {
+
+    @Throws(IOException::class)
+    private fun openFile(filename: String): InputStream {
+        // TODO to FIXME: Need to test open classloader files and check that directory exists first
+        val projectDirAbsolutePath = Paths.get("").toAbsolutePath().toString()
+        println("projectDirAbsolutePath = $projectDirAbsolutePath")
+        val assetsPath = Paths.get("source/main/assets").toAbsolutePath().toString()
+        println("assetsPath = $assetsPath")
+
+        println("filename = $filename")
+
+        val theClassLoader = javaClass.classLoader
+        println("theClassLoader = $theClassLoader")
+
+        val theStream = theClassLoader.getResourceAsStream(filename)
+        println("theStream = $theStream")
+
+        return theStream
+    }
+
+    @Test
+    fun testOpenProjectAsset() {
+        // FIXME - this doesn't work
+        openFile("./source/main/assets/HelpCombinations.txt")
+    }
 
     @Test
     fun splitHelpCombinations_Example1() {

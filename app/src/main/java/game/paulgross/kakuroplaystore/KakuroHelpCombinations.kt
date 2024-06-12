@@ -66,7 +66,6 @@ fun splitHelpCombinations(lineString: String): List<List<Int>> {
     for (group in groups) {
         val numberList = mutableListOf<Int>()
 
-//        val numbersList = group.split(",")
         for (digit in group) {
             val number = digit.toString().toInt()
             numberList.add(number)
