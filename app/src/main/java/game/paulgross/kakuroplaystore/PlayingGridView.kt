@@ -566,7 +566,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                 paint.color = Color.BLACK
                 paint.textSize = squareTextSize * 0.85f
 
-                var downPos = squareWidth * 1.65f
+                var downPos = squareWidth * 0.95f
                 for (currChar in helpText) {
                     if (currChar.toString() == " ") {
                         downPos += (squareWidth * 0.25f)
@@ -583,12 +583,21 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                 val helpText = helpersToAcrossString(selAcrossHelpSets)
 
                 paint.color = Color.BLACK
-                if (helpText.length > 41) {
+
+                val textLineBoundary = 3 * gameState?.puzzleWidth!!
+
+                if (helpText.length > textLineBoundary) {
+                    // Handle multiline...cut at the space before the boundary.
+                    val line1Boundary = helpText.substring(textLineBoundary).lastIndexOf(" ")
+                    val line1 =  helpText.substring(line1Boundary)
+                    val remainder = helpText.substring(line1Boundary, helpText.length- 1)
                     paint.textSize = squareTextSize * 0.65f
+                    canvas.drawText(line1, squareWidth * 0.95f, squareWidth * 0.55f, paint)
+                    canvas.drawText(remainder, squareWidth * 0.95f, squareWidth * 0.85f, paint)
                 } else {
                     paint.textSize = squareTextSize * 0.85f
+                    canvas.drawText(helpText, squareWidth * 0.95f, squareWidth * 0.65f, paint)
                 }
-                canvas.drawText(helpText, squareWidth * 1.18f, squareWidth * 0.65f, paint)
             }
         }
     }
