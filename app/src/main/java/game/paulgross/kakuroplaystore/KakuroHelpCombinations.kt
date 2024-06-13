@@ -59,8 +59,8 @@ data class HelpSets(var indexLookup: MutableMap<Int, List<List<Int>>> = mutableM
 // Example:
 //      "0-1:2/1-1:2:5|1:3:4"
 // Meaning
-//      Index 0 can only have 1 and 2
-//      Index 1 can have 1, 2 and 5, or 1, 3 and 4
+//      Index 0 can only be digits 1 and 2
+//      Index 1 can be digits 1, 2 and 5, or 1, 3 and 4
 
 fun encodeHelpSet(helpSet: HelpSets): String {
 

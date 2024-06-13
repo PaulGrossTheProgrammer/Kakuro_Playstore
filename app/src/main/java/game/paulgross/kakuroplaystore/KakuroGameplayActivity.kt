@@ -37,10 +37,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val isTv = applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")
 
         if (isTv) {
-            Log.d(TAG, "TV DETECTED")
+            Log.d(TAG, "TV DETECTED.")
+            // According to Google policy, a TV App is only allowed to use landscape orientation.
+            // (Yes, Google are very stupid. I walk past portrait-oriented TV screens almost every day. Advertisers use portrait mode all the time.)
+            Log.d(TAG, "TV APP IS FIXED TO LANDSCAPE MODE.")
             setContentView(R.layout.activity_kakurogameplay_landscape)
         } else {
-            Log.d(TAG, "THIS NOT A TV")
+            Log.d(TAG, "THIS NOT A TV.")
+            // Set either portrait or landscape.
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
                 setContentView(R.layout.activity_kakurogameplay)
             } else {
@@ -73,9 +77,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val newKey = gameState?.puzzleKey
 
         if (prevKey != newKey) {
-            println("#### Puzzle has changed - need to blank helpsets and request new ones.")
-            // TODO - for new puzzles (key has changed), blank the grid's helpsets
-            //  and send a request to the engine for the current key's helpsets.
+            // Whenever the puzzle changes, send an additional request for the helper combinations sets.
             engine?.queueMessageFromActivity(GameEngine.Message("RequestHelperSets"), ::queueMessage)
         }
 
@@ -512,8 +514,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
 
     fun onClickDigit(view: View) {
-        Log.d(TAG, "Clicked a guess: ${view.tag}")
-
         val selectedIndex = findViewById<PlayingGridView>(R.id.viewPlayGrid).getSelectedIndex()
         if (selectedIndex == -1) {
             return
@@ -538,7 +538,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         val value = tag.substringAfter("Possible")
-        Log.d(TAG, "Possible digit: $value")
 
         val message = GameEngine.Message("Possible")
         message.setKeyString("Index", selectedIndex.toString())
@@ -606,10 +605,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
      */
     private val activityMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            Log.d(TAG, "Received new message ...")
-
             val messageString = intent.getStringExtra("Message") ?: return
-            Log.d(TAG, "Message: $messageString")
 
             val message = GameEngine.Message.decodeMessage(messageString)
             if (message.type == "State") {
@@ -619,7 +615,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 }
             }
             if (message.type == "HelperSets") {
-                println("#### Recieved helpsets...")
                 val downhelpSetString = message.getString("down").toString()
                 val acrosshelpSetString = message.getString("across").toString()
                 if (downhelpSetString.isNotEmpty() && acrosshelpSetString.isNotEmpty()) {

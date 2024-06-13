@@ -146,7 +146,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         invalidate()
     }
 
-    // TODO - call this from the activity.
     fun setHelpSets(newDownHelpSet: HelpSets, newAcrossHelpSet: HelpSets ) {
         downHelpSets.indexLookup = newDownHelpSet.indexLookup
         acrossHelpSets.indexLookup = newAcrossHelpSet.indexLookup
@@ -424,9 +423,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             Log.d("PlayingGridView", "onDraw() exiting - No gameState to draw.")
             return
         }
-
-        // FIXME - get the puzzle key...
-//        println("Drawing for puzzle key ${gameState.}")
 
         canvas.drawBitmap(paperTexture, 0f, 0f, paint)
 

@@ -1,7 +1,6 @@
 package game.paulgross.kakuroplaystore
 
 import android.util.Log
-import java.io.File
 
 object KakuroGameplayDefinition: GameplayDefinition {
 
@@ -11,8 +10,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     // First 2 digits is the puzzle width.
     // From there, 0 is for non-playable squares, and any digit from 1..9 is for solution squares.
-    private const val builtinPuzzlesFilename = "builtin_puzzles.txt"
-    private const val builtinHelpCombinations = "HelpCombinations.txt"
+    private const val BUILTIN_PUZZLES_FILENAME = "builtin_puzzles.txt"
+    private const val BUILTIN_HELP_COMBINATIONS_FILENAME = "HelpCombinations.txt"
 
     private val builtinPuzzles: MutableList<String> = mutableListOf()
     private val puzzleKeys: MutableMap<String, String> = mutableMapOf()
@@ -53,11 +52,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
         this.engine = engine
 
         // Load the built-in HelpCombinations
-        createAllHelpCombinations(engine.assets.open(builtinHelpCombinations).bufferedReader())
+        createAllHelpCombinations(engine.assets.open(BUILTIN_HELP_COMBINATIONS_FILENAME).bufferedReader())
 
         // Load the built-in puzzles.
         // TODO - how do I close the file after reading?
-        engine.assets.open(builtinPuzzlesFilename).bufferedReader().forEachLine () {
+        engine.assets.open(BUILTIN_PUZZLES_FILENAME).bufferedReader().forEachLine () {
             if (!it.startsWith("#")) {
                 val currPuzzleString = it.replace("\\s".toRegex(), "")
                 if (currPuzzleString.isNotEmpty()) {
@@ -518,7 +517,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
      * Returns all the helper sets for the given puzzle key.
      */
     private fun getHelperSets(message: GameEngine.Message): GameEngine.Message {
-        println("#### Handling a request for helper sets...")
         val selectedKey = message.getString("k").toString()
 
         if (puzzleKeys.contains(selectedKey)) {

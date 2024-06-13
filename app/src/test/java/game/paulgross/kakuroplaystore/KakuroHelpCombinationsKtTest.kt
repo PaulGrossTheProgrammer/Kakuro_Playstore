@@ -1,12 +1,7 @@
 package game.paulgross.kakuroplaystore
 
 import org.junit.Test
-import java.io.BufferedReader
 import java.io.File
-import java.io.IOException
-import java.io.InputStream
-import java.nio.file.Paths
-
 
 class KakuroHelpCombinationsKtTest {
 
@@ -14,8 +9,12 @@ class KakuroHelpCombinationsKtTest {
     fun testOpenProjectAsset() {
         createAllHelpCombinations(File("src/main/assets/HelpCombinations.txt").bufferedReader())
 
+        // Check that the first and last entries loaded.
         assert(getHelpSets(2, 3)?.size == 1)
         assert(getHelpSets(9, 45)?.size == 1)
+
+        // Check that the longest set of combinations loaded.
+        assert(getHelpSets(5, 25)?.size == 12)
     }
 
     @Test
