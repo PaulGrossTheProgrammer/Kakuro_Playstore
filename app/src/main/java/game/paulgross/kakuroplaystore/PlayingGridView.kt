@@ -457,24 +457,32 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         var selectedX: Float? = null
         var selectedY: Float? = null
         var showHelp = false
+        var alpha = 255
 
         for (row in (1..gameState!!.puzzleHeight + 1)) {
             for (col in (1..gameState!!.puzzleWidth + 1)) {
 
                 if (addTouchAreas) {
                     // Add any boundary squares for auto scrolling
-                    if (currX < 0 && currX + squareWidth > 0) {
+                    if (currX <= 0 && currX + squareWidth > 0) {
                         boundaryLeftTouchLookupId.put(TouchArea(currX, currY, currX + squareWidth, currY + squareWidth), index)
                     }
                     if (currX < measuredWidth && currX + squareWidth > measuredWidth) {
                         boundaryRightTouchLookupId.put(TouchArea(currX, currY, currX + squareWidth, currY + squareWidth), index)
                     }
-                    if (currY < 0 && currY + squareWidth > 0) {
+                    if (currY <= 0 && currY + squareWidth > 0) {
                         boundaryTopTouchLookupId.put(TouchArea(currX, currY, currX + squareWidth, currY + squareWidth), index)
                     }
                     if (currY < measuredHeight && currY + squareWidth > measuredHeight) {
                         boundaryBottomTouchLookupId.put(TouchArea(currX, currY, currX + squareWidth, currY + squareWidth), index)
                     }
+                }
+
+                // Make the top edge square fainter, so the help is more visible.
+                if (currX < squareWidth * 0.8 || currY < squareWidth * 0.8) {
+                    alpha = 90
+                } else {
+                    alpha = 255
                 }
 
                 // First row and colum are only used as space for showing hints.
@@ -513,26 +521,26 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                         // So at this point, if we have the selected square, just store the currX and currY.
                         drawGuessSquare(index, gridValue.toString(), possiblesString, selected, visible, error,
-                            gameState!!.solved, addTouchAreas, currX, currY, canvas, paint)
+                            gameState!!.solved, addTouchAreas, currX, currY, canvas, paint, alpha)
                     } else {
-                        drawBlankSquare(currX, currY, canvas, paint)
+                        drawBlankSquare(currX, currY, canvas, paint, alpha)
                     }
 
                     gameState!!.playerHints.forEach { hint ->
                         if (index == hint.index) {
                             if (hint.direction == KakuroGameplayDefinition.Direction.DOWN) {
-                                drawDownHint(hint.total.toString(), currX, currY, canvas, paint)
+                                drawDownHint(hint.total.toString(), currX, currY, canvas, paint, alpha)
                             } else if (hint.direction == KakuroGameplayDefinition.Direction.ACROSS) {
-                                drawAcrossHint(hint.total.toString(), currX, currY, canvas, paint)
+                                drawAcrossHint(hint.total.toString(), currX, currY, canvas, paint, alpha)
                             }
                         }
                     }
                     index++
                 } else {
-                    drawBlankSquare(currX, currY, canvas, paint)
+                    drawBlankSquare(currX, currY, canvas, paint, alpha)
                 }
 
-                drawSquareBorder(currX, currY, canvas, paint)
+                drawSquareBorder(currX, currY, canvas, paint, alpha)
 
                 currX += squareWidth
             }
@@ -547,18 +555,69 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             drawSelectionSquare(selectedX, selectedY, canvas, selectedByNavPaint)
         }
 
-        // TODO - draw the row and column help if the selected square doesn't yet have a guess.
         if (showHelp) {
-            println("TODO - show row and column help in the grid")
-            if (downHelpSets.indexLookup[selectedIndex] != null) {
-                val helpSets = downHelpSets.indexLookup[selectedIndex]
-                println("TODO: Draw the DOWN helper sets: $helpSets")
+            // TODO - Auto switch to smaller multiline text when help text is too long.
+
+            val selDownHelpSets = downHelpSets.indexLookup[selectedIndex]
+            if (selDownHelpSets != null) {
+                println("TODO: Draw the DOWN helper sets: $selDownHelpSets")
+                val helpText = helpersToAcrossString(selDownHelpSets)
+
+                paint.color = Color.BLACK
+                paint.textSize = squareTextSize * 0.85f
+
+                var downPos = squareWidth * 1.65f
+                for (currChar in helpText) {
+                    if (currChar.toString() == " ") {
+                        downPos += (squareWidth * 0.25f)
+                    } else {
+                        canvas.drawText(currChar.toString(), squareWidth * 0.28f, downPos, paint)
+                        downPos += (squareWidth * 0.50f)
+                    }
+                }
             }
-            if (acrossHelpSets.indexLookup[selectedIndex] != null) {
-                val helpSets = acrossHelpSets.indexLookup[selectedIndex]
-                println("TODO: Draw the ACROSS helper sets: $helpSets")
+
+            val selAcrossHelpSets = acrossHelpSets.indexLookup[selectedIndex]
+            if (selAcrossHelpSets != null) {
+                println("TODO: Draw the ACROSS helper sets: $selAcrossHelpSets")
+                val helpText = helpersToAcrossString(selAcrossHelpSets)
+
+                paint.color = Color.BLACK
+                if (helpText.length > 41) {
+                    paint.textSize = squareTextSize * 0.65f
+                } else {
+                    paint.textSize = squareTextSize * 0.85f
+                }
+                canvas.drawText(helpText, squareWidth * 1.18f, squareWidth * 0.65f, paint)
             }
         }
+    }
+
+    private fun helpersToAcrossString(helpSets: List<List<Int>>): String {
+        val builder = StringBuilder()
+        for (digitList in helpSets) {
+            if (builder.isNotEmpty()) {
+                builder.append(" ")
+            }
+            for (digit in digitList) {
+                builder.append(digit.toString())
+            }
+        }
+        return builder.toString()
+    }
+
+    // TODO - delete this
+    private fun helpersToDownString(helpSets: List<List<Int>>): String {
+        val builder = StringBuilder()
+        for (digitList in helpSets) {
+            if (builder.isNotEmpty()) {
+                builder.append(" ")
+            }
+            for (digit in digitList) {
+                builder.append(digit.toString())
+            }
+        }
+        return builder.toString()
     }
 
     private fun drawSelectionSquare(x: Float, y: Float, canvas: Canvas, paint: Paint) {
@@ -567,7 +626,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean,
                                 visible: Boolean,error: Boolean, solved: Boolean,
-                                addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint
+                                addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint,
+                                alpha: Int
     ) {
         // Clear selectedIndex if the square is not visible.
         if (selectedIndex == index && !visible) {
@@ -583,11 +643,14 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         paint.color = Color.LTGRAY
+        paint.alpha = alpha
         if (solved) {
             paint.color = Color.GRAY
+            paint.alpha = alpha
         } else {
             if (selected) {
                 paint.color = Color.WHITE
+                paint.alpha = alpha
             }
         }
         canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )
@@ -595,8 +658,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         if (content != "0") {
             // Display the player's guess.
             paint.color = Color.BLUE
+            paint.alpha = alpha
             if (error) {
                 paint.color = Color.RED
+                paint.alpha = alpha
             }
             paint.textSize = squareTextSize
             canvas.drawText(content, x + squareWidth * 0.31f, y + squareWidth * 0.75f, paint)
@@ -605,6 +670,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         if (possiblesString != null) {
             paint.textSize = possiblesTextSize
             paint.color = Color.BLACK
+            paint.alpha = alpha
 
             val xStart = x + squareWidth * 0.10f
             val yStart = y + squareWidth * 0.30f
@@ -624,41 +690,50 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                 xPos = xStart
             }
         }
+        paint.alpha = 255
     }
 
-    private fun drawSquareBorder(x: Float, y: Float, canvas: Canvas, paint: Paint) {
+    private fun drawSquareBorder(x: Float, y: Float, canvas: Canvas, paint: Paint, alpha: Int) {
         paint.color = colourSquareBorder
+        paint.alpha = alpha
         paint.strokeWidth = borderThickness
         canvas.drawLine(x, y, x + squareWidth, y, paint )
         canvas.drawLine(x, y, x, y + squareWidth, paint )
         canvas.drawLine(x, y + squareWidth, x + squareWidth, y + squareWidth, paint )
         canvas.drawLine(x + squareWidth, y, x + squareWidth, y + squareWidth, paint )
+        paint.alpha = 255
     }
 
-    private fun drawBlankSquare(x: Float, y: Float, canvas: Canvas, paint: Paint) {
+    private fun drawBlankSquare(x: Float, y: Float, canvas: Canvas, paint: Paint, alpha: Int) {
         paint.color = colourNonPlaySquareInside
+        paint.alpha = alpha
 
         canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )
+        paint.alpha = 255
     }
 
-    private fun drawDownHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
+    private fun drawDownHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint, alpha: Int) {
         paint.color = Color.LTGRAY
+        paint.alpha = alpha
         paint.strokeWidth = squareWidth * 0.02f
 
         canvas.drawLine(x + slashMargin, y - squareWidth + slashMargin, x + squareWidth - slashMargin, y - slashMargin, paint )
 
         paint.textSize = squareTextSize * 0.45f
         canvas.drawText(hintString, x + squareWidth * 0.18f, y + squareWidth * 0.85f - squareWidth, paint)
+        paint.alpha = 255
     }
 
-    private fun drawAcrossHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint) {
+    private fun drawAcrossHint(hintString: String, x: Float, y: Float, canvas: Canvas, paint: Paint, alpha: Int) {
         paint.color = Color.LTGRAY
+        paint.alpha = alpha
         paint.strokeWidth = squareWidth * 0.02f
 
         canvas.drawLine(x + slashMargin - squareWidth, y + slashMargin, x - slashMargin, y - slashMargin + squareWidth, paint )
 
         paint.textSize = squareTextSize * 0.45f
         canvas.drawText(hintString, x + squareWidth * 0.56f  - squareWidth, y + squareWidth * 0.45f, paint)
+        paint.alpha = 255
     }
 
     fun navigateGrid(dir: KakuroGameplayActivity.NavDirection) {
