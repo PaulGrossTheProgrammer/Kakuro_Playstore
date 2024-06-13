@@ -11,6 +11,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import kotlin.math.floor
 
 fun getResizedBitmap(bitmap: Bitmap , newWidth: Int , newHeight: Int ): Bitmap {
 
@@ -564,15 +565,15 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                 val helpText = helpersToAcrossString(selDownHelpSets)
 
                 paint.color = Color.BLACK
-                paint.textSize = squareTextSize * 0.85f
+                paint.textSize = squareTextSize * 0.95f
 
-                var downPos = squareWidth * 0.95f
+                var downPos = squareWidth * 1.15f
                 for (currChar in helpText) {
                     if (currChar.toString() == " ") {
                         downPos += (squareWidth * 0.25f)
                     } else {
                         canvas.drawText(currChar.toString(), squareWidth * 0.28f, downPos, paint)
-                        downPos += (squareWidth * 0.50f)
+                        downPos += (squareWidth * 0.55f)
                     }
                 }
             }
@@ -584,19 +585,19 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                 paint.color = Color.BLACK
 
-                val textLineBoundary = 3 * gameState?.puzzleWidth!!
+                val textLineBoundary = floor(6.0f * gameState?.puzzleWidth!!).toInt()
 
                 if (helpText.length > textLineBoundary) {
                     // Handle multiline...cut at the space before the boundary.
-                    val line1Boundary = helpText.substring(textLineBoundary).lastIndexOf(" ")
-                    val line1 =  helpText.substring(line1Boundary)
-                    val remainder = helpText.substring(line1Boundary, helpText.length- 1)
-                    paint.textSize = squareTextSize * 0.65f
-                    canvas.drawText(line1, squareWidth * 0.95f, squareWidth * 0.55f, paint)
-                    canvas.drawText(remainder, squareWidth * 0.95f, squareWidth * 0.85f, paint)
+                    val line1Boundary = helpText.substring(0, textLineBoundary).lastIndexOf(" ")
+                    val line1 =  helpText.substring(0, line1Boundary)
+                    val remainder = helpText.substring(line1Boundary)
+                    paint.textSize = squareTextSize * 0.60f
+                    canvas.drawText(line1, squareWidth * 0.80f, squareWidth * 0.53f, paint)
+                    canvas.drawText(remainder, squareWidth * 0.80f, squareWidth * 0.92f, paint)
                 } else {
-                    paint.textSize = squareTextSize * 0.85f
-                    canvas.drawText(helpText, squareWidth * 0.95f, squareWidth * 0.65f, paint)
+                    paint.textSize = squareTextSize * 0.95f
+                    canvas.drawText(helpText, squareWidth * 0.85f, squareWidth * 0.65f, paint)
                 }
             }
         }
