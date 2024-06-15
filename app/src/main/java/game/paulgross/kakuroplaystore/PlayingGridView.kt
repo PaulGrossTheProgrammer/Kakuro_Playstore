@@ -585,18 +585,34 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                 paint.color = Color.BLACK
 
-                val textLineBoundary = floor(6.0f * gameState?.puzzleWidth!!).toInt()
+                // FIXME - make relative to current size
+                val textLineBoundary = floor(3.0f * currDisplayRows).toInt()
+                println("textLineBoundary = $textLineBoundary")
 
+                val fullFontSize = squareWidth * 0.85f
+                val line2FontConvert = 0.75f
+
+                println("helpText.length = ${helpText.length}")
                 if (helpText.length > textLineBoundary) {
                     // Handle multiline...cut at the space before the boundary.
-                    val line1Boundary = helpText.substring(0, textLineBoundary).lastIndexOf(" ")
+
+                    var newTextLineBoundary = (textLineBoundary/line2FontConvert).toInt()
+                    println("newTextLineBoundary = $newTextLineBoundary")
+
+                    // FIXME - stop the  newTextLineBoundary exceeding the string length.
+                    // FIXME - avoid this happening.
+                    if (newTextLineBoundary > helpText.length) {
+                        newTextLineBoundary = helpText.length
+                        println("ERROR: Adjusted newTextLineBoundary = $newTextLineBoundary")
+                    }
+                    val line1Boundary = helpText.substring(0, newTextLineBoundary).lastIndexOf(" ")
                     val line1 =  helpText.substring(0, line1Boundary)
-                    val remainder = helpText.substring(line1Boundary)
-                    paint.textSize = squareTextSize * 0.60f
+                    val remainder = helpText.substring(line1Boundary + 1)
+                    paint.textSize = fullFontSize * line2FontConvert
                     canvas.drawText(line1, squareWidth * 0.80f, squareWidth * 0.53f, paint)
                     canvas.drawText(remainder, squareWidth * 0.80f, squareWidth * 0.92f, paint)
                 } else {
-                    paint.textSize = squareTextSize * 0.95f
+                    paint.textSize = fullFontSize
                     canvas.drawText(helpText, squareWidth * 0.85f, squareWidth * 0.65f, paint)
                 }
             }
