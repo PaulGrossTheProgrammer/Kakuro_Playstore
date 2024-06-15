@@ -585,18 +585,23 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                 paint.color = Color.BLACK
 
-                // FIXME - make relative to current size
-                val textLineBoundary = floor(3.0f * currDisplayRows).toInt()
+                // TODO - make relative to current size
+                // This isn't working. Try a different strategy
+                // If length is exceeded, halve the help text (with longer first line for odd groups)
+                // The calc a scale to fit the first line.
+
+                val textLineBoundary = floor(2.5f * (currDisplayRows + 1)).toInt()
+                println("currDisplayRows = $currDisplayRows")
                 println("textLineBoundary = $textLineBoundary")
 
                 val fullFontSize = squareWidth * 0.85f
-                val line2FontConvert = 0.75f
+                val line2FontConvert = 0.50f
 
                 println("helpText.length = ${helpText.length}")
                 if (helpText.length > textLineBoundary) {
                     // Handle multiline...cut at the space before the boundary.
 
-                    var newTextLineBoundary = (textLineBoundary/line2FontConvert).toInt()
+                    var newTextLineBoundary = (0.85f * textLineBoundary/line2FontConvert).toInt()
                     println("newTextLineBoundary = $newTextLineBoundary")
 
                     // FIXME - stop the  newTextLineBoundary exceeding the string length.
