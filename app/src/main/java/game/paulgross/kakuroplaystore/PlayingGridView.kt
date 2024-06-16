@@ -49,6 +49,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var xSquaresOffset = 0
     private var ySquaresOffset = 0
 
+    // TODO - control this from a UI button.
+    var showHelp = false
+
     private var navigatedByDpad = false  // Indicates that the dpad has navigated to this grid.
     private var selectedIndex: Int = -1
     private var defaultIndex = -1
@@ -382,7 +385,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             displayZoom = currDisplayRows - maxGridDimension - 1
         }
 
-        val borderOffset = (GRID_LEFT_MARGIN + GRID_RIGHT_MARGIN)/2
+        var borderOffset = GRID_RIGHT_MARGIN
+
+        if (showHelp) {
+            borderOffset = (GRID_LEFT_MARGIN_HELP + GRID_RIGHT_MARGIN)/2
+        }
 
         // Determine squareWidth from max of row vs. columns.
         if (gameState!!.puzzleWidth > gameState!!.puzzleHeight) {
@@ -438,8 +445,13 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         paint.color = Color.WHITE
 
-        val xStart = (squareWidth * GRID_LEFT_MARGIN)/2 + xSquaresOffset * squareWidth
-        val yStart = (squareWidth * GRID_TOP_MARGIN)/2 + ySquaresOffset * squareWidth
+        var xStart = (squareWidth * GRID_RIGHT_MARGIN)/2 + xSquaresOffset * squareWidth
+        var yStart = (squareWidth * GRID_BOTTOM_MARGIN)/2 + ySquaresOffset * squareWidth
+
+        if (showHelp) {
+            xStart = (squareWidth * GRID_LEFT_MARGIN_HELP)/2 + xSquaresOffset * squareWidth
+            yStart = (squareWidth * GRID_TOP_MARGIN_HELP)/2 + ySquaresOffset * squareWidth
+        }
 
         var currX = xStart
         var currY = yStart
@@ -458,7 +470,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         var index = 0
         var selectedX: Float? = null
         var selectedY: Float? = null
-        var showHelp = false
         var alpha = 255
 
         for (row in (1..gameState!!.puzzleHeight + 1)) {
@@ -481,7 +492,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                 }
 
                 // Make the top edge square fainter, so the help is more visible.
-                if (currX < squareWidth * 0.8 || currY < squareWidth * 0.8) {
+                if (showHelp && (currX < squareWidth * 0.8 || currY < squareWidth * 0.8)) {
                     alpha = 90
                 } else {
                     alpha = 255
@@ -511,7 +522,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                             selectedY = currY
 
                             // TODO - Determine if the user needs help here.
-                            showHelp = true
+//                            showHelp = true
                         }
 
                         var possiblesString = gameState!!.possibles[index]
@@ -567,7 +578,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                 paint.color = Color.BLACK
                 paint.textSize = fullFontSize * 0.7f
 
-                val textLineBoundary = floor(2.1f * (currDisplayRows + 1)).toInt()
+                var textLineBoundary = floor(2.1f * (currDisplayRows + 1)).toInt()
 
                 if (helpText.length < textLineBoundary) {
                     var downPos = squareWidth * 1.15f
@@ -584,7 +595,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                     val line1Text = split[0]
                     val line2Text = split[1]
 
-                    var textLineBoundary = floor(4.4f * (currDisplayRows + 1)).toInt()
+                    textLineBoundary = floor(4.4f * (currDisplayRows + 1)).toInt()
                     var verticalSpacer = squareWidth * 0.26f
                     if (line1Text.length < textLineBoundary) {
                         paint.textSize = fullFontSize * 0.40f
@@ -873,9 +884,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     companion object {
         private val TAG = PlayingGridView::class.java.simpleName
 
-        const val GRID_TOP_MARGIN = 2.0f
+        const val GRID_TOP_MARGIN_HELP = 2.0f
         const val GRID_BOTTOM_MARGIN = 0.8f
-        const val GRID_LEFT_MARGIN = 2.0f
+        const val GRID_LEFT_MARGIN_HELP = 2.0f
         const val GRID_RIGHT_MARGIN = 0.8f
         const val MAX_DISPLAY_ROWS = 14
         const val MIN_DISPLAY_ROWS = 5
