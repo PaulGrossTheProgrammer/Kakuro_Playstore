@@ -11,6 +11,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import kotlin.math.ceil
 import kotlin.math.floor
 
 fun getResizedBitmap(bitmap: Bitmap , newWidth: Int , newHeight: Int ): Bitmap {
@@ -557,68 +558,78 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         if (showHelp) {
-            // TODO - Auto switch to smaller multiline text when help text is too long.
+            val fullFontSize = squareWidth * 0.85f
 
             val selDownHelpSets = downHelpSets.indexLookup[selectedIndex]
             if (selDownHelpSets != null) {
-                println("TODO: Draw the DOWN helper sets: $selDownHelpSets")
                 val helpText = helpersToAcrossString(selDownHelpSets)
 
                 paint.color = Color.BLACK
-                paint.textSize = squareTextSize * 0.95f
+                paint.textSize = fullFontSize * 0.7f
 
-                var downPos = squareWidth * 1.15f
-                for (currChar in helpText) {
-                    if (currChar.toString() == " ") {
-                        downPos += (squareWidth * 0.25f)
-                    } else {
-                        canvas.drawText(currChar.toString(), squareWidth * 0.28f, downPos, paint)
-                        downPos += (squareWidth * 0.55f)
+                val textLineBoundary = floor(2.1f * (currDisplayRows + 1)).toInt()
+
+                if (helpText.length < textLineBoundary) {
+                    // TODO - convert to multiline down text.
+                    var downPos = squareWidth * 1.15f
+                    for (currChar in helpText) {
+                        if (currChar.toString() == " ") {
+                            downPos += (squareWidth * 0.25f)
+                        } else {
+                            canvas.drawText(currChar.toString(), squareWidth * 0.38f, downPos, paint)
+                            downPos += (squareWidth * 0.55f)
+                        }
+                    }
+                } else {
+                    paint.textSize = fullFontSize * 0.38f
+                    var downPos = squareWidth * 1.15f
+                    for (currChar in helpText) {
+                        if (currChar.toString() == " ") {
+                            downPos += (squareWidth * 0.09f)
+                        } else {
+                            canvas.drawText(currChar.toString(), squareWidth * 0.38f, downPos, paint)
+                            downPos += (squareWidth * 0.25f)
+                        }
                     }
                 }
             }
 
             val selAcrossHelpSets = acrossHelpSets.indexLookup[selectedIndex]
             if (selAcrossHelpSets != null) {
-                println("TODO: Draw the ACROSS helper sets: $selAcrossHelpSets")
-                val helpText = helpersToAcrossString(selAcrossHelpSets)
+                var helpText = helpersToAcrossString(selAcrossHelpSets)
 
                 paint.color = Color.BLACK
 
-                // TODO - make relative to current size
-                // This isn't working. Try a different strategy
-                // If length is exceeded, halve the help text (with longer first line for odd groups)
-                // The calc a scale to fit the first line.
-
-                val textLineBoundary = floor(2.5f * (currDisplayRows + 1)).toInt()
-                println("currDisplayRows = $currDisplayRows")
-                println("textLineBoundary = $textLineBoundary")
-
-                val fullFontSize = squareWidth * 0.85f
-                val line2FontConvert = 0.50f
-
-                println("helpText.length = ${helpText.length}")
+                val textLineBoundary = floor(2.1f * (currDisplayRows + 1)).toInt()
                 if (helpText.length > textLineBoundary) {
-                    // Handle multiline...cut at the space before the boundary.
-
-                    var newTextLineBoundary = (0.85f * textLineBoundary/line2FontConvert).toInt()
-                    println("newTextLineBoundary = $newTextLineBoundary")
-
-                    // FIXME - stop the  newTextLineBoundary exceeding the string length.
-                    // FIXME - avoid this happening.
-                    if (newTextLineBoundary > helpText.length) {
-                        newTextLineBoundary = helpText.length
-                        println("ERROR: Adjusted newTextLineBoundary = $newTextLineBoundary")
+                    val helpGroups = helpText.split(" ")
+                    val groupsHalfCount = ceil(0.5f * helpGroups.size).toInt()
+                    val line1Text = StringBuilder()
+                    val line2Text = StringBuilder()
+                    helpGroups.forEachIndexed { index, groupText ->
+                        if (index < groupsHalfCount) {
+                            if (line1Text.isNotEmpty()) { line1Text.append(", ") }
+                            line1Text.append(groupText)
+                        } else {
+                            if (line2Text.isNotEmpty()) { line2Text.append(", ") }
+                            line2Text.append(groupText)
+                        }
                     }
-                    val line1Boundary = helpText.substring(0, newTextLineBoundary).lastIndexOf(" ")
-                    val line1 =  helpText.substring(0, line1Boundary)
-                    val remainder = helpText.substring(line1Boundary + 1)
-                    paint.textSize = fullFontSize * line2FontConvert
-                    canvas.drawText(line1, squareWidth * 0.80f, squareWidth * 0.53f, paint)
-                    canvas.drawText(remainder, squareWidth * 0.80f, squareWidth * 0.92f, paint)
+
+                    val shrinkFactor = 0.50f
+                    if (line1Text.length < textLineBoundary / shrinkFactor) {
+                        paint.textSize = fullFontSize * 0.48f
+                        canvas.drawText(line1Text.toString(), squareWidth * 1.02f, squareWidth * 0.50f, paint)
+                        canvas.drawText(line2Text.toString(), squareWidth * 1.02f, squareWidth * 0.90f, paint)
+                    } else {
+                        paint.textSize = fullFontSize * 0.40f
+                        canvas.drawText(line1Text.toString(), squareWidth * 1.02f, squareWidth * 0.56f, paint)
+                        canvas.drawText(line2Text.toString(), squareWidth * 1.02f, squareWidth * 0.90f, paint)
+                    }
                 } else {
                     paint.textSize = fullFontSize
-                    canvas.drawText(helpText, squareWidth * 0.85f, squareWidth * 0.65f, paint)
+                    helpText = helpText.replace(" ", ", ")
+                    canvas.drawText(helpText, squareWidth * 1.05f, squareWidth * 0.85f, paint)
                 }
             }
         }
