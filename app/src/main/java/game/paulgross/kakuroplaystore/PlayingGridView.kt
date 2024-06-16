@@ -159,6 +159,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     fun toggleShowHelp() {
         showHelp = !showHelp
+        resetTouchAreas()
         invalidate()
     }
 
@@ -525,9 +526,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                         if (selected) {
                             selectedX = currX
                             selectedY = currY
-
-                            // TODO - Determine if the user needs help here.
-//                            showHelp = true
                         }
 
                         var possiblesString = gameState!!.possibles[index]
