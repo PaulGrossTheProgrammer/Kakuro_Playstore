@@ -157,6 +157,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         invalidate()
     }
 
+    fun toggleShowHelp() {
+        showHelp = !showHelp
+        invalidate()
+    }
+
     /**
      * Create a TouchArea lookup to find the index of the guess square that was touched.
      * Each TouchArea defines the top-left and bottom right of the touchscreen rectangle.

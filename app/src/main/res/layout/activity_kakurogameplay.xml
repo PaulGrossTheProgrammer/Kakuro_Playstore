@@ -430,4 +430,14 @@
         app:layout_constraintTop_toTopOf="@+id/textViewDigitClear"
         app:srcCompat="@android:drawable/ic_media_ff" />
 
+    <ImageButton
+        android:id="@+id/imageButtonToggleHelp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:onClick="onClickToggleShowHelp"
+        app:layout_constraintEnd_toStartOf="@+id/imageButtonSettings"
+        app:layout_constraintTop_toTopOf="@+id/imageButtonSettings"
+        app:srcCompat="@android:drawable/ic_menu_help" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

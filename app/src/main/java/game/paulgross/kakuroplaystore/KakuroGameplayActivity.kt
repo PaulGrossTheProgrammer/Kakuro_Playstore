@@ -141,6 +141,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private var undoView: View? = null
     private var redoView: View? = null
 
+    private var toggleHelpView: View? = null
+
     private var settingsView: View? = null
     private var resetView: View? = null
     private var prevPuzzleView: View? = null
@@ -204,6 +206,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         undoView = findViewById(R.id.imageButtonUndo)
         redoView = findViewById(R.id.imageButtonRedo)
+
+        toggleHelpView = findViewById(R.id.imageButtonToggleHelp)
 
         settingsView = findViewById(R.id.imageButtonSettings)
         resetView = findViewById(R.id.textViewReset)
@@ -310,13 +314,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
         dpadNavLookup[NavCmd(undoView!!, NavDirection.CURSOR_UP)] = possible8View!!
         dpadNavLookup[NavCmd(undoView!!, NavDirection.CURSOR_LEFT)] = zoomOutView!!
         dpadNavLookup[NavCmd(undoView!!, NavDirection.CURSOR_RIGHT)] = redoView!!
-        dpadNavLookup[NavCmd(undoView!!, NavDirection.CURSOR_DOWN)] = settingsView!!
+        dpadNavLookup[NavCmd(undoView!!, NavDirection.CURSOR_DOWN)] = toggleHelpView!!
 
         dpadNavLookup[NavCmd(redoView!!, NavDirection.CURSOR_UP)] = possible9View!!
         dpadNavLookup[NavCmd(redoView!!, NavDirection.CURSOR_LEFT)] = undoView!!
         dpadNavLookup[NavCmd(redoView!!, NavDirection.CURSOR_DOWN)] = settingsView!!
 
-        // Row 4 navigation - reset, puzzle control and settings.
+        // Row 4 navigation - reset, puzzle control, help and settings.
 
         dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_UP)] = zoomInView!!
         dpadNavLookup[NavCmd(resetView!!, NavDirection.CURSOR_RIGHT)] = prevPuzzleView!!
@@ -327,10 +331,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_UP)] = zoomOutView!!
         dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_LEFT)] = prevPuzzleView!!
-        dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_RIGHT)] = settingsView!!
+        dpadNavLookup[NavCmd(nextPuzzleView!!, NavDirection.CURSOR_RIGHT)] = toggleHelpView!!
+
+        dpadNavLookup[NavCmd(toggleHelpView!!, NavDirection.CURSOR_UP)] = undoView!!
+        dpadNavLookup[NavCmd(toggleHelpView!!, NavDirection.CURSOR_LEFT)] = nextPuzzleView!!
+        dpadNavLookup[NavCmd(toggleHelpView!!, NavDirection.CURSOR_RIGHT)] = settingsView!!
 
         dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_UP)] = redoView!!
-        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_LEFT)] = nextPuzzleView!!
+        dpadNavLookup[NavCmd(settingsView!!, NavDirection.CURSOR_LEFT)] = toggleHelpView!!
     }
 
     /**
@@ -583,6 +591,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private fun nextPuzzle() {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
         engine?.queueMessageFromActivity(GameEngine.Message("NextPuzzle"), ::queueMessage)
+    }
+
+    fun onClickToggleShowHelp(view: View) {
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        playGridView.toggleShowHelp()
     }
 
     private fun exitApp() {
