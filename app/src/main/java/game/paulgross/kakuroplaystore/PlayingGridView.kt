@@ -81,6 +81,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         selectedByNavPaint.strokeCap = Paint.Cap.ROUND
 
         val preferences = gameplayActivity.getPreferences(Context.MODE_PRIVATE)
+
+        val savedHelpState = preferences.getString("UI.grid.showHelp", null)
+        if (savedHelpState != null) {
+            showHelp = savedHelpState.toBoolean()
+        }
         val zoom = preferences.getString("UI.grid.zoom", null)
         if (zoom != null) {
             val converted = zoom.toIntOrNull()
@@ -159,8 +164,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     fun toggleShowHelp() {
         showHelp = !showHelp
+        setScreenSizes()
         resetTouchAreas()
         invalidate()
+        // TODO save the help state
+        saveUIState()
     }
 
     /**
@@ -257,6 +265,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private fun saveUIState() {
         val preferences = gameplayActivity.getPreferences(Context.MODE_PRIVATE)
         val editor = preferences.edit()
+        editor.putString("UI.grid.showHelp", showHelp.toString())
         editor.putString("UI.grid.zoom", displayZoom.toString())
         editor.putString("UI.grid.xOffset", xSquaresOffset.toString())
         editor.putString("UI.grid.yOffset", ySquaresOffset.toString())
@@ -462,17 +471,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         var currX = xStart
         var currY = yStart
 
-        var rows = gameState!!.puzzleWidth + 1
-        var cols = gameState!!.playerGrid.size.div(gameState!!.puzzleWidth) + 1
-
-        // Assume a square display area.
-        if (rows > MAX_DISPLAY_ROWS) {
-            rows = MAX_DISPLAY_ROWS
-        }
-        if (cols > MAX_DISPLAY_ROWS) {
-            cols = MAX_DISPLAY_ROWS
-        }
-
         var index = 0
         var selectedX: Float? = null
         var selectedY: Float? = null
@@ -497,7 +495,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                     }
                 }
 
-                // Make the top edge square fainter, so the help is more visible.
+                // Make the top edge square fainter, so the help combinations are more visible.
                 if (showHelp && (currX < squareWidth * 0.8 || currY < squareWidth * 0.8)) {
                     alpha = 90
                 } else {
@@ -511,7 +509,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                     val gridValue = gameState!!.playerGrid[index]
                     // Non-playable grid value is -1, 0 means no guess yet, > 0 means a player guess
                     if (gridValue != -1) {
-                        // Determine if this square is within the visible area.
                         var visible = true
                         if (currX + squareWidth < 0 || currY + squareWidth < 0 || currX > measuredWidth || currY > measuredHeight) {
                             visible = false
@@ -535,7 +532,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                         val error = gameState!!.playerErrors.contains(index)
 
-                        // So at this point, if we have the selected square, just store the currX and currY.
                         drawGuessSquare(index, gridValue.toString(), possiblesString, selected, visible, error,
                             gameState!!.solved, addTouchAreas, currX, currY, canvas, paint, alpha)
                     } else {
@@ -579,18 +575,19 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                 val helpText = helpersToString(selDownHelpSets)
 
                 paint.color = Color.BLACK
-                paint.textSize = fullFontSize * 0.7f
 
                 var textLineBoundary = floor(2.1f * (currDisplayRows + 1)).toInt()
 
                 if (helpText.length < textLineBoundary) {
+                    paint.textSize = fullFontSize * 0.65f
+
                     var downPos = squareWidth * 1.15f
                     for (currChar in helpText) {
                         if (currChar.toString() == " ") {
-                            downPos += (squareWidth * 0.25f)
+                            downPos += (squareWidth * 0.22f)
                         } else {
                             canvas.drawText(currChar.toString(), squareWidth * 0.38f, downPos, paint)
-                            downPos += (squareWidth * 0.55f)
+                            downPos += (squareWidth * 0.48f)
                         }
                     }
                 } else {
