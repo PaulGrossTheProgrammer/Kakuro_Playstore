@@ -49,8 +49,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var xSquaresOffset = 0
     private var ySquaresOffset = 0
 
-    // TODO - control this from a UI button.
-    var showHelp = false
+    private var showHelp = false
 
     private var navigatedByDpad = false  // Indicates that the dpad has navigated to this grid.
     private var selectedIndex: Int = -1
