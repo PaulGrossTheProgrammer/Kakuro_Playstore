@@ -248,16 +248,28 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
         displayZoom += changeZoom
 
-        // Make sure the bottom right does not move too high or too far left.
-        if (xSquaresOffset < 0) {
-            xSquaresOffset++
-        }
-        if (ySquaresOffset < 0) {
-            ySquaresOffset++
+        if (changeZoom < 0) {
+            // When zooming in, ensure the selected index does not move off the screen.
+            val rightHalf = (currDisplayRows - xSquaresOffset)/2 < selectedIndex.rem(gameState!!.puzzleWidth)
+            if (rightHalf) {
+                xSquaresOffset--  // Track back to the right
+            }
+
+            val bottomHalf = (currDisplayRows - ySquaresOffset)/2 < selectedIndex.div(gameState!!.puzzleWidth)
+            if (bottomHalf) {
+                ySquaresOffset--  // Track back down
+            }
+        } else {
+            // Make sure the bottom right does not move too high or too far left.
+            if (xSquaresOffset < 0) {
+                xSquaresOffset++
+            }
+            if (ySquaresOffset < 0) {
+                ySquaresOffset++
+            }
         }
 
         saveUIState()
-
         setScreenSizes()  // This also forces a redraw
     }
 

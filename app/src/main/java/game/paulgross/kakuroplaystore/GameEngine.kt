@@ -168,7 +168,6 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                         }
 
                         // Handle custom messages, which will be passed back to the caller.
-                        println("#### A custom message was received...")
                         if (message != messageStateChange && message != messageNoStateChange) {
                             if (message.getString("StateChanged").toString().equals("true", ignoreCase = true)) {
                                 gameStateChanged = true

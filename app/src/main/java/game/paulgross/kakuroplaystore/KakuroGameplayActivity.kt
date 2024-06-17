@@ -628,13 +628,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 }
             }
             if (message.type == "HelperSets") {
-                val downhelpSetString = message.getString("down").toString()
-                val acrosshelpSetString = message.getString("across").toString()
-                if (downhelpSetString.isNotEmpty() && acrosshelpSetString.isNotEmpty()) {
-                    println(downhelpSetString)
-                    println(acrosshelpSetString)
-                    val downHelpSets = decodeHelpSet(downhelpSetString)
-                    val acrossHelpSets = decodeHelpSet(acrosshelpSetString)
+                val downHelpSetString = message.getString("down").toString()
+                val acrossHelpSetString = message.getString("across").toString()
+                if (downHelpSetString.isNotEmpty() && acrossHelpSetString.isNotEmpty()) {
+                    val downHelpSets = decodeHelpSet(downHelpSetString)
+                    val acrossHelpSets = decodeHelpSet(acrossHelpSetString)
                     updateGridHelpSets(downHelpSets, acrossHelpSets)
                 } else {
                     println("Empty HelpSets - skipping update.")
