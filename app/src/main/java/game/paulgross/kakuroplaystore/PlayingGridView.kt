@@ -148,11 +148,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         if (needNewSizes || lastKnownWidth == 0 || lastKnownHeight == 0 || lastKnownWidth != measuredWidth || lastKnownHeight != measuredHeight) {
             Log.d(TAG, "setGameState calling setScreenSizes()")
-            setScreenSizes()
+            rescaleScreenObjects()
         } else {
             Log.d(TAG, "setGameState SKIPPING setScreenSizes()")
+            invalidate()
         }
-        invalidate()
     }
 
     fun setHelpSets(newDownHelpSet: HelpSets, newAcrossHelpSet: HelpSets ) {
@@ -163,11 +163,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     fun toggleShowHelp() {
         showHelp = !showHelp
-        setScreenSizes()
-        resetTouchAreas()
-        invalidate()
-        // TODO save the help state
         saveUIState()
+        rescaleScreenObjects()
     }
 
     /**
@@ -270,7 +267,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         saveUIState()
-        setScreenSizes()  // This also forces a redraw
+        rescaleScreenObjects()
     }
 
     private fun saveUIState() {
@@ -369,7 +366,16 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private var lastKnownWidth = 0
     private var lastKnownHeight = 0
 
-    private fun setScreenSizes() {
+
+    /**
+     * Changes the sizes of objects drawn on the screen, clears the touch areas on the screen, and then requests a redraw.
+     *
+     * Note that if the touch areas have been cleared, a redraw will rebuild the touch areas.
+     *
+     * This is required when either the screen changes size, such as when it is rotated between portrait and landscape,
+     * or the zoom level of the grid is changed.
+     */
+    private fun rescaleScreenObjects() {
         Log.d("PlayingGridView", "setScreenSizes(): Width = $measuredWidth, height = $measuredHeight")
         if (gameState == null) {
             Log.d("PlayingGridView", "setScreenSizes() exiting because there is not yet a gameState.")
@@ -579,18 +585,18 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         if (showHelp) {
-            val fullFontSize = squareWidth * 0.85f
+            val fullFontSize = squareWidth * 0.45f
 
             val selDownHelpSets = downHelpSets.indexLookup[selectedIndex]
             if (selDownHelpSets != null) {
                 val helpText = helpersToString(selDownHelpSets)
+                paint.textSize = fullFontSize
 
                 paint.color = Color.BLACK
 
                 var textLineBoundary = floor(2.1f * (currDisplayRows + 1)).toInt()
 
                 if (helpText.length < textLineBoundary) {
-                    paint.textSize = fullFontSize * 0.65f
 
                     var downPos = squareWidth * 1.15f
                     for (currChar in helpText) {
@@ -607,13 +613,13 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                     val line2Text = split[1]
 
                     textLineBoundary = floor(4.4f * (currDisplayRows + 1)).toInt()
-                    var verticalSpacer = squareWidth * 0.26f
+                    var verticalSpacer = 0f
                     if (line1Text.length < textLineBoundary) {
-                        paint.textSize = fullFontSize * 0.40f
-
+                        paint.textSize = fullFontSize * 0.60f
+                        verticalSpacer = fullFontSize * 0.46f
                     } else {
-                        paint.textSize = fullFontSize * 0.26f
-                        verticalSpacer = squareWidth * 0.17f
+                        paint.textSize = fullFontSize * 0.46f
+                        verticalSpacer = fullFontSize * 0.38f
                     }
 
                     var downPos = squareWidth * 1.05f
@@ -643,6 +649,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                 var helpText = helpersToString(selAcrossHelpSets)
 
                 paint.color = Color.BLACK
+                paint.textSize = fullFontSize
 
                 val textLineBoundary = floor(2.1f * (currDisplayRows + 1)).toInt()
                 if (helpText.length > textLineBoundary) {
@@ -663,15 +670,14 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                     val shrinkFactor = 0.50f
                     if (line1Text.length < textLineBoundary / shrinkFactor) {
                         paint.textSize = fullFontSize * 0.48f
-                        canvas.drawText(line1Text.toString(), squareWidth * 1.02f, squareWidth * 0.50f, paint)
+                        canvas.drawText(line1Text.toString(), squareWidth * 1.02f, squareWidth * 0.60f, paint)
                         canvas.drawText(line2Text.toString(), squareWidth * 1.02f, squareWidth * 0.90f, paint)
                     } else {
                         paint.textSize = fullFontSize * 0.40f
-                        canvas.drawText(line1Text.toString(), squareWidth * 1.02f, squareWidth * 0.56f, paint)
+                        canvas.drawText(line1Text.toString(), squareWidth * 1.02f, squareWidth * 0.66f, paint)
                         canvas.drawText(line2Text.toString(), squareWidth * 1.02f, squareWidth * 0.90f, paint)
                     }
                 } else {
-                    paint.textSize = fullFontSize * 0.75f
                     helpText = helpText.replace(" ", ", ")
                     canvas.drawText(helpText, squareWidth * 1.05f, squareWidth * 0.85f, paint)
                 }
