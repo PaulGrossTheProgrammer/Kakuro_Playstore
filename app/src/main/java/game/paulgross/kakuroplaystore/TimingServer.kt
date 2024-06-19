@@ -3,7 +3,9 @@ package game.paulgross.kakuroplaystore
 class TimingServer: Thread() {
 
     // TODO - change the second String to the new Type that stores the timing data.
-    private val timerLookup = mutableMapOf<String,String>()
+    private val timerLookup = mutableMapOf<String, EventTimer>()
+
+    data class EventTimer(val start: Long, val duration: Int, val periodic: Boolean)
 
     override fun run() {
         // TODO - run until shutdown, sleeping between known events.
