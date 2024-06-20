@@ -202,8 +202,8 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         Log.d(TAG, "The Game Server has shut down.")
     }
 
-    fun requestDelayedEvent(responseFunction: (message: Message) -> Unit, delay: Int): EventTimer {
-        return timingServer.addSingleEvent(responseFunction, delay)
+    fun requestDelayedEvent(responseFunction: (message: Message) -> Unit, theType: String, delay: Int): EventTimer {
+        return timingServer.addSingleEvent(responseFunction, theType, delay)
     }
 
     private fun switchToRemoteServerMode(address: String) {
@@ -344,6 +344,8 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         }
     }
 
+
+    // TODO - stop and resume timing server when App is paused...
     class TimingServer() : Thread() {
 
         var serverThread: TimingServer? = null
@@ -355,15 +357,16 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         private var running = true
 
         private val eventTimers = mutableListOf<EventTimer>()
+        val DEFAULT_SLEEP_TIME = 10000L
 
-        data class EventTimer(val responseFunction: (message: Message) -> Unit, val delay: Int, val periodic: Boolean, val syncTime: Long)
+        data class EventTimer(val responseFunction: (message: Message) -> Unit, val theType: String, val delay: Int, val periodic: Boolean, val syncTime: Long)
 
         override fun run() {
             serverThread = this
             println("#### STARTING TIMER SYSTEM.")
 
 
-            var sleepTime = 10000L // Default 10 seconds
+            var sleepTime = DEFAULT_SLEEP_TIME
 
             // TODO - run until shutdown, sleeping between sending event messages.
             while (running) {
@@ -374,17 +377,46 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                 // Iterate all the timer tasks
                 // send messages as required. Each message contains the delay time in case the message is late.
                 // The delay time is the milliseconds between the requested event time and the actual message time.
-                // The special -1 delay time is for new events and also just after the system leaves pause mode.
+                // The special -1 delay time is for new events and also just after the system leaves pause mode???
 
                 // For each timer task, determine the sleep time required.
                 // Keep track of only the shortest sleep time, and at the end, sleep for that time.
                 // Note that there may not be any work to do while awake because a timer event may have been deleted.
+
+                val deleteList = mutableListOf<EventTimer>()
+
                 for (et in eventTimers) {
-                    println("#### TODO - calc sleep delay for [$et].")
                     val now = System.currentTimeMillis()
                     val currDelay = now - et.syncTime
                     val configuredDelay = et.delay
                     println("#### Synctime ${et.syncTime}, currDelay = $currDelay vs configuredDelay ${et.delay}.")
+
+                    if (currDelay < configuredDelay) {
+                        val waitTime = configuredDelay - currDelay
+                        // Only sleep for the shortest wait time.
+                        if (waitTime < sleepTime) {
+                            sleepTime = waitTime
+                            println("#### New sleep time $sleepTime.")
+                        }
+                    } else {
+                        val responseMessage = Message("TimingServer")
+                        responseMessage.setKeyString("type", et.theType)
+                        responseMessage.setKeyString("overrun", (currDelay - configuredDelay).toString())
+                        et.responseFunction.invoke(responseMessage)
+
+                        if (!et.periodic) {
+                            deleteList.add(et)
+                        }
+                        // TODO - for periodic, update sync time
+                    }
+
+
+                }
+
+                eventTimers.removeAll(deleteList)
+
+                if (eventTimers.isEmpty()) {
+                    sleepTime = DEFAULT_SLEEP_TIME
                 }
 
                 // Check running flag again in case it was switched off during message handling.
@@ -394,7 +426,8 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                         sleep(sleepTime)
                     } catch (e: InterruptedException) {
                         println("#### TimingServer was INTERRUPTED while sleeping.")
-                    }            }
+                    }
+                }
             }
 
             // Shutdown everything here ... clear maps and lists etc.
@@ -408,15 +441,15 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
             serverThread?.interrupt()
         }
 
-        public fun addSingleEvent(responseFunction: (message: Message) -> Unit, delay: Int): EventTimer {
-            val et = EventTimer(responseFunction, delay, false, System.currentTimeMillis())
+        public fun addSingleEvent(responseFunction: (message: Message) -> Unit, theType: String, delay: Int): EventTimer {
+            val et = EventTimer(responseFunction, theType, delay, false, System.currentTimeMillis())
             eventTimers.add(et)
             serverThread?.interrupt()    // Force a immediate assessment of the timing
             return et
         }
 
-        public fun addPeriodicEvent(responseFunction: (message: Message) -> Unit, period: Int): EventTimer {
-            val et = EventTimer(responseFunction, period, true, System.currentTimeMillis())
+        public fun addPeriodicEvent(responseFunction: (message: Message) -> Unit, theType: String, period: Int): EventTimer {
+            val et = EventTimer(responseFunction, theType, period, true, System.currentTimeMillis())
             eventTimers.add(et)
             serverThread?.interrupt()    // Force a immediate assessment of the timing
             return et
