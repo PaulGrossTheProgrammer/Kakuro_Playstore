@@ -9,6 +9,7 @@ import android.net.ConnectivityManager
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.text.toUpperCase
+import game.paulgross.kakuroplaystore.GameEngine.TimingServer.EventTimer
 import java.lang.Exception
 import java.util.Queue
 import java.util.concurrent.BlockingQueue
@@ -111,8 +112,12 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
     private var loopDelayMilliseconds = -1L  // -1 means disable looping,
 
+    val timingServer = TimingServer()
+
     override fun run() {
-        // TODO - register all the reserved system messages
+        timingServer.start()
+
+        // Register all the reserved system messages
         listOfSystemHandlers.add(SystemMessageHandler("Shutdown", ::handleShutdownMessage))
         listOfSystemHandlers.add(SystemMessageHandler("Abandoned", ::handleAbandonedMessage))
         listOfSystemHandlers.add(SystemMessageHandler("Reset", ::handleResetMessage))
@@ -195,6 +200,10 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
             }
         }
         Log.d(TAG, "The Game Server has shut down.")
+    }
+
+    fun requestDelayedEvent(responseFunction: (message: Message) -> Unit, delay: Int): EventTimer {
+        return timingServer.addSingleEvent(responseFunction, delay)
     }
 
     private fun switchToRemoteServerMode(address: String) {
@@ -333,6 +342,97 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                 return gm
             }
         }
+    }
+
+    class TimingServer() : Thread() {
+
+        var serverThread: TimingServer? = null
+
+        // TODO - move this to inside the game engine, and allow it to be requested with a factory function.
+        // The game engine will start it and shut it down as required.
+        // The game engine will pause and unpause it as required too. Need to research and test that feature.
+
+        private var running = true
+
+        private val eventTimers = mutableListOf<EventTimer>()
+
+        data class EventTimer(val responseFunction: (message: Message) -> Unit, val delay: Int, val periodic: Boolean, val syncTime: Long)
+
+        override fun run() {
+            serverThread = this
+            println("#### STARTING TIMER SYSTEM.")
+
+
+            var sleepTime = 10000L // Default 10 seconds
+
+            // TODO - run until shutdown, sleeping between sending event messages.
+            while (running) {
+
+                // Adding a new timer to eventTimers will wake the thread and force a recalc
+                // of the sleep time.
+
+                // Iterate all the timer tasks
+                // send messages as required. Each message contains the delay time in case the message is late.
+                // The delay time is the milliseconds between the requested event time and the actual message time.
+                // The special -1 delay time is for new events and also just after the system leaves pause mode.
+
+                // For each timer task, determine the sleep time required.
+                // Keep track of only the shortest sleep time, and at the end, sleep for that time.
+                // Note that there may not be any work to do while awake because a timer event may have been deleted.
+                for (et in eventTimers) {
+                    println("#### TODO - calc sleep delay for [$et].")
+                    val now = System.currentTimeMillis()
+                    val currDelay = now - et.syncTime
+                    val configuredDelay = et.delay
+                    println("#### Synctime ${et.syncTime}, currDelay = $currDelay vs configuredDelay ${et.delay}.")
+                }
+
+                // Check running flag again in case it was switched off during message handling.
+                if (running) {
+                    println("#### TimingServer sleeping for $sleepTime milliseconds.")
+                    try {
+                        sleep(sleepTime)
+                    } catch (e: InterruptedException) {
+                        println("#### TimingServer was INTERRUPTED while sleeping.")
+                    }            }
+            }
+
+            // Shutdown everything here ... clear maps and lists etc.
+            // ?? Iterate each EventTimer and send a shutdown message to the callbacks???
+
+            eventTimers.clear()
+        }
+
+        public fun shutdownTimerSystem() {
+            running = false
+            serverThread?.interrupt()
+        }
+
+        public fun addSingleEvent(responseFunction: (message: Message) -> Unit, delay: Int): EventTimer {
+            val et = EventTimer(responseFunction, delay, false, System.currentTimeMillis())
+            eventTimers.add(et)
+            serverThread?.interrupt()    // Force a immediate assessment of the timing
+            return et
+        }
+
+        public fun addPeriodicEvent(responseFunction: (message: Message) -> Unit, period: Int): EventTimer {
+            val et = EventTimer(responseFunction, period, true, System.currentTimeMillis())
+            eventTimers.add(et)
+            serverThread?.interrupt()    // Force a immediate assessment of the timing
+            return et
+        }
+
+        public fun setSyncOffset(delta: Int, otherEvent: EventTimer) {
+            // Adjust the sync time so that events don't happen too closely.
+
+            // The new sync time will be relative to the sync time of the otherEventId.
+        }
+
+        public fun cancelEvent(eventTimer: EventTimer) {
+            // TODO: Delete event from timerLookup
+        }
+
+        // Also allow events to tbe queried by id, for expected delays, last run etc...
     }
 
     private fun handleShutdownMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Changes {

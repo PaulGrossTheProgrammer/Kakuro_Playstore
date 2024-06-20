@@ -2,9 +2,9 @@ package game.paulgross.kakuroplaystore
 
 import game.paulgross.kakuroplaystore.GameEngine.Message
 
-class TimingServer() : Thread() {
+class TimingServer_old() : Thread() {
 
-    var serverThread: TimingServer? = null
+    var serverThread: TimingServer_old? = null
 
     // TODO - move this to inside the game engine, and allow it to be requested with a factory function.
     // The game engine will start it and shut it down as required.
