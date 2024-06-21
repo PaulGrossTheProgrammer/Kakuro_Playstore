@@ -360,7 +360,8 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
     }
 
 
-    // TODO - stop and resume timing server when App is paused...
+    // FIXME - when pausing the App, copy the state of all the eventTimers, and exit the run function.
+    // Then when resuming, create a new TimingServer using the saved eventTimers.
     class TimingServer() : Thread() {
 
         var serverThread: TimingServer? = null
