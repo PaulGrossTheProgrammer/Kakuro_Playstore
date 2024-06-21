@@ -11,6 +11,7 @@ class TimingServer_old() : Thread() {
     // The game engine will pause and unpause it as required too. Need to research and test that feature.
 
     private var running = true
+    private var shutdown = false
 
     private val eventTimers = mutableListOf<EventTimer>()
 
@@ -56,7 +57,19 @@ class TimingServer_old() : Thread() {
         eventTimers.clear()
     }
 
-    public fun shutdownTimerSystem() {
+    /**
+     * This will completely shutdown the timer system. All TimerEvents are removed.
+     */
+    public fun shutdown() {
+        shutdown = true
+    }
+
+    /**
+     * This will temporarily stop the timer system.
+     * It is called when the App is paused by the Android System.
+     * All TimerEvents are retained so then when run() is called next, the timer system can resume.
+     */
+    public fun pause() {
         running = false
         serverThread?.interrupt()
     }

@@ -18,17 +18,15 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class GameEngine( private val definition: GameplayDefinition, activity: AppCompatActivity): Thread() {
 
-    private val cm: ConnectivityManager
-    private val preferences: SharedPreferences
-    val assets: AssetManager
-    private var gameDefVersion = ""
+    private val cm: ConnectivityManager =
+        activity.applicationContext.getSystemService(ConnectivityManager::class.java)  // Used for Internet access.
+    private val preferences: SharedPreferences =
+        activity.getPreferences(MODE_PRIVATE)  // Use to save and load the game state.
+    val assets: AssetManager =
+        activity.applicationContext.assets // Used to access files in the assets directory
+    private var gameDefVersion = ""  // TODO - can paste the code in the init bock here?
 
     init {
-        cm = activity.applicationContext.getSystemService(ConnectivityManager::class.java)  // Used for Internet access.
-        preferences = activity.getPreferences(MODE_PRIVATE)  // Use to save and load the game state.
-
-        assets = activity.applicationContext.assets // Used to access files in the assets directory
-
         gameDefVersion = activity.applicationContext.packageManager.getPackageInfo(activity.applicationContext.packageName, 0).versionName
 
         Log.d(TAG, "Engine initialised with ${definition::class.java.simpleName}, version $gameDefVersion")
@@ -112,10 +110,10 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
     private var loopDelayMilliseconds = -1L  // -1 means disable looping,
 
-    val timingServer = TimingServer()
+    private val timingServer = TimingServer()
 
     override fun run() {
-        timingServer.start()
+        timingServer.startup()
 
         // Register all the reserved system messages
         listOfSystemHandlers.add(SystemMessageHandler("Shutdown", ::handleShutdownMessage))
@@ -143,7 +141,6 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                 // We are using a loop delay, so DON'T WAIT HERE for messages, just test to see if one is available ...
                 im = inboundMessageQueue.poll()
             }
-
 
             var systemStateChange = false
             var gameStateChanged = false
@@ -202,8 +199,26 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         Log.d(TAG, "The Game Server has shut down.")
     }
 
+    fun resumeTimingServer() {
+        // FIXME - this doesn't work
+        timingServer.startup()
+
+/*        if (!timingServer.running) {
+            timingServer.running = true
+            timingServer.run()
+        }*/
+    }
+
+    fun pauseTimingServer() {
+        timingServer.pause()
+    }
+
     fun requestDelayedEvent(responseFunction: (message: Message) -> Unit, theType: String, delay: Int): EventTimer {
         return timingServer.addSingleEvent(responseFunction, theType, delay)
+    }
+
+    fun requestPeriodicEvent(responseFunction: (message: Message) -> Unit, theType: String, period: Int): EventTimer {
+        return timingServer.addPeriodicEvent(responseFunction, theType, period)
     }
 
     private fun switchToRemoteServerMode(address: String) {
@@ -354,23 +369,21 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         // The game engine will start it and shut it down as required.
         // The game engine will pause and unpause it as required too. Need to research and test that feature.
 
-        private var running = true
+        var running = false
+        private var shutdown = false
 
         private val eventTimers = mutableListOf<EventTimer>()
         val DEFAULT_SLEEP_TIME = 10000L
 
-        data class EventTimer(val responseFunction: (message: Message) -> Unit, val theType: String, val delay: Int, val periodic: Boolean, val syncTime: Long)
+        data class EventTimer(val responseFunction: (message: Message) -> Unit, val theType: String, val delay: Int, val periodic: Boolean, var syncTime: Long)
 
         override fun run() {
             serverThread = this
             println("#### STARTING TIMER SYSTEM.")
 
-
             var sleepTime = DEFAULT_SLEEP_TIME
 
-            // TODO - run until shutdown, sleeping between sending event messages.
             while (running) {
-
                 // Adding a new timer to eventTimers will wake the thread and force a recalc
                 // of the sleep time.
 
@@ -406,11 +419,23 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
                         if (!et.periodic) {
                             deleteList.add(et)
+                        } else {
+                            // For periodic, update sync time
+                            // Note that the sync time is set to the ideal running time, not the actual running time.
+                            // get the period remainder period from the delay
+                            val syncRemainder = currDelay.rem(et.delay)
+                            val newSync = currDelay - syncRemainder
+                            println("Setting the periodic sync to: $newSync")
+                            et.syncTime = newSync
+
+                            val waitTime = newSync + currDelay
+                            // Only sleep for the shortest wait time.
+                            if (waitTime < sleepTime) {
+                                sleepTime = waitTime
+                                println("#### New sleep time $sleepTime.")
+                            }
                         }
-                        // TODO - for periodic, update sync time
                     }
-
-
                 }
 
                 eventTimers.removeAll(deleteList)
@@ -430,13 +455,38 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                 }
             }
 
-            // Shutdown everything here ... clear maps and lists etc.
-            // ?? Iterate each EventTimer and send a shutdown message to the callbacks???
+            // If shutdown is false skip this, so the system can be resumed by calling run() again.
+            if (shutdown) {
+                println("#### TimingServer is SHUTDOWN.")
+                // Shutdown everything here ... clear maps and lists etc.
+                // ?? Iterate each EventTimer and send a shutdown message to the callbacks???
 
-            eventTimers.clear()
+                eventTimers.clear()
+            } else {
+                println("#### TimingServer is PAUSED, and can be resumed later ...")
+            }
         }
 
-        public fun shutdownTimerSystem() {
+        fun shutdown() {
+            shutdown = true
+            running = false
+            serverThread?.interrupt()
+        }
+
+        fun startup() {
+            // Check the running flag to ensure we don't create a new Thread while already running the Timer Thread.
+            if (!running) {
+                running = true
+                // FIXME - CANNOT call start() again.
+                // Possible solution - don't exit the  run loop, but stay in witht long sleep, then interrupt to resume processing
+                // start()  // Create the new Thread that executes run()
+            }
+        }
+
+        /**
+         * Temporarily stop processing Events.
+         */
+        fun pause() {
             running = false
             serverThread?.interrupt()
         }
@@ -635,6 +685,8 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
     private fun stopGame() {
         Log.d(TAG, "The Game Server is shutting down ...")
+        timingServer.shutdown()
+
         gameIsRunning.set(false)
 
         if (gameMode == GameMode.SERVER) {
@@ -763,10 +815,13 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
             if (singletonGameEngine == null) {
                 Log.d(TAG, "Starting new GameEngine ...")
                 singletonGameEngine = GameEngine(definition, activity)
+                // TODO - Do I reactivate the Timer system here???
+                singletonGameEngine!!.resumeTimingServer()
                 singletonGameEngine!!.start()
             } else {
                 Log.d(TAG, "Already created GameEngine.")
             }
+
             return singletonGameEngine!!
         }
 

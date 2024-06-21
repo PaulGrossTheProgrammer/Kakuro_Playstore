@@ -60,6 +60,28 @@ class KakuroGameplayActivity : AppCompatActivity() {
         // Request that the GameEngine send a state message to queueMessage() whenever the game state changes.
         enableQueuedMessages()
         engine?.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
+
+        //TODO - delete this periodic event after testing
+        engine?.requestPeriodicEvent(::testPeriodicCallback, "PERIODIC EVENT TEST", 5000)
+    }
+
+    private fun testPeriodicCallback(message: GameEngine.Message) {
+        println("#### Callback message received: ${message.asString()}")
+        println("#### Callback message type: ${message.getString("type")}")
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        // ?? Start the timer system here??
+        engine?.resumeTimingServer()
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        // ?? Pause the timer system here??
+        engine?.pauseTimingServer()
     }
 
     fun onClickSettings(view: View) {
