@@ -132,15 +132,8 @@ object KakuroGameplayDefinition: GameplayDefinition {
         return GameEngine.messageStateChange
     }
 
-    private fun testCallback(message: GameEngine.Message) {
-        println("#### Callback message received: ${message.asString()}")
-        println("#### Callback message type: ${message.getString("type")}")
-    }
-
     private fun submitGuess(message: GameEngine.Message): GameEngine.Message {
         Log.d(TAG, "The user sent a guess: $message")
-
-        engine?.requestDelayedEvent(::testCallback, "TestSubmitEvent", 1000)
 
         if (!message.hasString("Index") || !message.hasString("Value")) {
             Log.d(TAG, "Missing [Index] or [Value].")

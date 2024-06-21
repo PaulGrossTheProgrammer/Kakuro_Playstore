@@ -70,6 +70,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         println("#### Callback message type: ${message.getString("type")}")
     }
 
+    private fun testDelayCallback(message: GameEngine.Message) {
+        println("#### Callback message received: ${message.asString()}")
+        println("#### Callback message type: ${message.getString("type")}")
+    }
+
     override fun onResume() {
         super.onResume()
 
@@ -548,6 +553,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         if (selectedIndex == -1) {
             return
         }
+
+        engine?.requestDelayedEvent(::testDelayCallback, "TestOnClickDigitEvent", 1000)
 
         checkForSolved = true  // This flag is used by the message receiver to react to the change if required
 
