@@ -377,60 +377,39 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         }
     }
 
-
-    // FIXME - when pausing the App, copy the state of all the eventTimers, and exit the run function.
-    // Then when resuming, create a new TimingServer using the saved eventTimers.
     class TimingServer() : Thread() {
 
-        var serverThread: TimingServer? = null
+        private var serverThread: TimingServer? = null
 
-        // TODO - move this to inside the game engine, and allow it to be requested with a factory function.
-        // The game engine will start it and shut it down as required.
-        // The game engine will pause and unpause it as required too. Need to research and test that feature.
-
-        var running = true
+        private var running = true
 
         private val eventTimers = mutableListOf<EventTimer>()
-        val DEFAULT_SLEEP_TIME = 10000L  // TODO - maybe make this longer?
+        private val DEFAULT_SLEEP_TIME = 60000L  // TODO - maybe make this longer?
 
         data class EventTimer(val responseFunction: (message: Message) -> Unit, val theType: String, val delay: Int, val periodic: Boolean, var syncTime: Long)
 
         override fun run() {
             serverThread = this
-            println("#### STARTING TIMER SYSTEM.")
+//            println("#### STARTING TIMER SYSTEM.")
 
             while (running) {
-
-                // Adding a new timer to eventTimers will wake the thread and force a recalc
-                // of the sleep time.
-
-                // Iterate all the timer tasks
-                // send messages as required. Each message contains the delay time in case the message is late.
-                // The delay time is the milliseconds between the requested event time and the actual message time.
-                // The special -1 delay time is for new events and also just after the system leaves pause mode???
-
-                // For each timer task, determine the sleep time required.
-                // Keep track of only the shortest sleep time, and at the end, sleep for that time.
-                // Note that there may not be any work to do while awake because a timer event may have been deleted.
-
                 val deleteList = mutableListOf<EventTimer>()
 
                 var sleepTime = DEFAULT_SLEEP_TIME
-                println("Processing ${eventTimers.size} EventTimers ...")
+//                println("Processing ${eventTimers.size} EventTimers ...")
                 for (et in eventTimers) {
                     val now = System.currentTimeMillis()
                     val currDelay = now - et.syncTime
                     val configuredDelay = et.delay
-                    println("#### Synctime ${et.syncTime}, currDelay = $currDelay vs configuredDelay ${et.delay}.")
+//                    println("#### Synctime ${et.syncTime}, currDelay = $currDelay vs configuredDelay ${et.delay}.")
 
                     if (currDelay < configuredDelay) {
                         val waitTime = configuredDelay - currDelay
 
-                        // Only sleep for the shortest wait time.
-                        // FIXME - this doesn't work for periodic events ...
+                        // Sleep duration is the shortest wait time.
                         if (sleepTime > waitTime) {
                             sleepTime = waitTime
-                            println("#### New sleep time $sleepTime.")
+//                            println("#### New sleep time $sleepTime.")
                         }
                     } else {
                         val responseMessage = Message("TimingServer")
@@ -441,35 +420,26 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                         if (!et.periodic) {
                             deleteList.add(et)
                         } else {
-                            // For periodic, update sync time
                             // Note that the sync time is set to the ideal running time, not the actual running time.
                             // get the period remainder period from the delay
                             val syncRemainder = currDelay.rem(et.delay)
-                            println("#### syncRemainder = $syncRemainder")
+//                            println("#### syncRemainder = $syncRemainder")
+                            // TODO - the next line might not be an accurate value for the new syncTime:
                             val newSync = et.syncTime + currDelay - syncRemainder
-                            println("#### Setting the new periodic sync to: $newSync")
+//                            println("#### Setting the new periodic sync to: $newSync")
                             et.syncTime = newSync
 
-//                            val waitTime = now - newSync + currDelay // FIXME - this is wrong!!!
                             val waitTime = now - newSync  // FIXME - is this OK???
-                            println("#### NEW WAIT TIME: $waitTime")
-                            // Only sleep for the shortest wait time.
+//                            println("#### NEW WAIT TIME: $waitTime")
                             if (sleepTime > waitTime) {
-                                // FIXME - this doesn't work for periodic events ...
                                 sleepTime = waitTime
-                                println("#### New sleep time $sleepTime.")
+//                                println("#### New sleep time $sleepTime.")
                             }
                         }
                     }
                 }
 
                 eventTimers.removeAll(deleteList)
-
-/*
-                if (eventTimers.isEmpty()) {
-                    sleepTime = DEFAULT_SLEEP_TIME
-                }
-*/
 
                 // Check running flag again in case it was switched off while sending messages.
                 if (running) {
@@ -482,38 +452,11 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                 }
             }
 
-            // If shutdown is false skip this, so the system can be resumed by calling run() again.
-            println("#### TimingServer is SHUTDOWN.")
-            // Shutdown everything here ... clear maps and lists etc.
-            // ?? Iterate each EventTimer and send a shutdown message to the callbacks???
-
             eventTimers.clear()
+            println("#### TimingServer is SHUTDOWN.")
         }
 
         fun shutdown() {
-            running = false
-            serverThread?.interrupt()
-        }
-
-/*
-        fun startup(savedEventTimers: List<EventTimer>) {
-            // Check if there is a current reference to the
-
-
-            // Check the running flag to ensure we don't create a new Thread while already running the Timer Thread.
-            if (!running) {
-                running = true
-                // FIXME - CANNOT call start() again.
-                // Possible solution - don't exit the  run loop, but stay in witht long sleep, then interrupt to resume processing
-                // start()  // Create the new Thread that executes run()
-            }
-        }
-*/
-
-        /**
-         * Temporarily stop processing Events.
-         */
-        fun pause() {
             running = false
             serverThread?.interrupt()
         }
@@ -555,7 +498,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
             return ets
         }
 
-        // Also allow events to tbe queried by id, for expected delays, last run etc...
+        // Also allow events to tbe queried by type, for expected delays, last run etc...?
     }
 
     private fun handleShutdownMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Changes {
