@@ -239,6 +239,10 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         return timingServer?.addPeriodicEvent(responseFunction, theType, period)
     }
 
+    fun cancelEventsByType(eventType: String) {
+        timingServer?.cancelEventsByType(eventType)
+    }
+
     private fun switchToRemoteServerMode(address: String) {
         // FIXME - doesn't handle when the remote server isn't running...
         // TODO - implement a timeout when attempting to join a remote game.
@@ -475,6 +479,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
             return et
         }
 
+
         public fun setSyncOffset(delta: Int, otherEvent: EventTimer) {
             // Adjust the sync time so that events don't happen too closely.
 
@@ -484,6 +489,13 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         public fun cancelEvent(eventTimer: EventTimer) {
             // TODO: Delete event from timerLookup
         }
+
+        public fun cancelEventsByType(eventType: String) {
+            // TODO: Delete events from timerLookup with the given type
+            // probably add the type String to a cancel list and then interrupt the timer thread.
+            // the timer thread removes the types prior to normal processing.
+        }
+
 
         fun restoreSavedTimers(savedEventTimers: List<GameEngine.TimingServer.EventTimer>) {
             eventTimers.addAll(savedEventTimers)

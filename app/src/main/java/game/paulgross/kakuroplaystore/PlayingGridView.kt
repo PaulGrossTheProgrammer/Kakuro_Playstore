@@ -58,6 +58,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private val downHelpSets = HelpSets()
     private val acrossHelpSets = HelpSets()
 
+    var flashIndex = -1  // Set to 0 just for testing...
+
     private var paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
     private val colourNonPlaySquareInside = Color.argb(180, 40, 71, 156)
@@ -542,6 +544,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                             selectedY = currY
                         }
 
+                        val flash = (index == flashIndex)
+
                         var possiblesString = gameState!!.possibles[index]
                         if (gridValue != 0) {
                             possiblesString = null
@@ -549,7 +553,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                         val error = gameState!!.playerErrors.contains(index)
 
-                        drawGuessSquare(index, gridValue.toString(), possiblesString, selected, visible, error,
+                        drawGuessSquare(index, gridValue.toString(), possiblesString, selected, visible, error, flash,
                             gameState!!.solved, addTouchAreas, currX, currY, canvas, paint, alpha)
                     } else {
                         drawBlankSquare(currX, currY, canvas, paint, alpha)
@@ -725,7 +729,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     private fun drawGuessSquare(index : Int, content: String, possiblesString: String?, selected: Boolean,
-                                visible: Boolean,error: Boolean, solved: Boolean,
+                                visible: Boolean, error: Boolean, flash: Boolean, solved: Boolean,
                                 addTouchAreas: Boolean, x: Float, y: Float, canvas: Canvas, paint: Paint,
                                 alpha: Int
     ) {
@@ -744,13 +748,18 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         paint.color = Color.LTGRAY
         paint.alpha = alpha
-        if (solved) {
-            paint.color = Color.GRAY
-            paint.alpha = alpha
+
+        if (flash) {
+            paint.color = Color.CYAN
         } else {
-            if (selected) {
-                paint.color = Color.WHITE
+            if (solved) {
+                paint.color = Color.GRAY
                 paint.alpha = alpha
+            } else {
+                if (selected) {
+                    paint.color = Color.WHITE
+                    paint.alpha = alpha
+                }
             }
         }
         canvas.drawRect(x, y,x + squareWidth, y + squareWidth, paint )

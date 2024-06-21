@@ -62,7 +62,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine?.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
 
         //TODO - delete this periodic event after testing
-        engine?.requestPeriodicEvent(::testPeriodicCallback, "PERIODIC EVENT TEST", 5000)
+//        engine?.requestPeriodicEvent(::testPeriodicCallback, "PERIODIC EVENT TEST", 5000)
     }
 
     private fun testPeriodicCallback(message: GameEngine.Message) {
@@ -552,7 +552,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
             return
         }
 
-        engine?.requestDelayedEvent(::testDelayCallback, "TestOnClickDigitEvent", 1000)
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        playGridView.flashIndex = selectedIndex
+        engine?.requestDelayedEvent(::cancelFlashCallback, "CancelFlashEvent", 600)
+        // TODO - also add a new digit flash periodic event where the callback slowly reduces the digit size...
+//        engine?.requestDelayedEvent(::flashDigitSize, "DigitFlashPeriodicEvent", 100)
 
         checkForSolved = true  // This flag is used by the message receiver to react to the change if required
 
@@ -562,6 +566,22 @@ class KakuroGameplayActivity : AppCompatActivity() {
         message.setKeyString("Index", selectedIndex.toString())
         message.setKeyString("Value", value)
         engine?.queueMessageFromActivity(message, ::queueMessage)
+    }
+
+    /**
+     * This callback is called by the time server to cancel the flash drawn at the new digit index.
+     */
+    fun cancelFlashCallback(message: GameEngine.Message) {
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        playGridView.flashIndex = -1
+        playGridView.invalidate()
+
+        // TODO - cancel the temporary size adjustment of the new digit index.
+        engine?.cancelEventsByType("DigitFlashPeriodicEvent")
+    }
+
+    fun flashDigitSize(message: GameEngine.Message) {
+        println("TODO - flash digit size ...")
     }
 
     fun onClickPossibleDigit(view: View) {
