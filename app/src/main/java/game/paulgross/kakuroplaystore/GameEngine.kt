@@ -391,7 +391,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         var running = true
 
         private val eventTimers = mutableListOf<EventTimer>()
-        val DEFAULT_SLEEP_TIME = 60000L  // TODO - maybe make this longer?
+        val DEFAULT_SLEEP_TIME = 10000L  // TODO - maybe make this longer?
 
         data class EventTimer(val responseFunction: (message: Message) -> Unit, val theType: String, val delay: Int, val periodic: Boolean, var syncTime: Long)
 
@@ -428,7 +428,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
                         // Only sleep for the shortest wait time.
                         // FIXME - this doesn't work for periodic events ...
-                        if (waitTime < sleepTime) {
+                        if (sleepTime > waitTime) {
                             sleepTime = waitTime
                             println("#### New sleep time $sleepTime.")
                         }
@@ -445,13 +445,17 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                             // Note that the sync time is set to the ideal running time, not the actual running time.
                             // get the period remainder period from the delay
                             val syncRemainder = currDelay.rem(et.delay)
-                            val newSync = currDelay - syncRemainder
-                            println("Setting the periodic sync to: $newSync")
+                            println("#### syncRemainder = $syncRemainder")
+                            val newSync = et.syncTime + currDelay - syncRemainder
+                            println("#### Setting the new periodic sync to: $newSync")
                             et.syncTime = newSync
 
-                            val waitTime = newSync + currDelay
+//                            val waitTime = now - newSync + currDelay // FIXME - this is wrong!!!
+                            val waitTime = now - newSync  // FIXME - is this OK???
+                            println("#### NEW WAIT TIME: $waitTime")
                             // Only sleep for the shortest wait time.
-                            if (waitTime < sleepTime) {
+                            if (sleepTime > waitTime) {
+                                // FIXME - this doesn't work for periodic events ...
                                 sleepTime = waitTime
                                 println("#### New sleep time $sleepTime.")
                             }

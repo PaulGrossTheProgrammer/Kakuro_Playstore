@@ -62,17 +62,15 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine?.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
 
         //TODO - delete this periodic event after testing
-        engine?.requestPeriodicEvent(::testPeriodicCallback, "PERIODIC EVENT TEST", 5000)
+        engine?.requestPeriodicEvent(::testPeriodicCallback, "PERIODIC EVENT TEST", 3000)
     }
 
     private fun testPeriodicCallback(message: GameEngine.Message) {
         println("#### Callback message received: ${message.asString()}")
-        println("#### Callback message type: ${message.getString("type")}")
     }
 
     private fun testDelayCallback(message: GameEngine.Message) {
         println("#### Callback message received: ${message.asString()}")
-        println("#### Callback message type: ${message.getString("type")}")
     }
 
     override fun onResume() {
