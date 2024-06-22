@@ -13,6 +13,7 @@ import game.paulgross.kakuroplaystore.GameEngine.TimingServer.EventTimer
 import java.lang.Exception
 import java.util.Queue
 import java.util.concurrent.BlockingQueue
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -425,7 +426,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         val cancelTypeRequests = mutableListOf<String>() // FIXME - Make this a threadsafe queue...
 
         // TODO - declare a thread safe queue to add EventTimers
-//        ConcurrentLinkedQueue
+        val newEventTimerQueue = ConcurrentLinkedQueue<EventTimer>()
 
         override fun run() {
             serverThread = this
@@ -442,6 +443,9 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                         }
                     }
                 }
+
+                // Transfer the queued EventTimers to the list.
+                newEventTimerQueue.forEach { et -> eventTimers.add(et) }
 
                 // FIXME - check cancel handling for multithreading issues..
                 // It's possible a delete request can get lost if t gets added while the list is being processed.
@@ -476,6 +480,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                         responseMessage.setKeyString("repeat", et.getCurrRepeat().toString())
                         responseMessage.setKeyString("final", et.isFinalEvent().toString())
                         et.responseFunction.invoke(responseMessage)
+
 
                         if (et.isFinalEvent()) {
                             // Maybe just flag et as expired ???
@@ -526,21 +531,21 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
         public fun addDelayedEvent(responseFunction: (message: Message) -> Unit, theType: String, delay: Int): EventTimer {
             val et = EventTimer(responseFunction, theType, delay, 0, System.currentTimeMillis())
-            eventTimers.add(et)
+            newEventTimerQueue.add(et)
             serverThread?.interrupt()    // Force a immediate assessment of the timing
             return et
         }
 
         public fun addPeriodicEvent(responseFunction: (message: Message) -> Unit, theType: String, period: Int): EventTimer {
             val et = EventTimer(responseFunction, theType, period, -1, System.currentTimeMillis())
-            eventTimers.add(et)
+            newEventTimerQueue.add(et)
             serverThread?.interrupt()    // Force a immediate assessment of the timing
             return et
         }
 
         public fun addFinitePeriodicEvent(responseFunction: (message: Message) -> Unit, theType: String, period: Int, repeats: Int): EventTimer {
-            val et = EventTimer(responseFunction, theType, period, -1, System.currentTimeMillis())
-            eventTimers.add(et)
+            val et = EventTimer(responseFunction, theType, period, repeats, System.currentTimeMillis())
+            newEventTimerQueue.add(et)
             serverThread?.interrupt()    // Force a immediate assessment of the timing
             return et
         }
