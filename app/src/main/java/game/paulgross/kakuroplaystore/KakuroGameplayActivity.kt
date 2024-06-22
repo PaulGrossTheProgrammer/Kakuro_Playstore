@@ -547,13 +547,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.flashIndex = selectedIndex
-        playGridView.flashIndexRatio = 1.3f
+        playGridView.flashIndexRatio = 1.4f
 
-        // TODO - simplify this pair of events by combining them into one periodic event that changes the colour an size.
-        // TODO - Also send a cancel call if there is already a digit flash animation in progress.
-//        engine?.requestDelayedEvent(::cancelFlashCallback, "CancelFlashEvent", 360)
-//        engine?.requestPeriodicEvent(::flashDigitSize, "DigitFlashPeriodicEvent", 60)
-        engine?.requestFinitePeriodicEvent(::flashDigitSize_v2, "FlashDigitEvent", 60, repeats = 6)
+        // TODO - track this EventTimer, and cancel it if it's still running when a new one is called for.
+        val et = engine?.requestFinitePeriodicEvent(::animateNewDigitCallback, "AnimateNewDigitEvent", period = 60, repeats = 6)
 
         checkForSolved = true  // This flag is used by the message receiver to react to the change if required
 
@@ -566,10 +563,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     /**
-     * This callback is called by the time server to reduce the new digit size.
+     * This callback is called by the time server to animate the new digit.
      */
-    fun flashDigitSize_v2(message: GameEngine.Message) {
-        println("#### V2-DIGIT FLASH SIZE EVENT received: ${message.asString()}")
+    private fun animateNewDigitCallback(message: GameEngine.Message) {
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
 
         if (message.getString("final").equals("true")) {
@@ -578,42 +574,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         } else {
             // Reduce the digit flash size gradually...
             if (playGridView.flashIndexRatio > 1.0f) {
-                playGridView.flashIndexRatio *= 0.95f
+                playGridView.flashIndexRatio *= 0.96f
             } else {
                 playGridView.flashIndexRatio = 1.0f
             }
         }
-        playGridView.invalidate()
-    }
-
-    /**
-     * This callback is called by the time server to cancel the flash drawn at the new digit index.
-     */
-    fun cancelFlashCallback(message: GameEngine.Message) {
-        println("#### CANCEL DIGIT FLASH EVENT received: ${message.asString()}")
-        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        playGridView.flashIndex = -1
-        playGridView.invalidate()
-
-        // TODO - cancel the temporary size adjustment of the new digit index.
-        engine?.cancelEventsByType("DigitFlashPeriodicEvent")
-    }
-
-    /**
-     * This callback is called by the time server to reduce the new digit size.
-     */
-    fun flashDigitSize(message: GameEngine.Message) {
-        println("#### DIGIT FLASH SIZE EVENT received: ${message.asString()}")
-        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-//        playGridView.flashIndexRatio = digitFlashRatio
-
-        // Reduce the digit flash size gradually...
-        if (playGridView.flashIndexRatio > 1.0f) {
-            playGridView.flashIndexRatio *= 0.95f
-        } else {
-            playGridView.flashIndexRatio = 1.0f
-        }
-
         playGridView.invalidate()
     }
 

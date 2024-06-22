@@ -395,12 +395,11 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         private val eventTimers = mutableListOf<EventTimer>()
         private val DEFAULT_SLEEP_TIME = 60000L  // TODO - maybe make this longer?
 
-        // TODO - add a "repeat" parameter.
-        // Replaces the periodic paramter.
-        // When skipped, repeat is implicitly zero and the event happens once.
-        // When a fixed number on a fixed period is required, use repeat as a positive integer.
-        // When there is no intention to stop the repreats, set repeat to -1. Effectively an infinte repeat.
-        // Note that An infinite repeat can still be stopped with a cancel message.
+        // The repeat parameter:
+        // When skipped, repeat is implicitly zero and the event happens once only after the delay.
+        // When a fixed number of repeats is required, use repeat as a positive integer. The repeats will have the delay period.
+        // When there is no intention to stop the repeats, set repeat to -1. Effectively an infinite repeat with the delay period.
+        // Note: An infinite repeat can still be stopped with a cancel message.
         // TODO - retain the original sync time, but update an ongoing sycTime in the normal way too.
         class EventTimer(val responseFunction: (message: Message) -> Unit, val theType: String, val delay: Int, private val repeats: Int = 0, var syncTime: Long) {
             private var currRepeat: Int = 0
@@ -425,7 +424,6 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
         val cancelTypeRequests = mutableListOf<String>() // FIXME - Make this a threadsafe queue...
 
-        // TODO - declare a thread safe queue to add EventTimers
         val newEventTimerQueue = ConcurrentLinkedQueue<EventTimer>()
 
         override fun run() {
@@ -435,6 +433,10 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
             while (running) {
                 // Remove cancelled types
+                // FIXME - check cancel handling for multithreading issues..
+                // It's possible a delete request can get lost if t gets added while the list is being processed.
+                // or worse... the add might crash the for loop???
+                // Maybe turn this into a thread safe queue instead of a list???
                 for (typeName in cancelTypeRequests) {
                     for (et in eventTimers) {
                         if (et.theType == typeName) {
@@ -443,22 +445,20 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                         }
                     }
                 }
-
-                // Transfer the queued EventTimers to the list.
-                newEventTimerQueue.forEach { et -> eventTimers.add(et) }
-
-                // FIXME - check cancel handling for multithreading issues..
-                // It's possible a delete request can get lost if t gets added while the list is being processed.
-                // or worse... the add might crash the for loop???
-                // Maybe turn this into a thread safe queue instead of a list???
-                cancelTypeRequests.clear()
-
                 eventTimers.removeAll(deleteList)
                 deleteList.clear()
+                cancelTypeRequests.clear()
+
+                // Transfer the queued EventTimers to the eventTimers list.
+                var newEventTimer: EventTimer? = null
+                do {
+                    newEventTimer = newEventTimerQueue.poll()
+                    if (newEventTimer != null) {
+                        eventTimers.add(newEventTimer)
+                    }
+                } while (newEventTimer != null)
 
                 var sleepTime = DEFAULT_SLEEP_TIME
-//                println("Processing ${eventTimers.size} EventTimers ...")
-                // FIXME - can throw a ConcurrentModificationException...
                 for (et in eventTimers) {
                     val now = System.currentTimeMillis()
                     val currDelay = now - et.syncTime
@@ -481,9 +481,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                         responseMessage.setKeyString("final", et.isFinalEvent().toString())
                         et.responseFunction.invoke(responseMessage)
 
-
                         if (et.isFinalEvent()) {
-                            // Maybe just flag et as expired ???
                             deleteList.add(et)
                         } else {
                             // Note that the sync time is set to the ideal running time, not the actual running time.
