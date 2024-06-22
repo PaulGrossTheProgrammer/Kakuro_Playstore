@@ -424,6 +424,9 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
         val cancelTypeRequests = mutableListOf<String>() // FIXME - Make this a threadsafe queue...
 
+        // TODO - declare a thread safe queue to add EventTimers
+//        ConcurrentLinkedQueue
+
         override fun run() {
             serverThread = this
 //            println("#### STARTING TIMER SYSTEM.")
