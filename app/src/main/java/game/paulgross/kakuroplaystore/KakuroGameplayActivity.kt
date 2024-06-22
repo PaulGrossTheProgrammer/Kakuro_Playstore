@@ -57,8 +57,15 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         engine = GameEngine.activate(KakuroGameplayDefinition, this)
 
+        // FIXME - when the App is resumed after being forced into the background, the grid isn't updated automatically.
+        // Instead, it remains blank. A workaround is to switch to another puzzle and back to force the grid to be updated.
+        // Maybe ...
+        // 1. there is no state update message, from the game server,
+        // 2. or else the grid is not yet sized properly by the Android system when the state message arrives.
+        // IF 2 is true, maybe the solution is for the grid to flag internally that it can't yet handle
+        // the state message, but when the Android system eventually sizes the grid, this flag forces the state to be redrawn???
+        enableQueuedMessages()  // Enable handling of responses from the GameEngine.
         // Request that the GameEngine send a state message to queueMessage() whenever the game state changes.
-        enableQueuedMessages()
         engine?.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
 
         //TODO - delete this periodic event after testing
@@ -554,9 +561,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.flashIndex = selectedIndex
-        engine?.requestDelayedEvent(::cancelFlashCallback, "CancelFlashEvent", 600)
-        // TODO - also add a new digit flash periodic event where the callback slowly reduces the digit size...
-//        engine?.requestDelayedEvent(::flashDigitSize, "DigitFlashPeriodicEvent", 100)
+        playGridView.flashIndexRatio = 1.3f
+
+        // TODO - simplify this pair of events by combining them into one periodic event that changes the colour an size.
+        // TODO - Also send a cancel call if there is already a digit flash animation in progress.
+        engine?.requestDelayedEvent(::cancelFlashCallback, "CancelFlashEvent", 360)
+        engine?.requestPeriodicEvent(::flashDigitSize, "DigitFlashPeriodicEvent", 60)
 
         checkForSolved = true  // This flag is used by the message receiver to react to the change if required
 
@@ -572,6 +582,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
      * This callback is called by the time server to cancel the flash drawn at the new digit index.
      */
     fun cancelFlashCallback(message: GameEngine.Message) {
+        println("#### CANCEL DIGIT FLASH EVENT received: ${message.asString()}")
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.flashIndex = -1
         playGridView.invalidate()
@@ -580,8 +591,24 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine?.cancelEventsByType("DigitFlashPeriodicEvent")
     }
 
+//    var digitFlashRatio = 1.0f  // Maybe move this into grid instead???
+
+    /**
+     * This callback is called by the time server to reduce the new digit size.
+     */
     fun flashDigitSize(message: GameEngine.Message) {
-        println("TODO - flash digit size ...")
+        println("#### DIGIT FLASH SIZE EVENT received: ${message.asString()}")
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+//        playGridView.flashIndexRatio = digitFlashRatio
+
+        // Reduce the digit flash size gradually...
+        if (playGridView.flashIndexRatio > 1.0f) {
+            playGridView.flashIndexRatio *= 0.95f
+        } else {
+            playGridView.flashIndexRatio = 1.0f
+        }
+
+        playGridView.invalidate()
     }
 
     fun onClickPossibleDigit(view: View) {

@@ -390,14 +390,41 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         private val eventTimers = mutableListOf<EventTimer>()
         private val DEFAULT_SLEEP_TIME = 60000L  // TODO - maybe make this longer?
 
+        // TODO - add a "repeat" parameter.
+        // Replaces the periodic paramter.
+        // When skipped, repeat is implicitly zero and the event happens once.
+        // When a fixed number on a fixed period is required, use repeat as a positive integer.
+        // When there is no intention to stop the repreats, set repeat to -1. Effectively an infinte repeat.
+        // Note that An infinite repeat can still be stopped with a cancel message.
+        // TODO - retain the original sync time, but update an ongoing sycTime in the normal way too.
         data class EventTimer(val responseFunction: (message: Message) -> Unit, val theType: String, val delay: Int, val periodic: Boolean, var syncTime: Long)
+
+        val cancelTypeRequests = mutableListOf<String>()
 
         override fun run() {
             serverThread = this
 //            println("#### STARTING TIMER SYSTEM.")
+            val deleteList = mutableListOf<EventTimer>()
 
             while (running) {
-                val deleteList = mutableListOf<EventTimer>()
+                // Remove cancelled types
+                for (typeName in cancelTypeRequests) {
+                    for (et in eventTimers) {
+                        if (et.theType == typeName) {
+                            println("Removing event of type $typeName")
+                            deleteList.add(et)
+                        }
+                    }
+                }
+
+                // FIXME - check cancel handling for multithreading issues..
+                // It's possible a delete request can get lost if t gets added while the list is being processed.
+                // or worse... the add might crash the for loop???
+                // Maybe turn this into a thread safe queue instead of a list???
+                cancelTypeRequests.clear()
+
+                eventTimers.removeAll(deleteList)
+                deleteList.clear()
 
                 var sleepTime = DEFAULT_SLEEP_TIME
 //                println("Processing ${eventTimers.size} EventTimers ...")
@@ -447,11 +474,11 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
                 // Check running flag again in case it was switched off while sending messages.
                 if (running) {
-                    println("#### TimingServer sleeping for $sleepTime milliseconds.")
+//                    println("#### TimingServer sleeping for $sleepTime milliseconds.")
                     try {
                         sleep(sleepTime)
                     } catch (e: InterruptedException) {
-                        println("#### TimingServer was INTERRUPTED while sleeping.")
+//                        println("#### TimingServer was INTERRUPTED while sleeping.")
                     }
                 }
             }
@@ -492,6 +519,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
         public fun cancelEventsByType(eventType: String) {
             // TODO: Delete events from timerLookup with the given type
+            cancelTypeRequests.add(eventType)
             // probably add the type String to a cancel list and then interrupt the timer thread.
             // the timer thread removes the types prior to normal processing.
         }

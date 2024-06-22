@@ -58,7 +58,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private val downHelpSets = HelpSets()
     private val acrossHelpSets = HelpSets()
 
-    var flashIndex = -1  // Set to 0 just for testing...
+    // These variables control the momentary flash of the chosen digit.
+    var flashIndex = -1
+    var flashIndexRatio = 1.0f
 
     private var paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
@@ -772,7 +774,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                 paint.color = Color.RED
                 paint.alpha = alpha
             }
-            paint.textSize = squareTextSize
+            if (flash) {
+                paint.textSize = squareTextSize * flashIndexRatio
+            } else {
+                paint.textSize = squareTextSize
+            }
             canvas.drawText(content, x + squareWidth * 0.31f, y + squareWidth * 0.75f, paint)
         }
 
