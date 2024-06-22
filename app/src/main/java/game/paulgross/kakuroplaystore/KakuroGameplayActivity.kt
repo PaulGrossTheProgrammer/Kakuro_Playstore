@@ -67,30 +67,16 @@ class KakuroGameplayActivity : AppCompatActivity() {
         enableQueuedMessages()  // Enable handling of responses from the GameEngine.
         // Request that the GameEngine send a state message to queueMessage() whenever the game state changes.
         engine?.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
-
-        //TODO - delete this periodic event after testing
-//        engine?.requestPeriodicEvent(::testPeriodicCallback, "PERIODIC EVENT TEST", 5000)
-    }
-
-    private fun testPeriodicCallback(message: GameEngine.Message) {
-        println("#### Callback message received: ${message.asString()}")
-    }
-
-    private fun testDelayCallback(message: GameEngine.Message) {
-        println("#### Callback message received: ${message.asString()}")
     }
 
     override fun onResume() {
         super.onResume()
-
-        // ?? Start the timer system here??
+        // TODO - maybe this can be done in the engine with an engineResume() call?
         engine?.resumeTimingServer()
     }
 
     override fun onPause() {
         super.onPause()
-
-        // ?? Pause the timer system here??
         engine?.pauseTimingServer()
     }
 
@@ -565,8 +551,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         // TODO - simplify this pair of events by combining them into one periodic event that changes the colour an size.
         // TODO - Also send a cancel call if there is already a digit flash animation in progress.
-        engine?.requestDelayedEvent(::cancelFlashCallback, "CancelFlashEvent", 360)
-        engine?.requestPeriodicEvent(::flashDigitSize, "DigitFlashPeriodicEvent", 60)
+//        engine?.requestDelayedEvent(::cancelFlashCallback, "CancelFlashEvent", 360)
+//        engine?.requestPeriodicEvent(::flashDigitSize, "DigitFlashPeriodicEvent", 60)
+        engine?.requestFinitePeriodicEvent(::flashDigitSize_v2, "FlashDigitEvent", 60, repeats = 6)
 
         checkForSolved = true  // This flag is used by the message receiver to react to the change if required
 
@@ -576,6 +563,27 @@ class KakuroGameplayActivity : AppCompatActivity() {
         message.setKeyString("Index", selectedIndex.toString())
         message.setKeyString("Value", value)
         engine?.queueMessageFromActivity(message, ::queueMessage)
+    }
+
+    /**
+     * This callback is called by the time server to reduce the new digit size.
+     */
+    fun flashDigitSize_v2(message: GameEngine.Message) {
+        println("#### V2-DIGIT FLASH SIZE EVENT received: ${message.asString()}")
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+
+        if (message.getString("final").equals("true")) {
+            playGridView.flashIndex = -1
+            playGridView.flashIndexRatio = 1.0f
+        } else {
+            // Reduce the digit flash size gradually...
+            if (playGridView.flashIndexRatio > 1.0f) {
+                playGridView.flashIndexRatio *= 0.95f
+            } else {
+                playGridView.flashIndexRatio = 1.0f
+            }
+        }
+        playGridView.invalidate()
     }
 
     /**
@@ -590,8 +598,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         // TODO - cancel the temporary size adjustment of the new digit index.
         engine?.cancelEventsByType("DigitFlashPeriodicEvent")
     }
-
-//    var digitFlashRatio = 1.0f  // Maybe move this into grid instead???
 
     /**
      * This callback is called by the time server to reduce the new digit size.

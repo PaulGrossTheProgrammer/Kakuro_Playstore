@@ -232,11 +232,15 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
     }
 
     fun requestDelayedEvent(responseFunction: (message: Message) -> Unit, theType: String, delay: Int): EventTimer? {
-        return timingServer?.addSingleEvent(responseFunction, theType, delay)
+        return timingServer?.addDelayedEvent(responseFunction, theType, delay)
     }
 
     fun requestPeriodicEvent(responseFunction: (message: Message) -> Unit, theType: String, period: Int): EventTimer? {
         return timingServer?.addPeriodicEvent(responseFunction, theType, period)
+    }
+
+    fun requestFinitePeriodicEvent(responseFunction: (message: Message) -> Unit, theType: String, period: Int, repeats: Int): EventTimer? {
+        return timingServer?.addFinitePeriodicEvent(responseFunction, theType, period, repeats)
     }
 
     fun cancelEventsByType(eventType: String) {
@@ -397,9 +401,28 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         // When there is no intention to stop the repreats, set repeat to -1. Effectively an infinte repeat.
         // Note that An infinite repeat can still be stopped with a cancel message.
         // TODO - retain the original sync time, but update an ongoing sycTime in the normal way too.
-        data class EventTimer(val responseFunction: (message: Message) -> Unit, val theType: String, val delay: Int, val periodic: Boolean, var syncTime: Long)
+        class EventTimer(val responseFunction: (message: Message) -> Unit, val theType: String, val delay: Int, private val repeats: Int = 0, var syncTime: Long) {
+            private var currRepeat: Int = 0
 
-        val cancelTypeRequests = mutableListOf<String>()
+            // TODO - add an internal currSyncTime
+
+            fun incRepeats() {
+                currRepeat++
+            }
+
+            fun getCurrRepeat(): Int {
+                return currRepeat
+            }
+
+            fun isFinalEvent(): Boolean {
+                if (repeats == -1) {
+                    return false
+                }
+                return currRepeat >= repeats
+            }
+        }
+
+        val cancelTypeRequests = mutableListOf<String>() // FIXME - Make this a threadsafe queue...
 
         override fun run() {
             serverThread = this
@@ -428,6 +451,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
                 var sleepTime = DEFAULT_SLEEP_TIME
 //                println("Processing ${eventTimers.size} EventTimers ...")
+                // FIXME - can throw a ConcurrentModificationException...
                 for (et in eventTimers) {
                     val now = System.currentTimeMillis()
                     val currDelay = now - et.syncTime
@@ -446,9 +470,12 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                         val responseMessage = Message("TimingServer")
                         responseMessage.setKeyString("type", et.theType)
                         responseMessage.setKeyString("overrun", (currDelay - configuredDelay).toString())
+                        responseMessage.setKeyString("repeat", et.getCurrRepeat().toString())
+                        responseMessage.setKeyString("final", et.isFinalEvent().toString())
                         et.responseFunction.invoke(responseMessage)
 
-                        if (!et.periodic) {
+                        if (et.isFinalEvent()) {
+                            // Maybe just flag et as expired ???
                             deleteList.add(et)
                         } else {
                             // Note that the sync time is set to the ideal running time, not the actual running time.
@@ -466,6 +493,8 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                                 sleepTime = waitTime
 //                                println("#### New sleep time $sleepTime.")
                             }
+
+                            et.incRepeats()
                         }
                     }
                 }
@@ -492,20 +521,26 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
             serverThread?.interrupt()
         }
 
-        public fun addSingleEvent(responseFunction: (message: Message) -> Unit, theType: String, delay: Int): EventTimer {
-            val et = EventTimer(responseFunction, theType, delay, false, System.currentTimeMillis())
+        public fun addDelayedEvent(responseFunction: (message: Message) -> Unit, theType: String, delay: Int): EventTimer {
+            val et = EventTimer(responseFunction, theType, delay, 0, System.currentTimeMillis())
             eventTimers.add(et)
             serverThread?.interrupt()    // Force a immediate assessment of the timing
             return et
         }
 
         public fun addPeriodicEvent(responseFunction: (message: Message) -> Unit, theType: String, period: Int): EventTimer {
-            val et = EventTimer(responseFunction, theType, period, true, System.currentTimeMillis())
+            val et = EventTimer(responseFunction, theType, period, -1, System.currentTimeMillis())
             eventTimers.add(et)
             serverThread?.interrupt()    // Force a immediate assessment of the timing
             return et
         }
 
+        public fun addFinitePeriodicEvent(responseFunction: (message: Message) -> Unit, theType: String, period: Int, repeats: Int): EventTimer {
+            val et = EventTimer(responseFunction, theType, period, -1, System.currentTimeMillis())
+            eventTimers.add(et)
+            serverThread?.interrupt()    // Force a immediate assessment of the timing
+            return et
+        }
 
         public fun setSyncOffset(delta: Int, otherEvent: EventTimer) {
             // Adjust the sync time so that events don't happen too closely.
