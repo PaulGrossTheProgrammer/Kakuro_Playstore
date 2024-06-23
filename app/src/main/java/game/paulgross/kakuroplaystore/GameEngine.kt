@@ -393,18 +393,15 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         private var running = true
 
         private val eventTimers = mutableListOf<EventTimer>()
-        private val DEFAULT_SLEEP_TIME = 60000L  // TODO - maybe make this longer?
+        private val DEFAULT_SLEEP_TIME = 60000L
 
         // The repeat parameter:
         // When skipped, repeat is implicitly zero and the event happens once only after the delay.
         // When a fixed number of repeats is required, use repeat as a positive integer. The repeats will have the delay period.
         // When there is no intention to stop the repeats, set repeat to -1. Effectively an infinite repeat with the delay period.
         // Note: An infinite repeat can still be stopped with a cancel message.
-        // TODO - retain the original sync time, but update an ongoing sycTime in the normal way too.
         class EventTimer(val responseFunction: (message: Message) -> Unit, val theType: String, val delay: Int, private val repeats: Int = 0, var syncTime: Long) {
             private var currRepeat: Int = 0
-
-            // TODO - add an internal currSyncTime
 
             fun incRepeats() {
                 currRepeat++
@@ -436,7 +433,6 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                     if (typeName != null) {
                         for (et in eventTimers) {
                             if (et.theType == typeName) {
-                                println("Removing event of type $typeName")
                                 deleteList.add(et)
                             }
                         }
@@ -458,7 +454,6 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                     val now = System.currentTimeMillis()
                     val currDelay = now - et.syncTime
                     val configuredDelay = et.delay
-//                    println("#### Synctime ${et.syncTime}, currDelay = $currDelay vs configuredDelay ${et.delay}.")
 
                     if (currDelay < configuredDelay) {
                         val waitTime = configuredDelay - currDelay
@@ -466,7 +461,6 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                         // Sleep duration is the shortest wait time.
                         if (sleepTime > waitTime) {
                             sleepTime = waitTime
-//                            println("#### New sleep time $sleepTime.")
                         }
                     } else {
                         val responseMessage = Message("TimingServer")
@@ -482,17 +476,12 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
                             // Note that the sync time is set to the ideal running time, not the actual running time.
                             // get the period remainder period from the delay
                             val syncRemainder = currDelay.rem(et.delay)
-//                            println("#### syncRemainder = $syncRemainder")
-                            // TODO - the next line might not be an accurate value for the new syncTime:
                             val newSync = et.syncTime + currDelay - syncRemainder
-//                            println("#### Setting the new periodic sync to: $newSync")
                             et.syncTime = newSync
 
-                            val waitTime = now - newSync  // FIXME - is this OK???
-//                            println("#### NEW WAIT TIME: $waitTime")
+                            val waitTime = et.delay - syncRemainder
                             if (sleepTime > waitTime) {
                                 sleepTime = waitTime
-//                                println("#### New sleep time $sleepTime.")
                             }
 
                             et.incRepeats()
@@ -504,11 +493,10 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
                 // Check running flag again in case it was switched off while sending messages.
                 if (running) {
-//                    println("#### TimingServer sleeping for $sleepTime milliseconds.")
                     try {
                         sleep(sleepTime)
                     } catch (e: InterruptedException) {
-//                        println("#### TimingServer was INTERRUPTED while sleeping.")
+                        // This catch block is empty because interruptions are needed for timer updates.
                     }
                 }
             }

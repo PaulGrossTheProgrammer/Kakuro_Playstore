@@ -546,6 +546,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             return
         }
 
+        // TODO - maybe TRIGGER this animation in the Definition class, which decides if the digit is changed.
         // Cancel previous animation if it's still running.
         engine?.cancelEventsByType("AnimateNewDigit")
         playGridView.flashIndex = selectedIndex
@@ -590,9 +591,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             return
         }
 
-        // TODO - test only. Delete when done.
-        engine?.requestFinitePeriodicEvent(::testCallback, "TEST", period = 100, repeats = 1)
-
         val value = tag.substringAfter("Possible")
 
         val message = GameEngine.Message("Possible")
@@ -600,15 +598,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         message.setKeyString("Value", value)
         engine?.queueMessageFromActivity(message, ::queueMessage)
     }
-
-
-    /**
-     * This is a TEST callback. Delete when done.
-     */
-    private fun testCallback(message: GameEngine.Message) {
-        println("Callback recieved: ${message.asString()}")
-    }
-
 
     fun onClickReset(view: View) {
         val builder = AlertDialog.Builder(this)
