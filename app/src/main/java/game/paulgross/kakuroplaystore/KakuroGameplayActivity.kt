@@ -540,17 +540,17 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
 
     fun onClickDigit(view: View) {
-        val selectedIndex = findViewById<PlayingGridView>(R.id.viewPlayGrid).getSelectedIndex()
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        val selectedIndex = playGridView.getSelectedIndex()
         if (selectedIndex == -1) {
             return
         }
 
-        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        // TODO - Cancel previous animation if it's still running.
+        engine?.cancelEventsByType("AnimateNewDigit")
         playGridView.flashIndex = selectedIndex
         playGridView.flashIndexRatio = 1.4f
-
-        // TODO - track this EventTimer, and cancel it if it's still running when a new one is called for.
-        val et = engine?.requestFinitePeriodicEvent(::animateNewDigitCallback, "AnimateNewDigitEvent", period = 60, repeats = 6)
+        engine?.requestFinitePeriodicEvent(::animateNewDigitCallback, "AnimateNewDigit", period = 60, repeats = 6)
 
         checkForSolved = true  // This flag is used by the message receiver to react to the change if required
 
@@ -563,7 +563,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     /**
-     * This callback is called by the time server to animate the new digit.
+     * This callback is called by the Engine's time server to animate the new digit.
      */
     private fun animateNewDigitCallback(message: GameEngine.Message) {
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)

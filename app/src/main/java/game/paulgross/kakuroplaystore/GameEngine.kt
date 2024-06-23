@@ -422,41 +422,36 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
             }
         }
 
-        val cancelTypeRequests = mutableListOf<String>() // FIXME - Make this a threadsafe queue...
-
-        val newEventTimerQueue = ConcurrentLinkedQueue<EventTimer>()
+        private val cancelTypeRequests = ConcurrentLinkedQueue<String>()
+        private val newEventTimerQueue = ConcurrentLinkedQueue<EventTimer>()
 
         override fun run() {
             serverThread = this
-//            println("#### STARTING TIMER SYSTEM.")
             val deleteList = mutableListOf<EventTimer>()
 
             while (running) {
                 // Remove cancelled types
-                // FIXME - check cancel handling for multithreading issues..
-                // It's possible a delete request can get lost if t gets added while the list is being processed.
-                // or worse... the add might crash the for loop???
-                // Maybe turn this into a thread safe queue instead of a list???
-                for (typeName in cancelTypeRequests) {
-                    for (et in eventTimers) {
-                        if (et.theType == typeName) {
-                            println("Removing event of type $typeName")
-                            deleteList.add(et)
+                do {
+                    val typeName = cancelTypeRequests.poll()
+                    if (typeName != null) {
+                        for (et in eventTimers) {
+                            if (et.theType == typeName) {
+                                println("Removing event of type $typeName")
+                                deleteList.add(et)
+                            }
                         }
                     }
-                }
+                } while (typeName != null)
                 eventTimers.removeAll(deleteList)
                 deleteList.clear()
-                cancelTypeRequests.clear()
 
                 // Transfer the queued EventTimers to the eventTimers list.
-                var newEventTimer: EventTimer? = null
                 do {
-                    newEventTimer = newEventTimerQueue.poll()
-                    if (newEventTimer != null) {
-                        eventTimers.add(newEventTimer)
+                    val et = newEventTimerQueue.poll()
+                    if (et != null) {
+                        eventTimers.add(et)
                     }
-                } while (newEventTimer != null)
+                } while (et != null)
 
                 var sleepTime = DEFAULT_SLEEP_TIME
                 for (et in eventTimers) {
@@ -530,21 +525,21 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         public fun addDelayedEvent(responseFunction: (message: Message) -> Unit, theType: String, delay: Int): EventTimer {
             val et = EventTimer(responseFunction, theType, delay, 0, System.currentTimeMillis())
             newEventTimerQueue.add(et)
-            serverThread?.interrupt()    // Force a immediate assessment of the timing
+            serverThread?.interrupt()
             return et
         }
 
         public fun addPeriodicEvent(responseFunction: (message: Message) -> Unit, theType: String, period: Int): EventTimer {
             val et = EventTimer(responseFunction, theType, period, -1, System.currentTimeMillis())
             newEventTimerQueue.add(et)
-            serverThread?.interrupt()    // Force a immediate assessment of the timing
+            serverThread?.interrupt()
             return et
         }
 
         public fun addFinitePeriodicEvent(responseFunction: (message: Message) -> Unit, theType: String, period: Int, repeats: Int): EventTimer {
             val et = EventTimer(responseFunction, theType, period, repeats, System.currentTimeMillis())
             newEventTimerQueue.add(et)
-            serverThread?.interrupt()    // Force a immediate assessment of the timing
+            serverThread?.interrupt()
             return et
         }
 
@@ -559,10 +554,8 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         }
 
         public fun cancelEventsByType(eventType: String) {
-            // TODO: Delete events from timerLookup with the given type
             cancelTypeRequests.add(eventType)
-            // probably add the type String to a cancel list and then interrupt the timer thread.
-            // the timer thread removes the types prior to normal processing.
+            serverThread?.interrupt()
         }
 
 
