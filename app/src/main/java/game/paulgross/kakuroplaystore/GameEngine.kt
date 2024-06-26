@@ -193,6 +193,7 @@ class GameEngine(): Thread() {
 
             if (loopDelayMilliseconds > 0) {
                 // TODO - call the optional periodic game actions
+                // Probably NOT - use a timer event with the time server.
 //                stateChanged = actionFunction.invoke()...
             }
 
@@ -211,12 +212,10 @@ class GameEngine(): Thread() {
     }
 
     fun resumeTimingServer() {
-        println("#### resumeTimingServer() running...")
         if (null != timingServer) {
             return
         }
 
-        println("#### resumeTimingServer() creating a new TimingServer()")
         timingServer = TimingServer()
         if (savedEventTimers != null) {
             timingServer?.restoreSavedTimers(savedEventTimers!!)
@@ -228,7 +227,6 @@ class GameEngine(): Thread() {
         if (null == timingServer) {
             return
         }
-        // TODO - store any EventTimers
         savedEventTimers = timingServer?.saveEventTimers()
         timingServer?.shutdown()
         timingServer = null
@@ -632,7 +630,6 @@ class GameEngine(): Thread() {
     }
 
     private fun handleRequestStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Changes {
-        Log.d(TAG, "handleRequestStateChangesMessage ...")
         if (responseFunction != null && gameMode == GameMode.SERVER) {
             if (!remotePlayers.contains(responseFunction)) {
                 remotePlayers.add(responseFunction)

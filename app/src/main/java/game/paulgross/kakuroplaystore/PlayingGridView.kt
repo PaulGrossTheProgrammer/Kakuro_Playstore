@@ -35,9 +35,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private var gameState: KakuroGameplayDefinition.StateVariables? = null
 
+    private var lastKnownWidth = 0
+    private var lastKnownHeight = 0
     private var currViewWidth = 1
     private var currViewHeight = 1
 
+    private var rescaleComplete = false
     private var squareWidth = 1f
     private var slashMargin = 1f
     private var squareTextSize = 1f
@@ -74,9 +77,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     init {
         println("#### PlayingGridView - init() ...")
-        // FIXME - How to force a siz e recalc and redraw on app resume???
-        currViewWidth = 1
-        currViewHeight = 1
+        // FIXME - How to force a size recalc and redraw on app resume???
+        rescaleComplete = false
 
         if (context is KakuroGameplayActivity) {
             gameplayActivity = context
@@ -372,10 +374,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
     }
 
-    private var lastKnownWidth = 0
-    private var lastKnownHeight = 0
-
-
     /**
      * Changes the sizes of objects drawn on the screen, clears the touch areas on the screen, and then requests a redraw.
      *
@@ -385,18 +383,19 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
      * or the zoom level of the grid is changed.
      */
     private fun rescaleScreenObjects() {
-        Log.d("PlayingGridView", "setScreenSizes(): Width = $measuredWidth, height = $measuredHeight")
+        Log.d(TAG, "#### rescaleScreenObjects(): Width = $measuredWidth, height = $measuredHeight")
         if (gameState == null) {
-            Log.d("PlayingGridView", "setScreenSizes() exiting because there is not yet a gameState.")
+            Log.d(TAG, "#### rescaleScreenObjects() exiting because there is not yet a gameState.")
             return
         }
 
         if (measuredWidth == 0 || measuredHeight == 0) {
-            Log.d("PlayingGridView", "setScreenSizes() exiting because of invalid width or height.")
+            Log.d(TAG, "#### rescaleScreenObjects() exiting because of invalid width or height.")
+            println("#### But we have a valid gameState: $gameState")
             return
         }
 
-        Log.d(TAG, "setScreenSizes using w = $measuredWidth, h = $measuredHeight")
+        Log.d(TAG, "#### rescaleScreenObjects() using w = $measuredWidth, h = $measuredHeight")
         lastKnownWidth = measuredWidth
         lastKnownHeight = measuredHeight
 
@@ -439,7 +438,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             squareWidth = (currViewWidth/(gameState!!.puzzleHeight + 1 + displayZoom + borderOffset)).toFloat()
         }
 
-        Log.d("PlayingGridView", "squareWidth = $squareWidth")
+        Log.d(TAG, "squareWidth = $squareWidth")
         borderThickness = squareWidth * 0.06f
 
         squareTextSize = squareWidth * 0.7f
@@ -452,6 +451,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         selectedByNavPaint.strokeWidth = squareWidth * 0.1f
 
+        rescaleComplete = true
         invalidate()  // Force a redraw
     }
 
@@ -472,6 +472,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         if (gameState == null) {
             Log.d("PlayingGridView", "onDraw() exiting - No gameState to draw.")
             return
+        }
+
+        if (rescaleComplete == false) {
+            println("Attempting a forced rescale...")
+            // FIXME- this still didn't work for display after a pause() ...
+            rescaleScreenObjects()
         }
 
         canvas.drawBitmap(paperTexture, 0f, 0f, paint)
