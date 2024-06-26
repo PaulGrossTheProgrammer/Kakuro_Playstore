@@ -17,18 +17,31 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class GameEngine( private val definition: GameplayDefinition, activity: AppCompatActivity): Thread() {
+class GameEngine(): Thread() {
 
-    private val cm: ConnectivityManager = activity.applicationContext.getSystemService(ConnectivityManager::class.java)  // Used for Internet access.
-    private val preferences: SharedPreferences = activity.getPreferences(MODE_PRIVATE)  // Use to save and load the game state.
-    val assets: AssetManager = activity.applicationContext.assets // Used to access files in the assets directory
+    private var definition: GameplayDefinition? = null
+    private var activity: AppCompatActivity? = null
+    var assets: AssetManager? = null
+    private var preferences: SharedPreferences? = null
+    private var cm: ConnectivityManager? = null
     private var gameDefVersion = ""  // TODO - can paste the code in the init bock here?
 
-    init {
+    fun isSetup(): Boolean {
+        return activity != null
+    }
+
+    fun setup(definition: GameplayDefinition, activity: AppCompatActivity) {
+        this.definition = definition
+        this.activity = activity
+        assets = activity?.applicationContext?.assets // Used to access files in the assets directory
+        preferences = activity.getPreferences(MODE_PRIVATE)  // Use to save and load the game state.
+        cm = activity.applicationContext.getSystemService(ConnectivityManager::class.java)  // Used for Internet access.
+
         gameDefVersion = activity.applicationContext.packageManager.getPackageInfo(activity.applicationContext.packageName, 0).versionName
 
         Log.d(TAG, "Engine initialised with ${definition::class.java.simpleName}, version $gameDefVersion")
     }
+
 
     private var socketServer: SocketServer? = null
     private var socketClient: SocketClient? = null
@@ -97,7 +110,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
     private fun determineIpAddresses() {
         // FUTURE: Need to monitor the network and react to IP address changes.
         allIpAddresses.clear()
-        val lp = cm.getLinkProperties(cm.activeNetwork)
+        val lp = cm?.getLinkProperties(cm?.activeNetwork)
         val addrs = lp?.linkAddresses
         addrs?.forEach { addr ->
             Log.d(TAG, "IP Address: $addr")
@@ -111,7 +124,6 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
     private var savedEventTimers: List<EventTimer>? = null
 
     override fun run() {
-//        timingServer.startup()
         resumeTimingServer()
 
         // Register all the reserved system messages
@@ -126,7 +138,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         listOfSystemHandlers.add(SystemMessageHandler("RequestStopEngineStateChanges", ::handleRequestStopEngineStateChangesMessage))
         listOfSystemHandlers.add(SystemMessageHandler("RequestStateChanges", ::handleRequestStateChangesMessage))
 
-        definition.setEngine(this)  // This is where the Definition plugs in its own message handlers.
+        definition?.setEngine(this)  // This is where the Definition plugs in its own message handlers.
 
         restoreGameState()
 
@@ -206,20 +218,10 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
 
         println("#### resumeTimingServer() creating a new TimingServer()")
         timingServer = TimingServer()
-        // TODO: Apply any saved TimerEvents to the server
         if (savedEventTimers != null) {
             timingServer?.restoreSavedTimers(savedEventTimers!!)
         }
         timingServer?.start()
-
-        // FIXME - this doesn't work. Can't call start() more than once.
-        // Need to create a new object.
-//        timingServer.startup()
-
-/*        if (!timingServer.running) {
-            timingServer.running = true
-            timingServer.run()
-        }*/
     }
 
     fun pauseTimingServer() {
@@ -712,7 +714,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         return theList
     }
 
-    private fun pushStateToClients() {
+    fun pushStateToClients() {
         Log.d(TAG, "Pushing State to clients...")
         stateChangeCallbacks.forEach { callback ->
             // TODO - figure out what the hell this syntax actually means???!!!!
@@ -742,7 +744,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
             socketClient?.shutdownRequest()
         }
 
-        singletonGameEngine = null
+//        singletonGameEngine = null
     }
 
     private fun saveGameState() {
@@ -777,7 +779,7 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
     }
 
     fun loadDataString(name: String, default: String): String {
-        var data = preferences.getString(name, null)
+        var data = preferences?.getString(name, null)
         if (data == null) {
             data = default
         }
@@ -785,9 +787,9 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
     }
 
     fun saveDataString(name: String, value: String) {
-        val editor = preferences.edit()
-        editor.putString(name, value)
-        editor.apply()
+        val editor = preferences?.edit()
+        editor?.putString(name, value)
+        editor?.apply()
     }
 
     private fun resetGame() {
@@ -853,28 +855,26 @@ class GameEngine( private val definition: GameplayDefinition, activity: AppCompa
         val messageStateChange = Message("StateChange")
 
         // For the moment, just permit the Singleton instance.
-        private var singletonGameEngine: GameEngine? = null
+        private var singletonGameEngine: GameEngine = GameEngine()
 
         // FUTURE: Allocate multiple instances based on a game identifier and definition.
         fun activate(definition: GameplayDefinition, activity: AppCompatActivity): GameEngine {
-            if (singletonGameEngine == null) {
-                Log.d(TAG, "Starting new GameEngine ...")
-                singletonGameEngine = GameEngine(definition, activity)
-                // TODO - Do I reactivate the Timer system here???
-                singletonGameEngine!!.resumeTimingServer()
-                singletonGameEngine!!.start()
+            if (!singletonGameEngine.isSetup()) {
+                Log.d(TAG, "Activating GameEngine ...")
+                singletonGameEngine.setup(definition, activity)
+
+                singletonGameEngine.resumeTimingServer()
+                singletonGameEngine.start()
             } else {
                 Log.d(TAG, "Already created GameEngine.")
+                println("#### Pushing state to clients. At least one client is missing the state...")
+                singletonGameEngine.pushStateToClients()
             }
 
             return singletonGameEngine!!
         }
 
-        fun get(): GameEngine? {
-            if (singletonGameEngine == null) {
-                Log.d(TAG, "GameEngine has not yet been activated.")
-                return null
-            }
+        fun get(): GameEngine {
             return singletonGameEngine
         }
     }

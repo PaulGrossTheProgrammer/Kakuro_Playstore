@@ -55,11 +55,11 @@ object KakuroGameplayDefinition: GameplayDefinition {
         this.engine = engine
 
         // Load the built-in HelpCombinations
-        createAllHelpCombinations(engine.assets.open(BUILTIN_HELP_COMBINATIONS_FILENAME).bufferedReader())
+        createAllHelpCombinations(engine.assets?.open(BUILTIN_HELP_COMBINATIONS_FILENAME)!!.bufferedReader())
 
         // Load the built-in puzzles.
         // TODO - how do I close the file after reading?
-        engine.assets.open(BUILTIN_PUZZLES_FILENAME).bufferedReader().forEachLine () {
+        engine.assets?.open(BUILTIN_PUZZLES_FILENAME)!!.bufferedReader().forEachLine () {
             if (!it.startsWith("#")) {
                 val currPuzzleString = it.replace("\\s".toRegex(), "")
                 if (currPuzzleString.isNotEmpty()) {

@@ -73,6 +73,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private val selectedByNavPaint = Paint()
 
     init {
+        println("#### PlayingGridView - init() ...")
+        // FIXME - How to force a siz e recalc and redraw on app resume???
+        currViewWidth = 1
+        currViewHeight = 1
+
         if (context is KakuroGameplayActivity) {
             gameplayActivity = context
         }
@@ -151,10 +156,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         if (needNewSizes || lastKnownWidth == 0 || lastKnownHeight == 0 || lastKnownWidth != measuredWidth || lastKnownHeight != measuredHeight) {
-            Log.d(TAG, "setGameState calling setScreenSizes()")
+            Log.d(TAG, "setGameState calling rescaleScreenObjects()")
             rescaleScreenObjects()
         } else {
-            Log.d(TAG, "setGameState SKIPPING setScreenSizes()")
+            Log.d(TAG, "setGameState SKIPPING rescaleScreenObjects()")
             invalidate()
         }
     }

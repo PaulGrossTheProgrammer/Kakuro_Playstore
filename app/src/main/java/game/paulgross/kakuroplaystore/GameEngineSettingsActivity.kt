@@ -36,7 +36,7 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     private var selectedSetting: String = ""
 
-    private var engine: GameEngine? = null
+    private var engine: GameEngine = GameEngine.get()
 
     private var gameMode: GameEngine.GameMode = GameEngine.GameMode.LOCAL
     private var remotePlayerCount = 0
@@ -55,8 +55,8 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
         enableQueuedMessages()
         // TODO - handle lack of engine activation... which is a null return here.
-        engine = GameEngine.get()
-        engine?.queueMessageFromActivity(GameEngine.Message("RequestEngineStateChanges"), ::queueMessage)
+//        engine =
+        engine.queueMessageFromActivity(GameEngine.Message("RequestEngineStateChanges"), ::queueMessage)
     }
 
     override fun onPause() {
@@ -66,8 +66,8 @@ class GameEngineSettingsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        engine = GameEngine.get()
-        engine?.queueMessageFromActivity(GameEngine.Message("RequestEngineStateChanges"), ::queueMessage)
+//        engine = GameEngine.get()
+        engine.queueMessageFromActivity(GameEngine.Message("RequestEngineStateChanges"), ::queueMessage)
     }
 
     private fun showLayout() {

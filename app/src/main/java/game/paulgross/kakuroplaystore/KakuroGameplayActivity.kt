@@ -21,7 +21,7 @@ import com.google.android.material.shape.MaterialShapeDrawable
 
 class KakuroGameplayActivity : AppCompatActivity() {
 
-    var engine: GameEngine? = null
+    var engine: GameEngine = GameEngine.get()
     var versionName = "Working..."
 
     @SuppressLint("ClickableViewAccessibility")  // Why do I need this??? Something to do with setOnTouchListener()
@@ -59,29 +59,34 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         // FIXME - when the App is resumed after being forced into the background, the grid isn't updated automatically.
         // Instead, it remains blank. A workaround is to switch to another puzzle and back to force the grid to be updated.
+        //
         // Maybe ...
         // 1. there is no state update message, from the game server,
         // 2. or else the grid is not yet sized properly by the Android system when the state message arrives.
         // IF 2 is true, maybe the solution is for the grid to flag internally that it can't yet handle
         // the state message, but when the Android system eventually sizes the grid, this flag forces the state to be redrawn???
+
         enableQueuedMessages()  // Enable handling of responses from the GameEngine.
+
         // Request that the GameEngine send a state message to queueMessage() whenever the game state changes.
-        engine?.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
+        engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
     }
 
     override fun onResume() {
         super.onResume()
+        println("#### Activity onResume()")
         // TODO - maybe this can be done in the engine with an engineResume() call?
-        engine?.resumeTimingServer()
+        engine.resumeTimingServer()
     }
 
     override fun onPause() {
         super.onPause()
-        engine?.pauseTimingServer()
+        println("#### Activity onPause()")
+        engine.pauseTimingServer()
     }
 
     fun onClickSettings(view: View) {
-        engine?.gotoSettingsActivity(this)
+        engine.gotoSettingsActivity(this)
     }
 
     private var gameState: KakuroGameplayDefinition.StateVariables? = null
@@ -96,7 +101,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         if (prevKey != newKey) {
             // Whenever the puzzle changes, send an additional request for the helper combinations sets.
-            engine?.queueMessageFromActivity(GameEngine.Message("RequestHelperSets"), ::queueMessage)
+            engine.queueMessageFromActivity(GameEngine.Message("RequestHelperSets"), ::queueMessage)
         }
 
         if (checkForSolved == true) {
@@ -553,7 +558,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val message = GameEngine.Message("Guess")
         message.setKeyString("Index", selectedIndex.toString())
         message.setKeyString("Value", value)
-        engine?.queueMessageFromActivity(message, ::queueMessage)
+        engine.queueMessageFromActivity(message, ::queueMessage)
     }
 
     fun onClickPossibleDigit(view: View) {
@@ -569,7 +574,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val message = GameEngine.Message("Possible")
         message.setKeyString("Index", selectedIndex.toString())
         message.setKeyString("Value", value)
-        engine?.queueMessageFromActivity(message, ::queueMessage)
+        engine.queueMessageFromActivity(message, ::queueMessage)
     }
 
     fun onClickReset(view: View) {
@@ -578,7 +583,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         builder.setMessage("Are you sure you want to restart?")
         builder.setPositiveButton("Reset") { _, _ ->
             findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
-            engine?.queueMessageFromActivity(GameEngine.Message("RestartPuzzle"), ::queueMessage)
+            engine.queueMessageFromActivity(GameEngine.Message("RestartPuzzle"), ::queueMessage)
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
@@ -586,12 +591,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     fun onClickUndo(view: View) {
         val message = GameEngine.Message("Undo")
-        engine?.queueMessageFromActivity(message, ::queueMessage)
+        engine.queueMessageFromActivity(message, ::queueMessage)
     }
 
     fun onClickRedo(view: View) {
         val message = GameEngine.Message("Redo")
-        engine?.queueMessageFromActivity(message, ::queueMessage)
+        engine.queueMessageFromActivity(message, ::queueMessage)
     }
 
     fun onClickPrevPuzzle(view: View) {
@@ -604,12 +609,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private fun prevPuzzle() {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
-        engine?.queueMessageFromActivity(GameEngine.Message("PrevPuzzle"), ::queueMessage)
+        engine.queueMessageFromActivity(GameEngine.Message("PrevPuzzle"), ::queueMessage)
     }
 
     private fun nextPuzzle() {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
-        engine?.queueMessageFromActivity(GameEngine.Message("NextPuzzle"), ::queueMessage)
+        engine.queueMessageFromActivity(GameEngine.Message("NextPuzzle"), ::queueMessage)
     }
 
     fun onClickToggleShowHelp(view: View) {
@@ -624,12 +629,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private fun stopGameServer() {
         Log.d(TAG, "Stopping the game server ...")
-        engine?.queueMessageFromActivity(GameEngine.Message("StopGame"), ::queueMessage)
+        engine.queueMessageFromActivity(GameEngine.Message("StopGame"), ::queueMessage)
     }
 
     fun onClickGotoSettings(view: View) {
         Log.d(TAG, "onClickGotoSettings")
-        engine?.gotoSettingsActivity(this)
+        engine.gotoSettingsActivity(this)
     }
 
     /**
@@ -661,7 +666,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
             val message = GameEngine.Message.decodeMessage(messageString)
             if (message.type == "State") {
-                val newState = engine?.decodeState(message)
+                val newState = engine.decodeState(message)
                 if (newState is KakuroGameplayDefinition.StateVariables) {
 
                     // Check for animation request for new guesses.
@@ -669,11 +674,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
                         val changedIndex = message.getString("gni")?.toInt()
                         if (changedIndex != null) {
                             // Cancel previous animation if it's still running.
-                            engine?.cancelEventsByType("AnimateNewDigit")
+                            engine.cancelEventsByType("AnimateNewDigit")
                             val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
                             playGridView.flashIndex = changedIndex
                             playGridView.flashIndexRatio = 1.4f
-                            engine?.requestFinitePeriodicEvent(::animateNewDigitCallback, "AnimateNewDigit", period = 60, repeats = 6)                    }
+                            engine.requestFinitePeriodicEvent(::animateNewDigitCallback, "AnimateNewDigit", period = 60, repeats = 6)                    }
                         }
 
                     displayGrid(newState)
