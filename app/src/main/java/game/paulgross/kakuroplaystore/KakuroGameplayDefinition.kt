@@ -48,6 +48,9 @@ object KakuroGameplayDefinition: GameplayDefinition {
     private val undoBuffer = mutableListOf<PlayState>()
     private val redoBuffer = mutableListOf<PlayState>()
 
+    // We want clients to animate each change of guess, so flag the changed index using this Int. The value of -1 indicates nothing to notify.
+    private var guessNotifyIndex = -1
+
     override fun setEngine(engine: GameEngine) {
         this.engine = engine
 
@@ -137,7 +140,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         if (!message.hasString("Index") || !message.hasString("Value")) {
             Log.d(TAG, "Missing [Index] or [Value].")
-            return GameEngine.messageNoStateChange
         }
 
         var index = -1
@@ -159,12 +161,17 @@ object KakuroGameplayDefinition: GameplayDefinition {
             return GameEngine.messageNoStateChange
         }
 
+        // Don't permit new guesses for solved puzzles, EXCEPT to clear a quess with a zero.
+        if (isSolved() && value != 0) { return GameEngine.messageNoStateChange }
+
+        // Push the current state to the undo buffer
         val currentPlayState = PlayState(playerGuesses.toMutableList(), playerPossibles.toMutableMap())
         undoBuffer.add(currentPlayState)
         redoBuffer.clear()
 
         playerGuesses[index] = value
         playerPossibles.remove(index)
+        guessNotifyIndex = index
 
         markPlayerErrors()
         return GameEngine.messageStateChange
@@ -281,6 +288,12 @@ object KakuroGameplayDefinition: GameplayDefinition {
         if (isSolved()) {
             message.setKeyString("s", "1")
         }
+
+        if (guessNotifyIndex != -1) {
+            message.setKeyString("gni", guessNotifyIndex.toString())
+            guessNotifyIndex = -1
+        }
+
         return message
     }
 

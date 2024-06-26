@@ -546,13 +546,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             return
         }
 
-        // TODO - maybe TRIGGER this animation in the Definition class, which decides if the digit is changed.
-        // Cancel previous animation if it's still running.
-        engine?.cancelEventsByType("AnimateNewDigit")
-        playGridView.flashIndex = selectedIndex
-        playGridView.flashIndexRatio = 1.4f
-        engine?.requestFinitePeriodicEvent(::animateNewDigitCallback, "AnimateNewDigit", period = 60, repeats = 6)
-
         checkForSolved = true  // This flag is used by the message receiver to react to the change if required
 
         val tag = view.tag.toString()
@@ -561,26 +554,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         message.setKeyString("Index", selectedIndex.toString())
         message.setKeyString("Value", value)
         engine?.queueMessageFromActivity(message, ::queueMessage)
-    }
-
-    /**
-     * This callback is called by the Engine's time server to animate the new digit.
-     */
-    private fun animateNewDigitCallback(message: GameEngine.Message) {
-        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-
-        if (message.getString("final").equals("true")) {
-            playGridView.flashIndex = -1
-            playGridView.flashIndexRatio = 1.0f
-        } else {
-            // Reduce the digit flash size gradually...
-            if (playGridView.flashIndexRatio > 1.0f) {
-                playGridView.flashIndexRatio *= 0.96f
-            } else {
-                playGridView.flashIndexRatio = 1.0f
-            }
-        }
-        playGridView.invalidate()
     }
 
     fun onClickPossibleDigit(view: View) {
@@ -660,6 +633,26 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     /**
+     * This callback is called by the Engine's time server to animate the new digit.
+     */
+    private fun animateNewDigitCallback(message: GameEngine.Message) {
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+
+        if (message.getString("final").equals("true")) {
+            playGridView.flashIndex = -1
+            playGridView.flashIndexRatio = 1.0f
+        } else {
+            // Reduce the digit flash size gradually...
+            if (playGridView.flashIndexRatio > 1.0f) {
+                playGridView.flashIndexRatio *= 0.96f
+            } else {
+                playGridView.flashIndexRatio = 1.0f
+            }
+        }
+        playGridView.invalidate()
+    }
+
+    /**
      * Receive messages from the GameEngine.
      */
     private val activityMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -670,6 +663,19 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (message.type == "State") {
                 val newState = engine?.decodeState(message)
                 if (newState is KakuroGameplayDefinition.StateVariables) {
+
+                    // Check for animation request for new guesses.
+                    if (message.hasString("gni")) {
+                        val changedIndex = message.getString("gni")?.toInt()
+                        if (changedIndex != null) {
+                            // Cancel previous animation if it's still running.
+                            engine?.cancelEventsByType("AnimateNewDigit")
+                            val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+                            playGridView.flashIndex = changedIndex
+                            playGridView.flashIndexRatio = 1.4f
+                            engine?.requestFinitePeriodicEvent(::animateNewDigitCallback, "AnimateNewDigit", period = 60, repeats = 6)                    }
+                        }
+
                     displayGrid(newState)
                 }
             }
