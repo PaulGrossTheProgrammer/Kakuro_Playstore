@@ -75,7 +75,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         println("#### Activity onResume()")
-        // TODO - maybe this can be done in the engine with an engineResume() call?
         engine.resumeTimingServer()
     }
 

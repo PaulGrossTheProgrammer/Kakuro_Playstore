@@ -24,7 +24,7 @@ class GameEngine(): Thread() {
     var assets: AssetManager? = null
     private var preferences: SharedPreferences? = null
     private var cm: ConnectivityManager? = null
-    private var gameDefVersion = ""  // TODO - can paste the code in the init bock here?
+    private var gameDefVersion = ""
 
     fun isSetup(): Boolean {
         return activity != null
@@ -41,7 +41,6 @@ class GameEngine(): Thread() {
 
         Log.d(TAG, "Engine initialised with ${definition::class.java.simpleName}, version $gameDefVersion")
     }
-
 
     private var socketServer: SocketServer? = null
     private var socketClient: SocketClient? = null
@@ -118,8 +117,6 @@ class GameEngine(): Thread() {
         }
     }
 
-    private var loopDelayMilliseconds = -1L  // -1 means disable looping,
-
     private var timingServer: TimingServer? = null
     private var savedEventTimers: List<EventTimer>? = null
 
@@ -145,13 +142,7 @@ class GameEngine(): Thread() {
         while (gameIsRunning.get()) {
             var im: InboundMessage? = null
 
-            if (loopDelayMilliseconds < 0) {
-                // We are NOT using a loop delay, so WAIT HERE for messages ...
-                im = inboundMessageQueue.take()
-            } else {
-                // We are using a loop delay, so DON'T WAIT HERE for messages, just test to see if one is available ...
-                im = inboundMessageQueue.poll()
-            }
+            im = inboundMessageQueue.take()
 
             var systemStateChange = false
             var gameStateChanged = false
@@ -191,21 +182,11 @@ class GameEngine(): Thread() {
                 }
             }
 
-            if (loopDelayMilliseconds > 0) {
-                // TODO - call the optional periodic game actions
-                // Probably NOT - use a timer event with the time server.
-//                stateChanged = actionFunction.invoke()...
-            }
-
             // TODO - if systemStateChange notify listeners...
 
             if (gameStateChanged) {
                 saveGameState() // Maybe don't do this for fast periodic games
                 pushStateToClients()
-            }
-
-            if (loopDelayMilliseconds > 0) {
-                sleep(loopDelayMilliseconds)
             }
         }
         Log.d(TAG, "The Game Server has shut down.")
@@ -740,8 +721,6 @@ class GameEngine(): Thread() {
         if (gameMode == GameMode.CLIENT) {
             socketClient?.shutdownRequest()
         }
-
-//        singletonGameEngine = null
     }
 
     private fun saveGameState() {
