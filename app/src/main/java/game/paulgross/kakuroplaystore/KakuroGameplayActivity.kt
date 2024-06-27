@@ -627,12 +627,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     private fun stopGameServer() {
-        Log.d(TAG, "Stopping the game server ...")
         engine.queueMessageFromActivity(GameEngine.Message("StopGame"), ::queueMessage)
     }
 
     fun onClickGotoSettings(view: View) {
-        Log.d(TAG, "onClickGotoSettings")
         engine.gotoSettingsActivity(this)
     }
 
@@ -703,7 +701,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val intentFilter = IntentFilter()
         intentFilter.addAction(queuedMessageAction)
         registerReceiver(activityMessageReceiver, intentFilter)
-        Log.d(TAG, "Enabled message receiver for [${queuedMessageAction}]")
     }
 
     /**

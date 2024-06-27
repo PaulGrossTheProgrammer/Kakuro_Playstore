@@ -383,19 +383,19 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
      * or the zoom level of the grid is changed.
      */
     private fun rescaleScreenObjects() {
-        Log.d(TAG, "#### rescaleScreenObjects(): Width = $measuredWidth, height = $measuredHeight")
+        println("#### rescaleScreenObjects(): Width = $measuredWidth, height = $measuredHeight")
         if (gameState == null) {
-            Log.d(TAG, "#### rescaleScreenObjects() exiting because there is not yet a gameState.")
+            println("#### rescaleScreenObjects() exiting because there is not yet a gameState.")
             return
         }
 
         if (measuredWidth == 0 || measuredHeight == 0) {
-            Log.d(TAG, "#### rescaleScreenObjects() exiting because of invalid width or height.")
+            println("#### rescaleScreenObjects() exiting because of invalid width or height.")
             println("#### But we have a valid gameState: $gameState")
             return
         }
 
-        Log.d(TAG, "#### rescaleScreenObjects() using w = $measuredWidth, h = $measuredHeight")
+        println("#### rescaleScreenObjects() using w = $measuredWidth, h = $measuredHeight")
         lastKnownWidth = measuredWidth
         lastKnownHeight = measuredHeight
 
@@ -438,7 +438,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             squareWidth = (currViewWidth/(gameState!!.puzzleHeight + 1 + displayZoom + borderOffset)).toFloat()
         }
 
-        Log.d(TAG, "squareWidth = $squareWidth")
+        Log.d(TAG, "#### squareWidth = $squareWidth")
         borderThickness = squareWidth * 0.06f
 
         squareTextSize = squareWidth * 0.7f
@@ -468,14 +468,14 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        Log.d("PlayingGridView", "onDraw() running")
+        println("#### onDraw() running")
         if (gameState == null) {
-            Log.d("PlayingGridView", "onDraw() exiting - No gameState to draw.")
+            println("#### onDraw() exiting - No gameState to draw.")
             return
         }
 
         if (rescaleComplete == false) {
-            println("Attempting a forced rescale...")
+            println("#### Attempting a forced rescale...")
             // FIXME- this still didn't work for display after a pause() ...
             rescaleScreenObjects()
         }
@@ -486,7 +486,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         val addTouchAreas = playSquareTouchLookUpId.isEmpty()
 
         if (addTouchAreas) {
-            Log.d(TAG, "Adding touch areas....")
             boundaryLeftTouchLookupId.clear()
         }
 
@@ -548,7 +547,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
                         if (selectedIndex == -1 && defaultIndex == -1 && visible) {
                             defaultIndex = index
-                            Log.d(TAG, "Setting default index to $defaultIndex")
                             selectedIndex = index // Is this OK for both TV and phone/tablet???
                         }
                         val selected = (index == selectedIndex)

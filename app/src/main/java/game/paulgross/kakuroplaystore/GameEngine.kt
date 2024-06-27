@@ -483,7 +483,6 @@ class GameEngine(): Thread() {
             }
 
             eventTimers.clear()
-            println("#### TimingServer is SHUTDOWN.")
         }
 
         fun shutdown() {
