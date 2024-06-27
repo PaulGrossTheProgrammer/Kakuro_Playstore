@@ -7,10 +7,12 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.accessibility.AccessibilityNodeInfo
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -138,15 +140,19 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     fun setGameState(newestGameState: KakuroGameplayDefinition.StateVariables) {
+        println("#### setGameState() newestGameState = $newestGameState")
         var needNewSizes = (gameState == null)
 
         var oldWidth = 0
+        var prevKey = ""
         if (gameState != null) {
             oldWidth = gameState!!.puzzleWidth
+            prevKey = gameState!!.puzzleKey
         }
 
-        val prevKey = gameState?.puzzleKey
         gameState = newestGameState
+        println("#### setGameState() HAS UPDATED THE GAME STATE!!!!")
+
         val currKey = gameState?.puzzleKey
         if (currKey != prevKey) {
             acrossHelpSets.indexLookup.clear()
@@ -158,10 +164,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         if (needNewSizes || lastKnownWidth == 0 || lastKnownHeight == 0 || lastKnownWidth != measuredWidth || lastKnownHeight != measuredHeight) {
-            Log.d(TAG, "setGameState calling rescaleScreenObjects()")
+            println("#### setGameState() calling rescaleScreenObjects()")
             rescaleScreenObjects()
         } else {
-            Log.d(TAG, "setGameState SKIPPING rescaleScreenObjects()")
+            println("#### setGameState() SKIPPING rescaleScreenObjects()")
             invalidate()
         }
     }
@@ -464,6 +470,22 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         resetTouchAreas()
         saveUIState()
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        println("#### onMeasure: widthMeasureSpec = $widthMeasureSpec, heightMeasureSpec = $heightMeasureSpec")
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+        println("#### onLayout(): changed = $changed, left = $left, top = $top. right = $right, bottom = $bottom")
+        // FIXME - attempting to get the object rescale working properly....
+        //
+        if (changed) {
+            // FIXME - sadly this didn't work!!!
+            rescaleScreenObjects()
+        }
     }
 
     override fun onDraw(canvas: Canvas) {
