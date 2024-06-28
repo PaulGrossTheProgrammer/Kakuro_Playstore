@@ -627,6 +627,7 @@ class GameEngine(): Thread() {
     }
 
     private fun handleRequestStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Changes {
+        println("#### handleRequestStateChangesMessage() starting ...")
         if (responseFunction != null && gameMode == GameMode.SERVER) {
             if (!remotePlayers.contains(responseFunction)) {
                 remotePlayers.add(responseFunction)
@@ -635,14 +636,14 @@ class GameEngine(): Thread() {
 
         if (responseFunction != null) {
             if (!stateChangeCallbacks.contains(responseFunction)) {
-                Log.d(TAG,"Adding caller to stateChangeCallbacks ...")
+                println("#### Adding caller to stateChangeCallbacks ...")
                 stateChangeCallbacks.add(responseFunction)
                 // Assume that the caller does NOT have the current state.
 
                 if (encodeStateFunction != null) {
                     val newMessage = encodeStateFunction?.invoke()
                     if (newMessage != null) {
-                        Log.d(TAG, "Sending ${newMessage.asString()}")
+                        println("#### Sending state meesage: ${newMessage.asString()}")
                         responseFunction.invoke(newMessage)
                     }
                 }
@@ -653,7 +654,11 @@ class GameEngine(): Thread() {
         return Changes(system = false, game = false)
     }
 
+    // TODO - replace this with a Thread lookup...
     private val engineStateChangeListeners: MutableSet<(message: Message) -> Unit> = mutableSetOf()
+    // TODO - need to pass the thread pointer with the callback function.
+    // Because for whatever reason the same thread passes a new callback function object each time!!!
+    private val  engineStateChangeListenerLookup: MutableMap<Thread, (message: Message) -> Unit> = mutableMapOf()
 
     private fun handleRequestEngineStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Changes {
         Log.d(TAG, "Request for engine state changes received")
@@ -671,7 +676,7 @@ class GameEngine(): Thread() {
 
     private fun handleRequestStopEngineStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Changes {
         // TODO
-        Log.d(TAG, "Request STOP for engine state changes received")
+        println("#### Request STOP for engine state changes received")
 
         // Remove the response function from the Set for future notifications.
         if (responseFunction != null) {
@@ -828,6 +833,7 @@ class GameEngine(): Thread() {
     }
 
     fun queueMessageFromActivity(message: Message, responseFunction: ((message: Message) -> Unit)?) {
+        println("#### Thread [${Thread.currentThread().id}] is queuing a message ${message.asString()}")
         val im = InboundMessage(message, InboundMessageSource.APP, responseFunction)
         inboundMessageQueue.add(im)
     }

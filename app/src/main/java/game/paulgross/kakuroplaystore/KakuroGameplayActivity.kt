@@ -53,6 +53,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine = GameEngine.activate(KakuroGameplayDefinition, this)
 
         enableQueuedMessages()  // Enable handling of responses from the GameEngine.
+
+        // FIXME - this seems to add multiple instances of the request to the server...
         engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
     }
 
@@ -65,6 +67,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         println("#### Activity onPause()")
+
+        engine.queueMessageFromActivity(GameEngine.Message("RequestStopEngineStateChanges"), ::queueMessage)
+        // RequestStopEngineStateChanges
         engine.pauseTimingServer()
     }
 
