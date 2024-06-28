@@ -29,10 +29,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         versionName = "V" + packageManager.getPackageInfo(packageName, 0).versionName
-        Log.d(TAG, "Version $versionName")
 
         val packageInfo = applicationContext.packageManager.getPackageInfo(packageName, 0)
-        Log.d(TAG, "onCreate() starting version: " + packageInfo.versionName)
 
         val isTv = applicationContext.packageManager.hasSystemFeature("android.software.leanback_only")
 
@@ -40,11 +38,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
             Log.d(TAG, "TV DETECTED.")
             // According to Google policy, a TV App is only allowed to use landscape orientation.
             // (Yes, Google are very stupid. I walk past portrait-oriented TV screens almost every day. Advertisers use portrait mode all the time.)
-            Log.d(TAG, "TV APP IS FIXED TO LANDSCAPE MODE.")
             setContentView(R.layout.activity_kakurogameplay_landscape)
         } else {
-            Log.d(TAG, "THIS NOT A TV.")
-            // Set either portrait or landscape.
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
                 setContentView(R.layout.activity_kakurogameplay)
             } else {
@@ -57,18 +52,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         engine = GameEngine.activate(KakuroGameplayDefinition, this)
 
-        // FIXME - when the App is resumed after being forced into the background, the grid isn't updated automatically.
-        // Instead, it remains blank. A workaround is to switch to another puzzle and back to force the grid to be updated.
-        //
-        // Maybe ...
-        // 1. there is no state update message, from the game server,
-        // 2. or else the grid is not yet sized properly by the Android system when the state message arrives.
-        // IF 2 is true, maybe the solution is for the grid to flag internally that it can't yet handle
-        // the state message, but when the Android system eventually sizes the grid, this flag forces the state to be redrawn???
-
         enableQueuedMessages()  // Enable handling of responses from the GameEngine.
-
-        // Request that the GameEngine send a state message to queueMessage() whenever the game state changes.
         engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
     }
 
@@ -106,6 +90,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         if (checkForSolved == true) {
             if (gameState!!.solved) {
                 Toast.makeText(this, "SOLVED!", Toast.LENGTH_LONG).show()
+                // TODO - draw a fancy solved animation using the TimeServer...
             }
             checkForSolved = false
         }

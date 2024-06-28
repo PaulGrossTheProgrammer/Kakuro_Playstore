@@ -37,11 +37,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private var gameState: KakuroGameplayDefinition.StateVariables? = null
 
-    private var lastKnownWidth = 0
-    private var lastKnownHeight = 0
-    private var currViewWidth = 1
-    private var currViewHeight = 1
-
     private var rescaleComplete = false
     private var squareWidth = 1f
     private var slashMargin = 1f
@@ -78,8 +73,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private val selectedByNavPaint = Paint()
 
     init {
-        println("#### PlayingGridView - init() ...")
-        // FIXME - How to force a size recalc and redraw on app resume???
         rescaleComplete = false
 
         if (context is KakuroGameplayActivity) {
@@ -140,37 +133,19 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     fun setGameState(newestGameState: KakuroGameplayDefinition.StateVariables) {
-        println("#### setGameState() newestGameState = $newestGameState")
-        var needNewSizes = (gameState == null)
-
-        var oldWidth = 0
         var prevKey = ""
         if (gameState != null) {
-            oldWidth = gameState!!.puzzleWidth
             prevKey = gameState!!.puzzleKey
         }
 
         gameState = newestGameState
-        println("#### setGameState() HAS UPDATED THE GAME STATE!!!!")
 
         val currKey = gameState?.puzzleKey
         if (currKey != prevKey) {
             acrossHelpSets.indexLookup.clear()
             downHelpSets.indexLookup.clear()
         }
-
-        if (oldWidth != gameState!!.puzzleWidth) {
-            needNewSizes = true
-        }
-
         invalidate()
-/*        if (needNewSizes || lastKnownWidth == 0 || lastKnownHeight == 0 || lastKnownWidth != measuredWidth || lastKnownHeight != measuredHeight) {
-            println("#### setGameState() calling rescaleScreenObjects()")
-            rescaleScreenObjects()
-        } else {
-            println("#### setGameState() SKIPPING rescaleScreenObjects()")
-            invalidate()
-        }*/
     }
 
     fun setHelpSets(newDownHelpSet: HelpSets, newAcrossHelpSet: HelpSets ) {
@@ -390,30 +365,20 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
      * or the zoom level of the grid is changed.
      */
     private fun rescaleScreenObjects() {
-        println("#### rescaleScreenObjects(): Width = $measuredWidth, height = $measuredHeight")
         if (gameState == null) {
-            println("#### rescaleScreenObjects() exiting because there is not yet a gameState.")
             return
         }
 
         if (measuredWidth == 0 || measuredHeight == 0) {
-            println("#### rescaleScreenObjects() exiting because of invalid width or height.")
-            println("#### But we have a valid gameState: $gameState")
             return
         }
 
-        println("#### rescaleScreenObjects() using w = $measuredWidth, h = $measuredHeight")
-        // TODO: These two var can likely be deleted...
-        lastKnownWidth = measuredWidth
-        lastKnownHeight = measuredHeight
 
-        // TODO - pre-allocate the TouchArea for each on screen index.
-        // So that we can remove the allocation code and boundary intersect code from onDraw().
-
+        // TODO - pre-allocate the TouchArea for each on screen index so that we can remove the allocation code and boundary intersect code from onDraw().
         resetTouchAreas()
 
-        currViewWidth = measuredWidth
-        currViewHeight = measuredHeight
+//        currViewWidth = measuredWidth
+//        currViewHeight = measuredHeight
 
         // maxGridDimension is the larger of either puzzleWidth or puzzleHeight
         val maxGridDimension = if (gameState!!.puzzleWidth > gameState!!.puzzleHeight) {
@@ -441,12 +406,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         // Determine squareWidth from max of row vs. columns.
         if (gameState!!.puzzleWidth > gameState!!.puzzleHeight) {
-            squareWidth = (currViewWidth/(gameState!!.puzzleWidth + 1 + displayZoom + borderOffset)).toFloat()
+            squareWidth = (measuredWidth/(gameState!!.puzzleWidth + 1 + displayZoom + borderOffset)).toFloat()
         } else {
-            squareWidth = (currViewWidth/(gameState!!.puzzleHeight + 1 + displayZoom + borderOffset)).toFloat()
+            squareWidth = (measuredWidth/(gameState!!.puzzleHeight + 1 + displayZoom + borderOffset)).toFloat()
         }
 
-        Log.d(TAG, "#### squareWidth = $squareWidth")
         borderThickness = squareWidth * 0.06f
 
         squareTextSize = squareWidth * 0.7f
@@ -474,34 +438,15 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         saveUIState()
     }
 
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        println("#### (THIS IS PROBABLY A REDUNDANT FUNCTION OVERRIDE) onMeasure: widthMeasureSpec = $widthMeasureSpec, heightMeasureSpec = $heightMeasureSpec")
-    }
-
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(changed, left, top, right, bottom)
-        println("#### onLayout(): changed = $changed, left = $left, top = $top. right = $right, bottom = $bottom")
-        // FIXME - attempting to get the object rescale working properly....
-        if (changed) {
-            rescaleScreenObjects()
-        }
-    }
-
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        println("#### onDraw() running")
         if (gameState == null) {
-            println("#### onDraw() exiting - No gameState to draw.")
             return
         }
 
+        // Make sure we have made the initial call to rescaleScreenObjects()
         if (rescaleComplete == false) {
-            println("#### Attempting a forced rescale...")
-            // TODO - why is this needed here???
             rescaleScreenObjects()
-        } else {
-            println("#### SKIPPED forced rescale...")
         }
 
         canvas.drawBitmap(paperTexture, 0f, 0f, paint)
@@ -885,14 +830,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     fun navigateGrid(dir: KakuroGameplayActivity.NavDirection) {
-        Log.d(TAG, "navigateGrid $dir")
         if (selectedIndex == -1) {
             selectedIndex = defaultIndex
             invalidate()
         }
 
         val nextSquare = searchForNextSquare(selectedIndex, dir)
-        Log.d(TAG, "navigateGrid: New index $nextSquare")
         if (nextSquare != -1) {
             selectedIndex = nextSquare
             checkAutoscrollForDpad()

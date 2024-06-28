@@ -708,8 +708,10 @@ class GameEngine(): Thread() {
         return theList
     }
 
-    fun pushStateToClients() {
-        Log.d(TAG, "Pushing State to clients...")
+    private fun pushStateToClients() {
+        // FIXME - the number of clients is rising without any new clients.
+        // FIXME - likely the resume() call is creating extra requests...
+        println("#### Pushing State to [${stateChangeCallbacks.size}] clients...")
         stateChangeCallbacks.forEach { callback ->
             // TODO - figure out what the hell this syntax actually means???!!!!
             encodeState()?.let { callback(it) }
@@ -810,22 +812,18 @@ class GameEngine(): Thread() {
     }
 
     fun pluginEncodeState(encodeStateFunction: () -> Message) {
-        Log.d(TAG, "Plugging in encode state function...")
         this.encodeStateFunction = encodeStateFunction
     }
 
     fun pluginDecodeState(decodeStateFunction: (message: Message) -> Any) {
-        Log.d(TAG, "Plugging in encode state function...")
         this.decodeStateFunction = decodeStateFunction
     }
 
     fun pluginSaveState(saveStateFunction: () -> Unit) {
-        Log.d(TAG, "Plugging in save puzzle function...")
         this.saveStateFunction = saveStateFunction
     }
 
     fun pluginRestoreState(restoreStateFunction: () -> Unit) {
-        Log.d(TAG, "Plugging in restore puzzle function...")
         this.restoreStateFunction = restoreStateFunction
     }
 
@@ -836,12 +834,12 @@ class GameEngine(): Thread() {
 
     fun queueMessageFromClient(message: Message, responseFunction: (message: Message) -> Unit) {
         val im = InboundMessage(message, InboundMessageSource.CLIENT, responseFunction)
-        singletonGameEngine?.inboundMessageQueue?.add(im)
+        singletonGameEngine.inboundMessageQueue?.add(im)
     }
 
     fun queueMessageFromClientHandler(message: Message, responseFunction: (message: Message) -> Unit) {
         val im = InboundMessage(message, InboundMessageSource.CLIENTHANDLER, responseFunction)
-        singletonGameEngine?.inboundMessageQueue?.add(im)
+        singletonGameEngine.inboundMessageQueue?.add(im)
     }
 
     companion object {
@@ -850,25 +848,12 @@ class GameEngine(): Thread() {
         val messageNoStateChange = Message("NoStateChange")
         val messageStateChange = Message("StateChange")
 
-        // For the moment, just permit the Singleton instance.
         private var singletonGameEngine: GameEngine = GameEngine()
 
-        // FUTURE: Allocate multiple instances based on a game identifier and definition.
         fun activate(definition: GameplayDefinition, activity: AppCompatActivity): GameEngine {
             if (!singletonGameEngine.isSetup()) {
                 Log.d(TAG, "Activating GameEngine ...")
                 singletonGameEngine.activate(definition, activity)
-
-//                singletonGameEngine.resumeTimingServer()
-
-                // FIXME - why does leaving out this line cause the grid to be blank???
-                // FIXME - why does leaving in this line cause the game to crash on RESUME?
-                // MAYBE CALL START INSIDE activate() ??? - but conditional on the loop not already running...
-//                singletonGameEngine.start()
-            } else {
-                Log.d(TAG, "Already created GameEngine.")
-                println("#### Pushing state to clients. At least one client is missing the state...")
-                singletonGameEngine.pushStateToClients()
             }
 
             return singletonGameEngine!!

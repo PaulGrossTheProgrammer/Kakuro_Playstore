@@ -69,9 +69,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 }
             }
         }
-        Log.d(TAG, "Loaded ${builtinPuzzles.size} built-in puzzles.")
 
-        Log.d(TAG, "Plugin the gameplay functions ...")
         engine.registerHandler("Guess", ::submitGuess)
         engine.registerHandler("Possible", ::togglePossible)
         engine.registerHandler("Undo", ::undo)
@@ -117,7 +115,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
             index += 2
         }
-        Log.d(TAG, "Puzzle Key: ${hexString.reversed()}")
 
         return hexString.reversed()
     }
@@ -136,10 +133,10 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun submitGuess(message: GameEngine.Message): GameEngine.Message {
-        Log.d(TAG, "The user sent a guess: $message")
 
         if (!message.hasString("Index") || !message.hasString("Value")) {
             Log.d(TAG, "Missing [Index] or [Value].")
+            return GameEngine.messageNoStateChange
         }
 
         var index = -1
@@ -178,7 +175,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun togglePossible(message: GameEngine.Message): GameEngine.Message {
-        Log.d(TAG, "The user sent a possible: $message")
 
         if (message.missingString("Index") || message.missingString("Value")) {
             Log.d(TAG, "Missing [Index] or [Value].")
@@ -240,7 +236,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private fun undo(message: GameEngine.Message): GameEngine.Message {
         if (undoBuffer.isEmpty()) {
-            Log.d(TAG, "undo buffer is empty.")
             return GameEngine.messageNoStateChange
         }
 
@@ -298,7 +293,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun decodeState(message: GameEngine.Message): StateVariables {
-        Log.d(TAG, "DecodeState() for [$message]")
+        Log.d(TAG, "#### DecodeState() for [$message]")
 
         if (message.missingString("w") || message.missingString("g") || message.missingString("h") ) {
             Log.d(TAG, "Missing width, grid and and/or hints.")
@@ -490,7 +485,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
                 playerGuesses.add(guessString.toInt())
             }
         }
-        Log.d(TAG, "Size of play grid = ${playerGuesses.size}")
 
         val possiblesString = engine?.loadDataString("$currPuzzle.Possibles", "")
         playerPossibles = decodePossibles(possiblesString!!)
