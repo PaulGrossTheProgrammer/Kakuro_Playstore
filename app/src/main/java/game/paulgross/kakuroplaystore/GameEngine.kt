@@ -30,16 +30,31 @@ class GameEngine(): Thread() {
         return activity != null
     }
 
-    fun setup(definition: GameplayDefinition, activity: AppCompatActivity) {
+    fun activate(definition: GameplayDefinition, activity: AppCompatActivity) {
         this.definition = definition
         this.activity = activity
-        assets = activity?.applicationContext?.assets // Used to access files in the assets directory
+        assets = activity.applicationContext?.assets // Used to access files in the assets directory
         preferences = activity.getPreferences(MODE_PRIVATE)  // Use to save and load the game state.
         cm = activity.applicationContext.getSystemService(ConnectivityManager::class.java)  // Used for Internet access.
 
         gameDefVersion = activity.applicationContext.packageManager.getPackageInfo(activity.applicationContext.packageName, 0).versionName
 
         Log.d(TAG, "Engine initialised with ${definition::class.java.simpleName}, version $gameDefVersion")
+
+        if (gameIsRunning.get()) {
+            println("#### Game thread already running.")
+        } else {
+            println("#### Game thread NOT already running, so starting it up now.")
+            start()
+        }
+    }
+
+    private fun deactivate() {
+        Log.d(TAG, "Engine removing akk references to the Activity...")
+        activity = null
+        assets = null
+        preferences = null
+        cm = null
     }
 
     private var socketServer: SocketServer? = null
@@ -53,7 +68,7 @@ class GameEngine(): Thread() {
     private var saveStateFunction: (() -> Unit)? = null
     private var restoreStateFunction: (() -> Unit)? = null
 
-    private val gameIsRunning = AtomicBoolean(true)  // TODO - this might not need to be Atomic.
+    private val gameIsRunning = AtomicBoolean(false)  // TODO - this might not need to be Atomic.
 
     // We use a BlockingQueue here to block thread progress if needed.
     // https://developer.android.com/reference/java/util/concurrent/BlockingQueue
@@ -121,6 +136,8 @@ class GameEngine(): Thread() {
     private var savedEventTimers: List<EventTimer>? = null
 
     override fun run() {
+        gameIsRunning.set(true)
+
         resumeTimingServer()
 
         // Register all the reserved system messages
@@ -199,9 +216,9 @@ class GameEngine(): Thread() {
 
         timingServer = TimingServer()
         if (savedEventTimers != null) {
-            timingServer?.restoreSavedTimers(savedEventTimers!!)
+            timingServer!!.restoreSavedTimers(savedEventTimers!!)
         }
-        timingServer?.start()
+        timingServer!!.start()
     }
 
     fun pauseTimingServer() {
@@ -711,7 +728,8 @@ class GameEngine(): Thread() {
         Log.d(TAG, "The Game Server is shutting down ...")
         timingServer?.shutdown()
 
-        gameIsRunning.set(false)
+//        gameIsRunning.set(false) // FIXME - can we just leave the loop waiting instead of killing it??? It seems so!!!
+        // Looks like a lot of problems just go away if I leave the loop suspended...!!!!
 
         if (gameMode == GameMode.SERVER) {
             socketServer?.shutdownRequest()
@@ -720,6 +738,9 @@ class GameEngine(): Thread() {
         if (gameMode == GameMode.CLIENT) {
             socketClient?.shutdownRequest()
         }
+
+        // TODO: Deactivate the game engine - remove references to the Activity...
+        deactivate()
     }
 
     private fun saveGameState() {
@@ -836,10 +857,14 @@ class GameEngine(): Thread() {
         fun activate(definition: GameplayDefinition, activity: AppCompatActivity): GameEngine {
             if (!singletonGameEngine.isSetup()) {
                 Log.d(TAG, "Activating GameEngine ...")
-                singletonGameEngine.setup(definition, activity)
+                singletonGameEngine.activate(definition, activity)
 
-                singletonGameEngine.resumeTimingServer()
-                singletonGameEngine.start()
+//                singletonGameEngine.resumeTimingServer()
+
+                // FIXME - why does leaving out this line cause the grid to be blank???
+                // FIXME - why does leaving in this line cause the game to crash on RESUME?
+                // MAYBE CALL START INSIDE activate() ??? - but conditional on the loop not already running...
+//                singletonGameEngine.start()
             } else {
                 Log.d(TAG, "Already created GameEngine.")
                 println("#### Pushing state to clients. At least one client is missing the state...")
