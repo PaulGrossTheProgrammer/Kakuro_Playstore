@@ -498,8 +498,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         if (rescaleComplete == false) {
             println("#### Attempting a forced rescale...")
-            // FIXME- this still didn't work for display after a pause() ...
+            // TODO - why is this needed here???
             rescaleScreenObjects()
+        } else {
+            println("#### SKIPPED forced rescale...")
         }
 
         canvas.drawBitmap(paperTexture, 0f, 0f, paint)
