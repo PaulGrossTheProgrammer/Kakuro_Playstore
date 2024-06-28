@@ -163,13 +163,14 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             needNewSizes = true
         }
 
-        if (needNewSizes || lastKnownWidth == 0 || lastKnownHeight == 0 || lastKnownWidth != measuredWidth || lastKnownHeight != measuredHeight) {
+        invalidate()
+/*        if (needNewSizes || lastKnownWidth == 0 || lastKnownHeight == 0 || lastKnownWidth != measuredWidth || lastKnownHeight != measuredHeight) {
             println("#### setGameState() calling rescaleScreenObjects()")
             rescaleScreenObjects()
         } else {
             println("#### setGameState() SKIPPING rescaleScreenObjects()")
             invalidate()
-        }
+        }*/
     }
 
     fun setHelpSets(newDownHelpSet: HelpSets, newAcrossHelpSet: HelpSets ) {
@@ -402,6 +403,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         println("#### rescaleScreenObjects() using w = $measuredWidth, h = $measuredHeight")
+        // TODO: These two var can likely be deleted...
         lastKnownWidth = measuredWidth
         lastKnownHeight = measuredHeight
 
@@ -474,16 +476,14 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        println("#### onMeasure: widthMeasureSpec = $widthMeasureSpec, heightMeasureSpec = $heightMeasureSpec")
+        println("#### (THIS IS PROBABLY A REDUNDANT FUNCTION OVERRIDE) onMeasure: widthMeasureSpec = $widthMeasureSpec, heightMeasureSpec = $heightMeasureSpec")
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
         println("#### onLayout(): changed = $changed, left = $left, top = $top. right = $right, bottom = $bottom")
         // FIXME - attempting to get the object rescale working properly....
-        //
         if (changed) {
-            // FIXME - sadly this didn't work!!!
             rescaleScreenObjects()
         }
     }
