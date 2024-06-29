@@ -652,7 +652,7 @@ class GameEngine(): Thread() {
                 stateChangeCallbacks.add(ThreadMessageCallback(currentThread() ,responseFunction))
             }
 
-            // Also send the current engine state. This assumes that a new request needs the current state.
+            // Also send the current state to ensure that the client is up to date.
             val newMessage = encodeStateFunction?.invoke()
             if (newMessage != null) {
                 responseFunction.invoke(newMessage)
@@ -662,14 +662,8 @@ class GameEngine(): Thread() {
         return Changes(system = false, game = false)
     }
 
-    // TODO - replace this with a Thread lookup...
-//    private val engineStateChangeListeners: MutableSet<(message: Message) -> Unit> = mutableSetOf()
     private val engineStateChangeListeners: MutableSet<ThreadMessageCallback> = mutableSetOf()
-    // TODO - need to pass the thread pointer with the callback function.
-    // Because for whatever reason the same thread passes a new callback function object each time!!!
-//    private val  engineStateChangeListenerLookup: MutableMap<Thread, (message: Message) -> Unit> = mutableMapOf()
 
-    // FIXME - check that we aren't acciedntallty calling this instead of handleRequestStateChangesMessage ...
     private fun handleRequestEngineStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Changes {
         println("#### Request for engine state changes received")
         // Put the response function in the Set for future notifications.

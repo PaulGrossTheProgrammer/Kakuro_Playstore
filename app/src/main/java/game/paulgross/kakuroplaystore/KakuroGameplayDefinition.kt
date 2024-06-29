@@ -6,7 +6,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
     private val TAG = KakuroGameplayDefinition::class.java.simpleName
 
-    private var engine: GameEngine? = null
+    private var engine: GameEngine? = null // Can we move the engine into the constructor???
 
     // First 2 digits is the puzzle width.
     // From there, 0 is for non-playable squares, and any digit from 1..9 is for solution squares.
