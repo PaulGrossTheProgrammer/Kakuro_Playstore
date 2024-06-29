@@ -16,6 +16,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
 
 class GameEngine(): Thread() {
 
@@ -50,7 +51,7 @@ class GameEngine(): Thread() {
     }
 
     private fun deactivate() {
-        Log.d(TAG, "Engine removing akk references to the Activity...")
+        Log.d(TAG, "Engine removing all references to the Activity...")
         activity = null
         assets = null
         preferences = null
@@ -100,10 +101,12 @@ class GameEngine(): Thread() {
 
     // TODO merge this with the state change callbacks???
     private var remotePlayers: MutableList<(message: Message) -> Unit> = mutableListOf()  // Only used in SERVER mode.
-    private var localPlayer: MutableList<(message: Message) -> Unit> = mutableListOf()  // Only used in SERVER mode.
+    private var localPlayer: MutableList<(message: Message) -> Unit> = mutableListOf()  // Only used in LOCAL mode?
+
+    data class ThreadMessageCallback(val thread: Thread, val callback: (message: Message) -> Unit)
 
     // TODO - combine this with the remote and local players lists...
-    private var stateChangeCallbacks: MutableList<(message: Message) -> Unit> = mutableListOf()
+    private var stateChangeCallbacks: MutableList<ThreadMessageCallback> = mutableListOf()
 
     data class ClientRequest(val requestString: String, val responseQ: Queue<String>)
 
@@ -635,19 +638,24 @@ class GameEngine(): Thread() {
         }
 
         if (responseFunction != null) {
-            if (!stateChangeCallbacks.contains(responseFunction)) {
-                println("#### Adding caller to stateChangeCallbacks ...")
-                stateChangeCallbacks.add(responseFunction)
-                // Assume that the caller does NOT have the current state.
-
-                if (encodeStateFunction != null) {
-                    val newMessage = encodeStateFunction?.invoke()
-                    if (newMessage != null) {
-                        println("#### Sending state meesage: ${newMessage.asString()}")
-                        responseFunction.invoke(newMessage)
-                    }
+            // First check that we haven't already got an request from the same thread...
+            var duplicate = false
+            for (threadCallback in stateChangeCallbacks) {
+                if (threadCallback.thread == currentThread()) {
+                    println("#### THIS IS A DUPLICATE REQUEST.")
+                    duplicate = true
                 }
-                encodeStateFunction?.invoke()?.let { responseFunction?.invoke(it) }
+            }
+
+            if (!duplicate) {
+                println("#### Not a duplicate request.")
+                stateChangeCallbacks.add(ThreadMessageCallback(currentThread() ,responseFunction))
+            }
+
+            // Also send the current engine state. This assumes that a new request needs the current state.
+            val newMessage = encodeStateFunction?.invoke()
+            if (newMessage != null) {
+                responseFunction.invoke(newMessage)
             }
         }
 
@@ -655,20 +663,32 @@ class GameEngine(): Thread() {
     }
 
     // TODO - replace this with a Thread lookup...
-    private val engineStateChangeListeners: MutableSet<(message: Message) -> Unit> = mutableSetOf()
+//    private val engineStateChangeListeners: MutableSet<(message: Message) -> Unit> = mutableSetOf()
+    private val engineStateChangeListeners: MutableSet<ThreadMessageCallback> = mutableSetOf()
     // TODO - need to pass the thread pointer with the callback function.
     // Because for whatever reason the same thread passes a new callback function object each time!!!
-    private val  engineStateChangeListenerLookup: MutableMap<Thread, (message: Message) -> Unit> = mutableMapOf()
+//    private val  engineStateChangeListenerLookup: MutableMap<Thread, (message: Message) -> Unit> = mutableMapOf()
 
+    // FIXME - check that we aren't acciedntallty calling this instead of handleRequestStateChangesMessage ...
     private fun handleRequestEngineStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Changes {
-        Log.d(TAG, "Request for engine state changes received")
-
+        println("#### Request for engine state changes received")
         // Put the response function in the Set for future notifications.
         if (responseFunction != null) {
-            engineStateChangeListeners.add(responseFunction)
-            // Also send the current engine state. This assumes that a new request needs the current state.
+            // First check that we haven't already got an identical request...
+            var duplicate = false
+            for (threadCallback in engineStateChangeListeners) {
+                if (threadCallback.thread == currentThread()) {
+                    println("#### THIS IS A DUPLICATE REQUEST.")
+                    duplicate = true
+                }
+            }
 
-            responseFunction.invoke(getEngineState())
+            if (!duplicate) {
+                println("#### Not a duplicate request.")
+                engineStateChangeListeners.add(ThreadMessageCallback(currentThread() ,responseFunction))
+                // Also send the current engine state. This assumes that a new request needs the current state.
+                responseFunction.invoke(getEngineState())
+            }
         }
 
         return Changes(system = false, game = false)
@@ -680,7 +700,19 @@ class GameEngine(): Thread() {
 
         // Remove the response function from the Set for future notifications.
         if (responseFunction != null) {
-            engineStateChangeListeners.remove(responseFunction)
+            var callback: ThreadMessageCallback? = null
+            for (threadCallback in engineStateChangeListeners) {
+                if (threadCallback.thread == currentThread() && threadCallback.callback == responseFunction) {
+                    println("#### Request found.")
+                    callback = threadCallback
+                }
+            }
+            if (callback != null) {
+                println("#### Found and removed callback request")
+                engineStateChangeListeners.remove(callback)
+            } else {
+                println("#### FAILED TO REMOVE CALLBACK REQUEST.")
+            }
         }
 
         return Changes(system = false, game = false)
@@ -717,9 +749,12 @@ class GameEngine(): Thread() {
         // FIXME - the number of clients is rising without any new clients.
         // FIXME - likely the resume() call is creating extra requests...
         println("#### Pushing State to [${stateChangeCallbacks.size}] clients...")
-        stateChangeCallbacks.forEach { callback ->
-            // TODO - figure out what the hell this syntax actually means???!!!!
-            encodeState()?.let { callback(it) }
+        stateChangeCallbacks.forEach { callbackClient ->
+            //encodeState()?.let { callback(it) }
+            val newMessage = encodeStateFunction?.invoke()
+            if (newMessage != null) {
+                callbackClient.callback.invoke(newMessage)
+            }
         }
     }
 
@@ -735,9 +770,6 @@ class GameEngine(): Thread() {
         Log.d(TAG, "The Game Server is shutting down ...")
         timingServer?.shutdown()
 
-//        gameIsRunning.set(false) // FIXME - can we just leave the loop waiting instead of killing it??? It seems so!!!
-        // Looks like a lot of problems just go away if I leave the loop suspended...!!!!
-
         if (gameMode == GameMode.SERVER) {
             socketServer?.shutdownRequest()
         }
@@ -746,7 +778,6 @@ class GameEngine(): Thread() {
             socketClient?.shutdownRequest()
         }
 
-        // TODO: Deactivate the game engine - remove references to the Activity...
         deactivate()
     }
 
@@ -833,7 +864,7 @@ class GameEngine(): Thread() {
     }
 
     fun queueMessageFromActivity(message: Message, responseFunction: ((message: Message) -> Unit)?) {
-        println("#### Thread [${Thread.currentThread().id}] is queuing a message ${message.asString()}")
+        println("#### Thread [${Thread.currentThread()}] is queuing a message ${message.asString()}")
         val im = InboundMessage(message, InboundMessageSource.APP, responseFunction)
         inboundMessageQueue.add(im)
     }
