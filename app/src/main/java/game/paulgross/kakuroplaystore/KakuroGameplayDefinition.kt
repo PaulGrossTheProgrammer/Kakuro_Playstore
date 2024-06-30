@@ -79,7 +79,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
         engine.registerHandler("PrevPuzzle", ::prevPuzzle)
         engine.registerHandler("NextPuzzle", ::nextPuzzle)
 
-        engine.registerHandler("RequestHelperSets", ::getHelperSets) // TODO...
+        engine.registerHandler("RequestHelperSets", ::getHelperSets)
 
         // TODO - Allow a pluginDecodeState() that is used to restore the saved game by default.
         // TODO - BUT decodeState returns StateVariables from this class, which isn't generic.
@@ -293,8 +293,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
     }
 
     private fun decodeState(message: GameEngine.Message): StateVariables {
-        Log.d(TAG, "#### DecodeState() for [$message]")
-
         if (message.missingString("w") || message.missingString("g") || message.missingString("h") ) {
             Log.d(TAG, "Missing width, grid and and/or hints.")
             return StateVariables("", mutableListOf(), 0, 0, mutableListOf(), mutableMapOf(), mutableSetOf(), false)
@@ -411,8 +409,6 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         saveUserBuffer("$currPuzzle.Undo", undoBuffer)
         saveUserBuffer("$currPuzzle.Redo", redoBuffer)
-
-        Log.d(TAG, "Saved game state.")
     }
 
     private fun saveUserBuffer(saveName: String, buffer:  MutableList<KakuroGameplayDefinition.PlayState>) {

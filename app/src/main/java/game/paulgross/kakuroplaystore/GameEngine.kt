@@ -153,7 +153,10 @@ class GameEngine(): Thread() {
         listOfSystemHandlers.add(SystemMessageHandler("StopGame", ::handleStopGameMessage))
         listOfSystemHandlers.add(SystemMessageHandler("RequestEngineStateChanges", ::handleRequestEngineStateChangesMessage))
         listOfSystemHandlers.add(SystemMessageHandler("RequestStopEngineStateChanges", ::handleRequestStopEngineStateChangesMessage))
+
+        // TODO: Can I make the GameDefinition solely responsible for game state changes, and make this a GameDefinition plugin instread???
         listOfSystemHandlers.add(SystemMessageHandler("RequestStateChanges", ::handleRequestStateChangesMessage))
+        listOfSystemHandlers.add(SystemMessageHandler("RequestStopStateChanges", ::handleRequestStopStateChangesMessage))
 
         definition?.setEngine(this)  // This is where the Definition plugs in its own message handlers.
 
@@ -172,7 +175,6 @@ class GameEngine(): Thread() {
                 // Check System Handlers
                 listOfSystemHandlers.forEach { handler ->
                     if (handler.type == im.message.type) {
-                        Log.d(TAG, "Handling SYSTEM message: ${im.message.type}")
                         val changes = handler.handlerFunction.invoke(im.message, im.source, im.responseFunction)
                         if (changes.system) {
                             systemStateChange = true
@@ -204,6 +206,7 @@ class GameEngine(): Thread() {
 
             // TODO - if systemStateChange notify listeners...
 
+            // TODO - can I design the GameplayDefinition such that it tracks and notifies gamestate changes???
             if (gameStateChanged) {
                 saveGameState() // Maybe don't do this for fast periodic games
                 pushStateToClients()
@@ -345,8 +348,6 @@ class GameEngine(): Thread() {
 
         companion object {
             fun decodeMessage(message: String): Message {
-                Log.d(TAG, "decodeMessage: $message")
-
                 var type = ""
                 val messageBody = mutableMapOf<String, String>()
 
@@ -630,7 +631,6 @@ class GameEngine(): Thread() {
     }
 
     private fun handleRequestStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Changes {
-        println("#### handleRequestStateChangesMessage() starting ...")
         if (responseFunction != null && gameMode == GameMode.SERVER) {
             if (!remotePlayers.contains(responseFunction)) {
                 remotePlayers.add(responseFunction)
@@ -642,20 +642,43 @@ class GameEngine(): Thread() {
             var duplicate = false
             for (threadCallback in stateChangeCallbacks) {
                 if (threadCallback.thread == currentThread()) {
-                    println("#### THIS IS A DUPLICATE REQUEST.")
                     duplicate = true
                 }
             }
 
             if (!duplicate) {
-                println("#### Not a duplicate request.")
                 stateChangeCallbacks.add(ThreadMessageCallback(currentThread() ,responseFunction))
             }
 
             // Also send the current state to ensure that the client is up to date.
+            println("#### Sending initial state to client requesting state changes.")
             val newMessage = encodeStateFunction?.invoke()
             if (newMessage != null) {
                 responseFunction.invoke(newMessage)
+            }
+        }
+
+        return Changes(system = false, game = false)
+    }
+
+    // TODO - need a stop request for state changes.
+    private fun handleRequestStopStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Changes {
+        println("#### Request STOP for state changes received")
+
+        // Remove the response function from the Set for future notifications.
+        if (responseFunction != null) {
+            var callback: ThreadMessageCallback? = null
+            for (threadCallback in stateChangeCallbacks) {
+                if (threadCallback.thread == currentThread() && threadCallback.callback == responseFunction) {
+                    println("#### Request found.")
+                    callback = threadCallback
+                }
+            }
+            if (callback != null) {
+                println("#### Found and removed callback request")
+                stateChangeCallbacks.remove(callback)
+            } else {
+                println("#### FAILED TO REMOVE CALLBACK REQUEST.")
             }
         }
 
@@ -688,8 +711,9 @@ class GameEngine(): Thread() {
         return Changes(system = false, game = false)
     }
 
+
+
     private fun handleRequestStopEngineStateChangesMessage(message: Message, source: InboundMessageSource, responseFunction: ((message: Message) -> Unit)?): Changes {
-        // TODO
         println("#### Request STOP for engine state changes received")
 
         // Remove the response function from the Set for future notifications.
@@ -858,7 +882,6 @@ class GameEngine(): Thread() {
     }
 
     fun queueMessageFromActivity(message: Message, responseFunction: ((message: Message) -> Unit)?) {
-        println("#### Thread [${Thread.currentThread()}] is queuing a message ${message.asString()}")
         val im = InboundMessage(message, InboundMessageSource.APP, responseFunction)
         inboundMessageQueue.add(im)
     }

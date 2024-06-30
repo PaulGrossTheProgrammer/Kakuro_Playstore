@@ -54,7 +54,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         enableQueuedMessages()  // Enable handling of responses from the GameEngine.
 
-        // FIXME - this seems to add multiple instances of the request to the server...
         engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
     }
 
@@ -64,12 +63,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine.resumeTimingServer()
     }
 
+    // FIXME: There seems to be a subtle bug where backgroinding the app doesn't work properly.
+    // The symptom is the next time the back button is pressed, the app stops then restarts. But A second press stops it.
+    // https://www.geeksforgeeks.org/activity-lifecycle-in-android-with-demo-app/
     override fun onPause() {
         super.onPause()
         println("#### Activity onPause()")
-
-        engine.queueMessageFromActivity(GameEngine.Message("RequestStopEngineStateChanges"), ::queueMessage)
-        // RequestStopEngineStateChanges
+        engine.queueMessageFromActivity(GameEngine.Message("RequestStopStateChanges"), ::queueMessage)
         engine.pauseTimingServer()
     }
 
