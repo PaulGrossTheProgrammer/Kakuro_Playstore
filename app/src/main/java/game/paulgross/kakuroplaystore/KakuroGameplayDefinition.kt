@@ -57,19 +57,20 @@ object KakuroGameplayDefinition: GameplayDefinition {
     override fun setEngine(engine: GameEngine) {
         this.engine = engine
 
-        val stream: InputStream = engine.assets?.open(BUILTIN_HELP_COMBINATIONS_FILENAME)!!
-        stream.use {
-            createAllHelpCombinations(stream.bufferedReader())
+        engine.assets?.open(BUILTIN_HELP_COMBINATIONS_FILENAME)!!.use { stream ->
+            stream.bufferedReader().use { reader -> createAllHelpCombinations(reader) }
         }
 
-        engine.assets?.open(BUILTIN_PUZZLES_FILENAME)!!.use {
-            it.bufferedReader().forEachLine () { line ->
-                if (!line.startsWith("#")) {
-                    val currPuzzleString = line.replace("\\s".toRegex(), "")
-                    if (currPuzzleString.isNotEmpty()) {
-                        builtinPuzzles.add(currPuzzleString)
-                        val puzzleKey = obfuscatePuzzleString(currPuzzleString)
-                        puzzleKeys[currPuzzleString] = puzzleKey
+        engine.assets?.open(BUILTIN_PUZZLES_FILENAME)!!.use {stream ->
+            stream.bufferedReader().use { reader ->
+                reader.forEachLine () { line ->
+                    if (!line.startsWith("#")) {
+                        val currPuzzleString = line.replace("\\s".toRegex(), "")
+                        if (currPuzzleString.isNotEmpty()) {
+                            builtinPuzzles.add(currPuzzleString)
+                            val puzzleKey = obfuscatePuzzleString(currPuzzleString)
+                            puzzleKeys[currPuzzleString] = puzzleKey
+                        }
                     }
                 }
             }
