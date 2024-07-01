@@ -1,6 +1,9 @@
 package game.paulgross.kakuroplaystore
 
+import android.renderscript.ScriptGroup.Input
 import android.util.Log
+import java.io.BufferedReader
+import java.io.InputStream
 
 object KakuroGameplayDefinition: GameplayDefinition {
 
@@ -54,19 +57,20 @@ object KakuroGameplayDefinition: GameplayDefinition {
     override fun setEngine(engine: GameEngine) {
         this.engine = engine
 
-        // Load the built-in HelpCombinations
-        createAllHelpCombinations(engine.assets?.open(BUILTIN_HELP_COMBINATIONS_FILENAME)!!.bufferedReader())
+        val stream: InputStream = engine.assets?.open(BUILTIN_HELP_COMBINATIONS_FILENAME)!!
+        stream.use {
+            createAllHelpCombinations(stream.bufferedReader())
+        }
 
-        // Load the built-in puzzles.
-        // TODO - how do I close the file after reading?
-        // https://www.baeldung.com/kotlin/try-with-resources
-        engine.assets?.open(BUILTIN_PUZZLES_FILENAME)!!.bufferedReader().forEachLine () {
-            if (!it.startsWith("#")) {
-                val currPuzzleString = it.replace("\\s".toRegex(), "")
-                if (currPuzzleString.isNotEmpty()) {
-                    builtinPuzzles.add(currPuzzleString)
-                    val puzzleKey = obfuscatePuzzleString(currPuzzleString)
-                    puzzleKeys[currPuzzleString] = puzzleKey
+        engine.assets?.open(BUILTIN_PUZZLES_FILENAME)!!.use {
+            it.bufferedReader().forEachLine () { line ->
+                if (!line.startsWith("#")) {
+                    val currPuzzleString = line.replace("\\s".toRegex(), "")
+                    if (currPuzzleString.isNotEmpty()) {
+                        builtinPuzzles.add(currPuzzleString)
+                        val puzzleKey = obfuscatePuzzleString(currPuzzleString)
+                        puzzleKeys[currPuzzleString] = puzzleKey
+                    }
                 }
             }
         }
