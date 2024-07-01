@@ -26,8 +26,6 @@ fun createAllHelpCombinations(reader: BufferedReader) {
 
         helpCombinationsLookup[hc] = splitHelpCombinations(entrySplit[1])
     }
-
-    println("Loaded ${helpCombinationsLookup.size} combinations with help sets")
 }
 
 fun splitHelpCombinations(lineString: String): List<List<Int>> {

@@ -58,6 +58,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private val downHelpSets = HelpSets()
     private val acrossHelpSets = HelpSets()
 
+    /*
+    // Animation variables
+    */
+
     // These variables control the momentary flash of the chosen digit.
     var flashIndex = -1
     var flashIndexRatio = 1.0f

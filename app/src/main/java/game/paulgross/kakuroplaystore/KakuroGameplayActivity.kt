@@ -52,9 +52,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         engine = GameEngine.activate(KakuroGameplayDefinition, this)
 
-        enableQueuedMessages()  // Enable handling of responses from the GameEngine.
+        enableCallbackMessages()
 
-        engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueMessage)
+        engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueCallbackMessage)
     }
 
     override fun onResume() {
@@ -63,13 +63,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine.resumeTimingServer()
     }
 
-    // FIXME: There seems to be a subtle bug where backgroinding the app doesn't work properly.
-    // The symptom is the next time the back button is pressed, the app stops then restarts. But A second press stops it.
+    // FIXME: There seems to be a subtle bug where backgronding the app doesn't work properly.
+    // The symptom is the next time the back button is pressed, the app stops, but then restarts. Then a second press stops it properly.
     // https://www.geeksforgeeks.org/activity-lifecycle-in-android-with-demo-app/
     override fun onPause() {
         super.onPause()
         println("#### Activity onPause()")
-        engine.queueMessageFromActivity(GameEngine.Message("RequestStopStateChanges"), ::queueMessage)
+        engine.queueMessageFromActivity(GameEngine.Message("RequestStopStateChanges"), ::queueCallbackMessage)
         engine.pauseTimingServer()
     }
 
@@ -89,7 +89,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         if (prevKey != newKey) {
             // Whenever the puzzle changes, send an additional request for the helper combinations sets.
-            engine.queueMessageFromActivity(GameEngine.Message("RequestHelperSets"), ::queueMessage)
+            engine.queueMessageFromActivity(GameEngine.Message("RequestHelperSets"), ::queueCallbackMessage)
         }
 
         if (checkForSolved == true) {
@@ -547,7 +547,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val message = GameEngine.Message("Guess")
         message.setKeyString("Index", selectedIndex.toString())
         message.setKeyString("Value", value)
-        engine.queueMessageFromActivity(message, ::queueMessage)
+        engine.queueMessageFromActivity(message, ::queueCallbackMessage)
     }
 
     fun onClickPossibleDigit(view: View) {
@@ -563,7 +563,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val message = GameEngine.Message("Possible")
         message.setKeyString("Index", selectedIndex.toString())
         message.setKeyString("Value", value)
-        engine.queueMessageFromActivity(message, ::queueMessage)
+        engine.queueMessageFromActivity(message, ::queueCallbackMessage)
     }
 
     fun onClickReset(view: View) {
@@ -572,7 +572,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         builder.setMessage("Are you sure you want to restart?")
         builder.setPositiveButton("Reset") { _, _ ->
             findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
-            engine.queueMessageFromActivity(GameEngine.Message("RestartPuzzle"), ::queueMessage)
+            engine.queueMessageFromActivity(GameEngine.Message("RestartPuzzle"), ::queueCallbackMessage)
         }
         builder.setNegativeButton("Back") { _, _ -> }
         builder.show()
@@ -580,12 +580,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     fun onClickUndo(view: View) {
         val message = GameEngine.Message("Undo")
-        engine.queueMessageFromActivity(message, ::queueMessage)
+        engine.queueMessageFromActivity(message, ::queueCallbackMessage)
     }
 
     fun onClickRedo(view: View) {
         val message = GameEngine.Message("Redo")
-        engine.queueMessageFromActivity(message, ::queueMessage)
+        engine.queueMessageFromActivity(message, ::queueCallbackMessage)
     }
 
     fun onClickPrevPuzzle(view: View) {
@@ -598,12 +598,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private fun prevPuzzle() {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
-        engine.queueMessageFromActivity(GameEngine.Message("PrevPuzzle"), ::queueMessage)
+        engine.queueMessageFromActivity(GameEngine.Message("PrevPuzzle"), ::queueCallbackMessage)
     }
 
     private fun nextPuzzle() {
         findViewById<PlayingGridView>(R.id.viewPlayGrid).resetOptions()
-        engine.queueMessageFromActivity(GameEngine.Message("NextPuzzle"), ::queueMessage)
+        engine.queueMessageFromActivity(GameEngine.Message("NextPuzzle"), ::queueCallbackMessage)
     }
 
     fun onClickToggleShowHelp(view: View) {
@@ -617,7 +617,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     private fun stopGameServer() {
-        engine.queueMessageFromActivity(GameEngine.Message("StopGame"), ::queueMessage)
+        engine.queueMessageFromActivity(GameEngine.Message("StopGame"), ::queueCallbackMessage)
     }
 
     fun onClickGotoSettings(view: View) {
@@ -687,7 +687,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private var queuedMessageAction: String = "$TAG.activity.MESSAGE"
 
-    private fun enableQueuedMessages() {
+    private fun enableCallbackMessages() {
         val intentFilter = IntentFilter()
         intentFilter.addAction(queuedMessageAction)
         registerReceiver(activityMessageReceiver, intentFilter)
@@ -696,7 +696,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     /**
      * This is the CALLBACK function to be used when a message needs to be queued for this Activity.
      */
-    private fun queueMessage(message: GameEngine.Message) {
+    private fun queueCallbackMessage(message: GameEngine.Message) {
         // For this CALLBACK to be used, enableQueuedMessages() must be executed at startup.
         // The UI thread will then call activityMessageReceiver() to handle each message.
         val intent = Intent()
