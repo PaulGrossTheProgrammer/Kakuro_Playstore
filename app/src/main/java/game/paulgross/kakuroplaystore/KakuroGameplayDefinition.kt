@@ -59,6 +59,7 @@ object KakuroGameplayDefinition: GameplayDefinition {
 
         // Load the built-in puzzles.
         // TODO - how do I close the file after reading?
+        // https://www.baeldung.com/kotlin/try-with-resources
         engine.assets?.open(BUILTIN_PUZZLES_FILENAME)!!.bufferedReader().forEachLine () {
             if (!it.startsWith("#")) {
                 val currPuzzleString = it.replace("\\s".toRegex(), "")
