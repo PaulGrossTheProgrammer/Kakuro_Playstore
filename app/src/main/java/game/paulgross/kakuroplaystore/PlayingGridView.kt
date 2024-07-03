@@ -171,7 +171,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     val translateStarMatrix = Matrix()
 
     private fun randomStarAnimate(message: GameEngine.Message) {
-        if (!randomStarVisible) {
+//        println("#### randomStarAnimate() running with message: ${message.asString()}")
+
+        //  check for zero repeats
+        if (message.getString("repeat") == "0") {
+            println("#### randomStarAnimate() initialising animation.")
             // Initialise the random star animation
             randomStarX = width/2f
             randomStarY = height/2f
@@ -189,8 +193,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
             // Setup the matrix for motion ...
             translateStarMatrix.setTranslate(randomStarDeltaX, randomStarDeltaY)
-            randomStarVisible = true
         }
+        randomStarVisible = true
 
         randomStarX += randomStarDeltaX
         randomStarY += randomStarDeltaY
@@ -738,6 +742,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             }
         }
 
+        println("#### onDraw(): randomStarVisible = $randomStarVisible")
+        // FIXME - when the app restarts, the is code section stops working ....
         if (randomStarVisible) {
             drawRandomStar(canvas)
         }
@@ -746,9 +752,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private val starPaint = Paint()
 
     private fun drawRandomStar(canvas: Canvas) {
+        println("drawRandomStar() running,")
         starPaint.textSize = 100f
         starPaint.color = Color.WHITE
-//        canvas.drawText("STAR", randomStarX, randomStarY, starPaint)
+        canvas.drawText("STAR", 200f, 200f, starPaint)
 
         starPaint.strokeWidth = 6f
         val radius = 5.0f

@@ -223,7 +223,10 @@ class GameEngine(): Thread() {
         }
 
         timingServer = TimingServer()
+        println("#### Found [${savedEventTimers?.size}] saved EventTimers.")
+
         if (savedEventTimers != null) {
+            println("#### Restoring saved EventTimers.")
             timingServer!!.restoreSavedTimers(savedEventTimers!!)
         }
         timingServer!!.start()
@@ -234,6 +237,7 @@ class GameEngine(): Thread() {
             return
         }
         savedEventTimers = timingServer?.saveEventTimers()
+        println("#### Pausing TimeServer - saved [${savedEventTimers?.size}] EventTimers.")
         timingServer?.shutdown()
         timingServer = null
     }
