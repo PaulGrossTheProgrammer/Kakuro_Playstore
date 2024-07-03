@@ -58,6 +58,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private val downHelpSets = HelpSets()
     private val acrossHelpSets = HelpSets()
 
+    private var gameEngine: GameEngine? = null
+
     /*
     // Animation variables
     */
@@ -65,6 +67,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     // These variables control the momentary flash of the chosen digit.
     var flashIndex = -1
     var flashIndexRatio = 1.0f
+
+    var randomStarVisible = false
+    var randomStarX = 0f
+    var randomStarY = 0f
+    var randomStarDeltaX = 0f
+    var randomStarDeltaY = 0f
 
     private var paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
@@ -134,6 +142,39 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         selectedByNavPaint.color = Color.CYAN
 
         setOnTouchListener(CustomListener(this))
+    }
+
+    fun setGameEngine(engine: GameEngine) {
+        gameEngine = engine
+        createRandomStar(null)
+    }
+
+    private fun createRandomStar(message: GameEngine.Message?) {
+        gameEngine?.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 25, 40)
+
+        gameEngine?.requestDelayedEvent(::createRandomStar, "RandomStarCreate", 5000)  // Keep repeating this after a delay
+    }
+
+    private fun randomStarAnimate(message: GameEngine.Message) {
+        if (!randomStarVisible) {
+            // Initialise the random star animation
+            randomStarVisible = true
+
+            randomStarX = width/2f
+            randomStarY = height/2f
+
+            // TODO set a random direction ...
+            randomStarDeltaX = 2.5f
+            randomStarDeltaY = 2.5f
+        }
+
+        randomStarX += randomStarDeltaX
+        randomStarY += randomStarDeltaY
+
+        if (message.getString("final") == "true") {
+            randomStarVisible = false
+        }
+        invalidate()
     }
 
     fun setGameState(newestGameState: KakuroGameplayDefinition.StateVariables) {
@@ -671,6 +712,18 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
                 }
             }
         }
+
+        if (randomStarVisible) {
+            drawRandomStar(canvas)
+        }
+    }
+
+    private val starPaint = Paint()
+
+    private fun drawRandomStar(canvas: Canvas) {
+        starPaint.textSize = 100f
+        starPaint.color = Color.WHITE
+        canvas.drawText("STAR", randomStarX, randomStarY, starPaint)
     }
 
     private fun helpersToString(helpSets: List<List<Int>>): String {

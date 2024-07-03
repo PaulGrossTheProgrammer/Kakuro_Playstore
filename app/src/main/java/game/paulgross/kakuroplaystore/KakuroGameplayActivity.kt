@@ -55,6 +55,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
         enableCallbackMessages()
 
         engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueCallbackMessage)
+
+        // TODO - pass the game engine to the grid display
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        playGridView.setGameEngine(engine)
     }
 
     override fun onResume() {
