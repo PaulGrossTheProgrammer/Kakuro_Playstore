@@ -5,16 +5,16 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.CornerPathEffect
 import android.graphics.Matrix
 import android.graphics.Paint
-import android.os.Bundle
+import android.graphics.Path
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.view.accessibility.AccessibilityNodeInfo
 import kotlin.math.ceil
 import kotlin.math.floor
+
 
 fun getResizedBitmap(bitmap: Bitmap , newWidth: Int , newHeight: Int ): Bitmap {
 
@@ -150,26 +150,54 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     private fun createRandomStar(message: GameEngine.Message?) {
-        gameEngine?.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 25, 40)
+        if (message != null) {
+            gameEngine?.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 50, 50)
+        }
 
-        gameEngine?.requestDelayedEvent(::createRandomStar, "RandomStarCreate", 5000)  // Keep repeating this after a delay
+        gameEngine?.requestDelayedEvent(::createRandomStar, "RandomStarCreate", 3000)  // Keep repeating this after a delay
     }
+
+    var starDxArray: FloatArray? = null
+    var starDyArray: FloatArray? = null
+    val starPath: Path = Path()
+    fun resetStarPath() {
+        starPath.rewind()
+        starPath.moveTo(-20f, -20f)
+        starPath.lineTo(-20f, 20f)
+        starPath.lineTo(20f, 20f)
+        starPath.lineTo(20f, -20f)
+        starPath.close()
+    }
+    val translateStarMatrix = Matrix()
 
     private fun randomStarAnimate(message: GameEngine.Message) {
         if (!randomStarVisible) {
             // Initialise the random star animation
-            randomStarVisible = true
-
             randomStarX = width/2f
             randomStarY = height/2f
 
-            // TODO set a random direction ...
-            randomStarDeltaX = 2.5f
-            randomStarDeltaY = 2.5f
+            starDxArray = floatArrayOf(-2.5f, 2.5f)
+            starDyArray = floatArrayOf(-2.5f, 2.5f)
+
+            randomStarDeltaX = starDxArray?.random()!!
+            randomStarDeltaY = starDyArray?.random()!!
+
+            // Set the initial shape and position.
+            resetStarPath()
+            translateStarMatrix.setTranslate(width/2f, height/2f)
+            starPath.transform(translateStarMatrix)
+
+            // Setup the matrix for motion ...
+            translateStarMatrix.setTranslate(randomStarDeltaX, randomStarDeltaY)
+            randomStarVisible = true
         }
 
         randomStarX += randomStarDeltaX
         randomStarY += randomStarDeltaY
+
+        starPath.transform(translateStarMatrix)
+
+        // TODO: transform the star Path using Deltas.
 
         if (message.getString("final") == "true") {
             randomStarVisible = false
@@ -421,9 +449,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         // TODO - pre-allocate the TouchArea for each on screen index so that we can remove the allocation code and boundary intersect code from onDraw().
         resetTouchAreas()
-
-//        currViewWidth = measuredWidth
-//        currViewHeight = measuredHeight
 
         // maxGridDimension is the larger of either puzzleWidth or puzzleHeight
         val maxGridDimension = if (gameState!!.puzzleWidth > gameState!!.puzzleHeight) {
@@ -723,7 +748,13 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private fun drawRandomStar(canvas: Canvas) {
         starPaint.textSize = 100f
         starPaint.color = Color.WHITE
-        canvas.drawText("STAR", randomStarX, randomStarY, starPaint)
+//        canvas.drawText("STAR", randomStarX, randomStarY, starPaint)
+
+        starPaint.strokeWidth = 6f
+        val radius = 5.0f
+        val corEffect = CornerPathEffect(radius)
+        starPaint.setPathEffect(corEffect)
+        canvas.drawPath(starPath, starPaint)
     }
 
     private fun helpersToString(helpSets: List<List<Int>>): String {
