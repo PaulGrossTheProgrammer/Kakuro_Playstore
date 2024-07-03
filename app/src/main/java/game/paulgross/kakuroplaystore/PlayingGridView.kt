@@ -156,6 +156,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         // FIXME: the ::createRandomStar seems to create a callback that links to the old PlayingGridView instance.
+        // FIXME by moving the function pointers into the Activity, so that the Android system calls the live Activity
+        // instead of the old View instance that should be garbage collected.
         // This means that when the timer thread resumes after the app is paused,
         // the new PlayingGridView instance isn't the same instance as the new one after the app resumes.
         // HOW DO I FIX THIS???
