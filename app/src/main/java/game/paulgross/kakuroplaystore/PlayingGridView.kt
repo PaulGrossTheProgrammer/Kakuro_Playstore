@@ -151,9 +151,18 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     private fun createRandomStar(message: GameEngine.Message?) {
         if (message != null) {
-            gameEngine?.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 50, 50)
+//            gameEngine?.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 50, 50)
+            gameEngine?.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 500, 5)
         }
 
+        // FIXME: the ::createRandomStar seems to create a callback that links to the old PlayingGridView instance.
+        // This means that when the timer thread resumes after the app is paused,
+        // the new PlayingGridView instance isn't the same instance as the new one after the app resumes.
+        // HOW DO I FIX THIS???
+        // Firstly, make it definitive that there are two instances - the old and the new.
+        // To do this, add a creation time val to PlayingGridView to ensure that we have actually found the real problem....
+        // If this is true, then whoever uses callbacks is responsible for saving and loading EventTimer instances,
+        // to ensure that the new instances store callbacks to the current instances... AND THIS MIGHT BE DIFFICULT!!
         gameEngine?.requestDelayedEvent(::createRandomStar, "RandomStarCreate", 3000)  // Keep repeating this after a delay
     }
 
@@ -195,6 +204,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             translateStarMatrix.setTranslate(randomStarDeltaX, randomStarDeltaY)
         }
         randomStarVisible = true
+        println("#### randomStarAnimate(): set randomStarVisible = [$randomStarVisible].")
+        println("#### randomStarAnimate(): thread = [${Thread.currentThread()}].")
+        println("#### onDraw(): class = [${this}].")
 
         randomStarX += randomStarDeltaX
         randomStarY += randomStarDeltaY
@@ -513,6 +525,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     override fun onDraw(canvas: Canvas) {
+        println("#### onDraw() running ...")
         super.onDraw(canvas)
         if (gameState == null) {
             return
@@ -743,6 +756,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         println("#### onDraw(): randomStarVisible = $randomStarVisible")
+        println("#### onDraw(): thread = [${Thread.currentThread()}].")
+        println("#### onDraw(): class = [${this}].")
         // FIXME - when the app restarts, the is code section stops working ....
         if (randomStarVisible) {
             drawRandomStar(canvas)
