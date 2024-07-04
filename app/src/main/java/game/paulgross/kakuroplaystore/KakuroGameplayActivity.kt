@@ -6,7 +6,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.CornerPathEffect
 import android.graphics.Matrix
+import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -63,6 +67,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
 //        playGridView.setGameEngine(engine)
 
         // TESTING
+        // FIXME - this first animated star appears on an App restart, but the ones on the line don't appear on an App restart
+        // FIXME - WHYYY???
+        // Seems that tne createRandomStar() calls create Stars with pointers to the old View prior to the restart..
+        // BUT WHYYYY???
+        AnimatedStar(engine, this)
         createRandomStar(null)
     }
 
@@ -123,22 +132,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
     */
 
     private fun createRandomStar(message: GameEngine.Message?) {
-        println("##### createRandomStar() running")
-
         if (message != null) {
-            println("##### createRandomStar() has message ${message.asString()}")
-
-//            gameEngine?.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 50, 50)
-            // engine.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 500, 5)
-            // TODO - create a random star which contains its own animateCallback() for the Timer
-//            AnimatedStar(engine, activity)
+            AnimatedStar(engine, this)
         }
-
-        engine.requestDelayedEvent(::createRandomStar, "RandomStarCreate", 3000)  // Keep repeating this after a delay
+        engine.requestDelayedEvent(::createRandomStar, "RandomStarCreate", 4000)  // Keep repeating this after a delay
     }
 
-    class AnimatedStar(private val gameEngine: GameEngine, private val width: Float, private val height: Float) {
-        // TODO - constructor needs a ref to the View. Derive width and height from that ref.
+    class AnimatedStar(private val gameEngine: GameEngine, activity: KakuroGameplayActivity) {
+        private val playGridView = activity.findViewById<PlayingGridView>(R.id.viewPlayGrid)
+
+        private val width = playGridView.width
+        private val height = playGridView.height
+
 
         var starDxArray: FloatArray? = null
         var starDyArray: FloatArray? = null
@@ -148,8 +153,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val starPath: Path = Path()
 
         var done = false
+        private val starPaint = Paint()
 
         init{
+            println("#### Creating an Animated Star ...")
+
             starPath.moveTo(-20f, -20f)
             starPath.lineTo(-20f, 20f)
             starPath.lineTo(20f, 20f)
@@ -163,12 +171,18 @@ class KakuroGameplayActivity : AppCompatActivity() {
             // Setup the matrix for motion animation ...
             // TODO - use a random direction
             translateStarMatrix.setTranslate(5f, 5f)
+            playGridView.addStar(this)
 
-            gameEngine.requestFinitePeriodicEvent(::animate, "RandomStarAnimate", 500, 5)
+//            gameEngine.requestFinitePeriodicEvent(::animate, "RandomStarAnimate", 50, 50)
+            gameEngine.requestFinitePeriodicEvent(::animate, "RandomStarAnimate", 100, 30)
         }
 
+        fun isDone(): Boolean {
+            return done
+        }
 
         private fun animate(message: GameEngine.Message) {
+            println("#### Animate the star ...")
             starPath.transform(translateStarMatrix)
 
             // TODO: transform the star Path using a rotation matrix.
@@ -177,12 +191,23 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 done = true
             }
 
-            // FIXME - need a ref to the View
-//            invalidate()
+            // Tell the view to redraw
+            println("#### Request redraw for $playGridView")
+            playGridView.invalidate()
         }
 
-        fun onDraw() {
+        fun onDraw(canvas: Canvas) {
             // TODO - called by the View's onDraw() function ...
+//            println("#### TODO - draw on the grid canvas ...")
+            starPaint.textSize = 100f
+            starPaint.color = Color.WHITE
+//            canvas.drawText("STAR", 200f, 200f, starPaint)
+
+            starPaint.strokeWidth = 6f
+            val radius = 5.0f
+            val corEffect = CornerPathEffect(radius)
+            starPaint.setPathEffect(corEffect)
+            canvas.drawPath(starPath, starPaint)
         }
     }
 

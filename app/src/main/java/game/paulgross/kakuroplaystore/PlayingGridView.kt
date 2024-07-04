@@ -68,11 +68,13 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     var flashIndex = -1
     var flashIndexRatio = 1.0f
 
+/*
     var randomStarVisible = false
     var randomStarX = 0f
     var randomStarY = 0f
     var randomStarDeltaX = 0f
     var randomStarDeltaY = 0f
+*/
 
     private var paperTexture: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.papertexture_02)
 
@@ -146,80 +148,89 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
     // TODO - move all of the RandomStar animation to the Activity.
 
-/*    fun setGameEngine(engine: GameEngine) {
+    // TODO - make the stars into a list.
+    var theStar: KakuroGameplayActivity.AnimatedStar? = null
+    fun addStar(star: KakuroGameplayActivity.AnimatedStar) {
+        theStar = star
+    }
+
+    /*    fun setGameEngine(engine: GameEngine) {
         gameEngine = engine
         createRandomStar(null)
     }*/
 
-    private fun createRandomStar(message: GameEngine.Message?) {
-        if (message != null) {
-//            gameEngine?.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 50, 50)
-            gameEngine?.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 500, 5)
+    /*
+        private fun createRandomStar(message: GameEngine.Message?) {
+            if (message != null) {
+    //            gameEngine?.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 50, 50)
+                gameEngine?.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 500, 5)
+            }
+
+            // FIXME: the ::createRandomStar seems to create a callback that links to the old PlayingGridView instance.
+            // FIXME by moving the function pointers into the Activity, so that the Android system calls the live Activity
+            // TODO - the solution is to implement animation from the Activity, not the View.
+            // TODO - That way when Android reactivates the Activity after it resumes, and allocates new View instances,
+            // the objects get their view references via the activity, which has the newly updated View references.
+            // instead of the old View instance that should be garbage collected.
+            // This means that when the timer thread resumes after the app is paused,
+            // the new PlayingGridView instance isn't the same instance as the new one after the app resumes.
+            // HOW DO I FIX THIS???
+            // Firstly, make it definitive that there are two instances - the old and the new.
+            // To do this, add a creation time val to PlayingGridView to ensure that we have actually found the real problem....
+            // If this is true, then whoever uses callbacks is responsible for saving and loading EventTimer instances,
+            // to ensure that the new instances store callbacks to the current instances... AND THIS MIGHT BE DIFFICULT!!
+            gameEngine?.requestDelayedEvent(::createRandomStar, "RandomStarCreate", 3000)  // Keep repeating this after a delay
         }
 
-        // FIXME: the ::createRandomStar seems to create a callback that links to the old PlayingGridView instance.
-        // FIXME by moving the function pointers into the Activity, so that the Android system calls the live Activity
-        // TODO - the solution is to implement animation from the Activity, not the View.
-        // TODO - That way when Android reactivates the Activity after it resumes, and allocates new View instances,
-        // the objects get their view references via the activity, which has the newly updated View references.
-        // instead of the old View instance that should be garbage collected.
-        // This means that when the timer thread resumes after the app is paused,
-        // the new PlayingGridView instance isn't the same instance as the new one after the app resumes.
-        // HOW DO I FIX THIS???
-        // Firstly, make it definitive that there are two instances - the old and the new.
-        // To do this, add a creation time val to PlayingGridView to ensure that we have actually found the real problem....
-        // If this is true, then whoever uses callbacks is responsible for saving and loading EventTimer instances,
-        // to ensure that the new instances store callbacks to the current instances... AND THIS MIGHT BE DIFFICULT!!
-        gameEngine?.requestDelayedEvent(::createRandomStar, "RandomStarCreate", 3000)  // Keep repeating this after a delay
-    }
 
-    var starDxArray: FloatArray? = null
-    var starDyArray: FloatArray? = null
-    val starPath: Path = Path()
-    fun resetStarPath() {
-        starPath.rewind()
-        starPath.moveTo(-20f, -20f)
-        starPath.lineTo(-20f, 20f)
-        starPath.lineTo(20f, 20f)
-        starPath.lineTo(20f, -20f)
-        starPath.close()
-    }
-    val translateStarMatrix = Matrix()
+        var starDxArray: FloatArray? = null
+        var starDyArray: FloatArray? = null
+        val starPath: Path = Path()
+        fun resetStarPath() {
+            starPath.rewind()
+            starPath.moveTo(-20f, -20f)
+            starPath.lineTo(-20f, 20f)
+            starPath.lineTo(20f, 20f)
+            starPath.lineTo(20f, -20f)
+            starPath.close()
+        }
+        val translateStarMatrix = Matrix()
 
-    private fun randomStarAnimate(message: GameEngine.Message) {
-        //  check for zero repeats
-        if (message.getString("repeat") == "0") {
-            // Initialise the random star animation
-            randomStarX = width/2f
-            randomStarY = height/2f
+        private fun randomStarAnimate(message: GameEngine.Message) {
+            //  check for zero repeats
+            if (message.getString("repeat") == "0") {
+                // Initialise the random star animation
+                randomStarX = width/2f
+                randomStarY = height/2f
 
-            starDxArray = floatArrayOf(-2.5f, 2.5f)
-            starDyArray = floatArrayOf(-2.5f, 2.5f)
+                starDxArray = floatArrayOf(-2.5f, 2.5f)
+                starDyArray = floatArrayOf(-2.5f, 2.5f)
 
-            randomStarDeltaX = starDxArray?.random()!!
-            randomStarDeltaY = starDyArray?.random()!!
+                randomStarDeltaX = starDxArray?.random()!!
+                randomStarDeltaY = starDyArray?.random()!!
 
-            // Set the initial shape and position.
-            resetStarPath()
-            translateStarMatrix.setTranslate(width/2f, height/2f)
+                // Set the initial shape and position.
+                resetStarPath()
+                translateStarMatrix.setTranslate(width/2f, height/2f)
+                starPath.transform(translateStarMatrix)
+
+                // Setup the matrix for motion ...
+                translateStarMatrix.setTranslate(randomStarDeltaX, randomStarDeltaY)
+            }
+
+            randomStarX += randomStarDeltaX
+            randomStarY += randomStarDeltaY
+
             starPath.transform(translateStarMatrix)
 
-            // Setup the matrix for motion ...
-            translateStarMatrix.setTranslate(randomStarDeltaX, randomStarDeltaY)
+            // TODO: transform the star Path using Deltas.
+
+            if (message.getString("final") == "true") {
+                randomStarVisible = false
+            }
+            invalidate()
         }
-
-        randomStarX += randomStarDeltaX
-        randomStarY += randomStarDeltaY
-
-        starPath.transform(translateStarMatrix)
-
-        // TODO: transform the star Path using Deltas.
-
-        if (message.getString("final") == "true") {
-            randomStarVisible = false
-        }
-        invalidate()
-    }
+    */
 
     fun setGameState(newestGameState: KakuroGameplayDefinition.StateVariables) {
         var prevKey = ""
@@ -525,7 +536,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     }
 
     override fun onDraw(canvas: Canvas) {
-        println("#### onDraw() running ...")
+        println("#### onDraw() running:  $this")
         super.onDraw(canvas)
         if (gameState == null) {
             return
@@ -755,18 +766,19 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             }
         }
 
-        println("#### onDraw(): randomStarVisible = $randomStarVisible")
-        println("#### onDraw(): thread = [${Thread.currentThread()}].")
-        println("#### onDraw(): class = [${this}].")
         // FIXME - when the app restarts, the is code section stops working ....
-        if (randomStarVisible) {
-            drawRandomStar(canvas)
+        if (theStar != null) {
+            if (theStar?.isDone() == true) {
+                theStar = null
+            } else {
+                theStar?.onDraw(canvas)
+            }
         }
     }
 
     private val starPaint = Paint()
 
-    private fun drawRandomStar(canvas: Canvas) {
+/*    private fun drawRandomStar(canvas: Canvas) {
         println("drawRandomStar() running,")
         starPaint.textSize = 100f
         starPaint.color = Color.WHITE
@@ -777,7 +789,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         val corEffect = CornerPathEffect(radius)
         starPaint.setPathEffect(corEffect)
         canvas.drawPath(starPath, starPaint)
-    }
+    }*/
 
     private fun helpersToString(helpSets: List<List<Int>>): String {
         val builder = StringBuilder()
