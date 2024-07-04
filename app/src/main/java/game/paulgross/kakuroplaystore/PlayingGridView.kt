@@ -144,10 +144,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         setOnTouchListener(CustomListener(this))
     }
 
-    fun setGameEngine(engine: GameEngine) {
+    // TODO - move all of the RandomStar animation to the Activity.
+
+/*    fun setGameEngine(engine: GameEngine) {
         gameEngine = engine
         createRandomStar(null)
-    }
+    }*/
 
     private fun createRandomStar(message: GameEngine.Message?) {
         if (message != null) {
@@ -157,6 +159,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         // FIXME: the ::createRandomStar seems to create a callback that links to the old PlayingGridView instance.
         // FIXME by moving the function pointers into the Activity, so that the Android system calls the live Activity
+        // TODO - the solution is to implement animation from the Activity, not the View.
+        // TODO - That way when Android reactivates the Activity after it resumes, and allocates new View instances,
+        // the objects get their view references via the activity, which has the newly updated View references.
         // instead of the old View instance that should be garbage collected.
         // This means that when the timer thread resumes after the app is paused,
         // the new PlayingGridView instance isn't the same instance as the new one after the app resumes.
@@ -182,11 +187,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     val translateStarMatrix = Matrix()
 
     private fun randomStarAnimate(message: GameEngine.Message) {
-//        println("#### randomStarAnimate() running with message: ${message.asString()}")
-
         //  check for zero repeats
         if (message.getString("repeat") == "0") {
-            println("#### randomStarAnimate() initialising animation.")
             // Initialise the random star animation
             randomStarX = width/2f
             randomStarY = height/2f
@@ -205,10 +207,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             // Setup the matrix for motion ...
             translateStarMatrix.setTranslate(randomStarDeltaX, randomStarDeltaY)
         }
-        randomStarVisible = true
-        println("#### randomStarAnimate(): set randomStarVisible = [$randomStarVisible].")
-        println("#### randomStarAnimate(): thread = [${Thread.currentThread()}].")
-        println("#### onDraw(): class = [${this}].")
 
         randomStarX += randomStarDeltaX
         randomStarY += randomStarDeltaY
