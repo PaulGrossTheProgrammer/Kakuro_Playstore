@@ -61,6 +61,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         // TODO - pass the game engine to the grid display
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
 //        playGridView.setGameEngine(engine)
+
+        // TESTING
+        createRandomStar(null)
     }
 
     override fun onResume() {
@@ -120,26 +123,17 @@ class KakuroGameplayActivity : AppCompatActivity() {
     */
 
     private fun createRandomStar(message: GameEngine.Message?) {
+        println("##### createRandomStar() running")
+
         if (message != null) {
+            println("##### createRandomStar() has message ${message.asString()}")
+
 //            gameEngine?.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 50, 50)
             // engine.requestFinitePeriodicEvent(::randomStarAnimate, "RandomStarAnimate", 500, 5)
             // TODO - create a random star which contains its own animateCallback() for the Timer
-
+//            AnimatedStar(engine, activity)
         }
 
-        // FIXME: the ::createRandomStar seems to create a callback that links to the old PlayingGridView instance.
-        // FIXME by moving the function pointers into the Activity, so that the Android system calls the live Activity
-        // TODO - the solution is to implement animation from the Activity, not the View.
-        // TODO - That way when Android reactivates the Activity after it resumes, and allocates new View instances,
-        // the objects get their view references via the activity, which has the newly updated View references.
-        // instead of the old View instance that should be garbage collected.
-        // This means that when the timer thread resumes after the app is paused,
-        // the new PlayingGridView instance isn't the same instance as the new one after the app resumes.
-        // HOW DO I FIX THIS???
-        // Firstly, make it definitive that there are two instances - the old and the new.
-        // To do this, add a creation time val to PlayingGridView to ensure that we have actually found the real problem....
-        // If this is true, then whoever uses callbacks is responsible for saving and loading EventTimer instances,
-        // to ensure that the new instances store callbacks to the current instances... AND THIS MIGHT BE DIFFICULT!!
         engine.requestDelayedEvent(::createRandomStar, "RandomStarCreate", 3000)  // Keep repeating this after a delay
     }
 
