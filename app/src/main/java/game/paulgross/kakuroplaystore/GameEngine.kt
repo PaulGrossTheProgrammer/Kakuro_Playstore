@@ -218,7 +218,6 @@ class GameEngine(): Thread() {
 
     fun resumeTimingServer() {
         // FIXME - timing server doesn't resume saved timers after screen rotation.
-        println("#### TimingServer resuming ...")
         if (null != timingServer) {
             return
         }

@@ -197,7 +197,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private fun animate(message: GameEngine.Message) {
             starPath.transform(translateStarMatrix)
 
-            // TODO: transform the star Path using a rotation matrix.
+            // TODO: Also transform the star Path using a rotation matrix.
 
             if (message.getString("final") == "true") {
                 done = true
@@ -206,7 +206,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         fun onDraw(canvas: Canvas) {
-            canvas.drawPath(starPath, starPaint)
+            if (!done) {
+                canvas.drawPath(starPath, starPaint)
+            }
         }
     }
 
