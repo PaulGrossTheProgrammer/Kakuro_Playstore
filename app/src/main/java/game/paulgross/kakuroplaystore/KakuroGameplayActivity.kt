@@ -61,24 +61,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
         enableCallbackMessages()
 
         engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueCallbackMessage)
-
-        // TODO - pass the game engine to the grid display
-        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-//        playGridView.setGameEngine(engine)
-
-        // TESTING
-        // FIXME - this first animated star appears on an App restart, but the ones on the line don't appear on an App restart
-        // FIXME - WHYYY???
-        // Seems that tne createRandomStar() calls create Stars with pointers to the old View prior to the restart..
-        // BUT WHYYYY???
-        AnimatedStar(engine, this)
-        createRandomStar(null)
     }
 
     override fun onResume() {
         super.onResume()
         println("#### Activity onResume()")
         engine.resumeTimingServer()
+        engine.requestPeriodicEvent(::createDelayedRandomStar, "RandomStar", 3000)
     }
 
     // FIXME: There seems to be a subtle bug where backgronding the app doesn't work properly.
@@ -131,11 +120,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
     **  Animation classes and functions.
     */
 
-    private fun createRandomStar(message: GameEngine.Message?) {
-        if (message != null) {
-            AnimatedStar(engine, this)
-        }
-        engine.requestDelayedEvent(::createRandomStar, "RandomStarCreate", 4000)  // Keep repeating this after a delay
+    private fun createDelayedRandomStar(message: GameEngine.Message) {
+        // NOTE: To allow a sleep without freezing the timer thread, we could add a new timer with a random delay, and then create the star...
+        val randomDelay = 500
+        engine.requestDelayedEvent(::createRandomStar, "DelayedStar", randomDelay)
+    }
+
+    private fun createRandomStar(message: GameEngine.Message) {
+        AnimatedStar(engine, this)
     }
 
     class AnimatedStar(private val gameEngine: GameEngine, activity: KakuroGameplayActivity) {
@@ -156,8 +148,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private val starPaint = Paint()
 
         init{
-            println("#### Creating an Animated Star ...")
-
             starPath.moveTo(-20f, -20f)
             starPath.lineTo(-20f, 20f)
             starPath.lineTo(20f, 20f)
@@ -171,10 +161,15 @@ class KakuroGameplayActivity : AppCompatActivity() {
             // Setup the matrix for motion animation ...
             // TODO - use a random direction
             translateStarMatrix.setTranslate(5f, 5f)
+
+            // TODO - to simplify this, send the entire list as a copy to the PlayingGridView.
+            // This way the replacement of the list is atomic because it is a pointer, and is thus thread safe.
+            // Therefore we store the actual list here in the activity.
+            // If we put all this star code in the View, how do we backup and restore the timers???
+            // it's probably simpler to have the Star code here and manage the animation timers and animation lists here too.
             playGridView.addStar(this)
 
-//            gameEngine.requestFinitePeriodicEvent(::animate, "RandomStarAnimate", 50, 50)
-            gameEngine.requestFinitePeriodicEvent(::animate, "RandomStarAnimate", 100, 30)
+            gameEngine.requestFinitePeriodicEvent(::animate, "RandomStarAnimate", 50, 50)
         }
 
         fun isDone(): Boolean {
@@ -182,7 +177,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         private fun animate(message: GameEngine.Message) {
-            println("#### Animate the star ...")
             starPath.transform(translateStarMatrix)
 
             // TODO: transform the star Path using a rotation matrix.
@@ -192,7 +186,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
 
             // Tell the view to redraw
-            println("#### Request redraw for $playGridView")
             playGridView.invalidate()
         }
 

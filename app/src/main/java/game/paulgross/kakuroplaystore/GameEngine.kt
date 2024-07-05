@@ -136,7 +136,8 @@ class GameEngine(): Thread() {
     }
 
     private var timingServer: TimingServer? = null
-    private var savedEventTimers: List<EventTimer>? = null
+    // TODO - add methods so that clients can save and restore their own timers.
+//    private var savedEventTimers: List<EventTimer>? = null
 
     override fun run() {
         gameIsRunning.set(true)
@@ -223,12 +224,12 @@ class GameEngine(): Thread() {
         }
 
         timingServer = TimingServer()
-        println("#### Found [${savedEventTimers?.size}] saved EventTimers.")
+//        println("#### Found [${savedEventTimers?.size}] saved EventTimers.")
 
-        if (savedEventTimers != null) {
+/*        if (savedEventTimers != null) {
             println("#### Restoring saved EventTimers.")
             timingServer!!.restoreSavedTimers(savedEventTimers!!)
-        }
+        }*/
         timingServer!!.start()
     }
 
@@ -236,8 +237,8 @@ class GameEngine(): Thread() {
         if (null == timingServer) {
             return
         }
-        savedEventTimers = timingServer?.saveEventTimers()
-        println("#### Pausing TimeServer - saved [${savedEventTimers?.size}] EventTimers.")
+//        savedEventTimers = timingServer?.saveEventTimers()
+//        println("#### Pausing TimeServer - saved [${savedEventTimers?.size}] EventTimers.")
         timingServer?.shutdown()
         timingServer = null
     }
