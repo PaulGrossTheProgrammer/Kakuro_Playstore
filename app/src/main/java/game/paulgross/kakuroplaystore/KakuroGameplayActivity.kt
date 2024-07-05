@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.shape.MaterialShapeDrawable
 import kotlin.random.Random
+import kotlin.random.nextInt
 
 class KakuroGameplayActivity : AppCompatActivity() {
 
@@ -67,7 +68,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         super.onResume()
         println("#### Activity onResume()")
         engine.resumeTimingServer()
-        engine.requestPeriodicEvent(::createDelayedRandomStar, "RandomStar", 3000)
+//        engine.requestPeriodicEvent(::createDelayedRandomStar, "RandomStar", 3000)
     }
 
     // FIXME: There seems to be a subtle bug where backgronding the app doesn't work properly.
@@ -86,6 +87,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private var gameState: KakuroGameplayDefinition.StateVariables? = null
 
+    private var displayingSolvedAnimation = false;
+
     /**
      * Update the custom playGridView with the new state and request a redraw.
      */
@@ -99,10 +102,22 @@ class KakuroGameplayActivity : AppCompatActivity() {
             engine.queueMessageFromActivity(GameEngine.Message("RequestHelperSets"), ::queueCallbackMessage)
         }
 
+        // Manage animation to celebrate the user finding a solution.
+        if (gameState!!.solved) {
+            if (!displayingSolvedAnimation) {
+                engine.requestPeriodicEvent(::createDelayedRandomStar, "SolvedAnimationStar", 1000)
+                displayingSolvedAnimation = true
+            }
+        } else {
+            if (displayingSolvedAnimation) {
+                displayingSolvedAnimation = false
+                engine.cancelEventsByType("SolvedAnimationStar")
+            }
+        }
+
         if (checkForSolved == true) {
             if (gameState!!.solved) {
                 Toast.makeText(this, "SOLVED!", Toast.LENGTH_LONG).show()
-                // TODO - draw a fancy "solved" animation using the TimeServer...
             }
             checkForSolved = false
         }
@@ -121,35 +136,32 @@ class KakuroGameplayActivity : AppCompatActivity() {
     */
 
     private fun createDelayedRandomStar(message: GameEngine.Message) {
-        // NOTE: To allow a sleep without freezing the timer thread, we could add a new timer with a random delay, and then create the star...
-        val randomDelay = Random.nextInt(500, 2000)
-        engine.requestDelayedEvent(::createRandomStar, "DelayedStar", randomDelay)
+        val randomDelay = Random.nextInt(200 .. 600)
+        engine.requestDelayedEvent(::createRandomStar, "SolvedAnimationStar", randomDelay)
     }
 
     private fun createRandomStar(message: GameEngine.Message) {
         AnimatedStar(engine, this)
     }
 
+    // TODO - Use a list of these stars that display simultaneously.
     class AnimatedStar(private val gameEngine: GameEngine, activity: KakuroGameplayActivity) {
         private val playGridView = activity.findViewById<PlayingGridView>(R.id.viewPlayGrid)
 
         private val width = playGridView.width
         private val height = playGridView.height
 
+        private val translateStarMatrix = Matrix()
 
-        var starDxArray: FloatArray? = null
-        var starDyArray: FloatArray? = null
+        private val starPath: Path = Path()
 
-        val translateStarMatrix = Matrix()
-
-        val starPath: Path = Path()
-
-        var done = false
+        private var done = false
         private val starPaint = Paint()
-
-        private val starScale = 10f
+        private val starScale = 14f
 
         init{
+            starPaint.color = Color.WHITE
+
             starPath.moveTo(-starScale, -starScale)
             starPath.lineTo(0f, starScale)
             starPath.lineTo(starScale, -starScale)
@@ -165,9 +177,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
             translateStarMatrix.setTranslate(width * (0.7f * Random.nextFloat()) + 0.15f, height * (0.7f * Random.nextFloat()) + 0.15f)
             starPath.transform(translateStarMatrix)
 
-            // Setup the matrix for motion animation ...
-            // Scale the speed to the width.
             translateStarMatrix.setTranslate(width * 0.015f * (Random.nextFloat() -0.5f), width * 0.015f  * (Random.nextFloat() -0.5f))
+            // TODO - also add a rotation Matrix so that the star rotates as it moves.
 
             // TODO - to simplify this, send the entire list as a copy to the PlayingGridView.
             // This way the replacement of the list is atomic because it is a pointer, and is thus thread safe.
@@ -191,22 +202,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (message.getString("final") == "true") {
                 done = true
             }
-
-            // Tell the view to redraw
             playGridView.invalidate()
         }
 
         fun onDraw(canvas: Canvas) {
-            // TODO - called by the View's onDraw() function ...
-//            println("#### TODO - draw on the grid canvas ...")
-//            starPaint.textSize = 100f
-            starPaint.color = Color.WHITE
-//            canvas.drawText("STAR", 200f, 200f, starPaint)
-
-            starPaint.strokeWidth = 6f
-//            val radius = 5.0f
-//            val corEffect = CornerPathEffect(radius)
-//            starPaint.setPathEffect(corEffect)
             canvas.drawPath(starPath, starPaint)
         }
     }
