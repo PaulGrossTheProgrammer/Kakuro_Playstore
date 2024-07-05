@@ -148,11 +148,23 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private val starPaint = Paint()
 
         init{
-            starPath.moveTo(-20f, -20f)
-            starPath.lineTo(-20f, 20f)
-            starPath.lineTo(20f, 20f)
-            starPath.lineTo(20f, -20f)
-            starPath.close()
+/*            starPath.moveTo(-40f, -40f)
+            starPath.lineTo(0f, 40f)
+            starPath.lineTo(40f, -40f)
+            starPath.lineTo(0f, 0f)
+            starPath.lineTo(0f, -40f)
+            starPath.lineTo(-40f, 40f)
+            starPath.lineTo(0f, 0f)
+            starPath.lineTo(40f, 40f)
+            starPath.lineTo(0f, -40f)
+            starPath.close()*/
+
+            starPath.moveTo(-40f, -40f)
+            starPath.lineTo(0f, 40f)
+            starPath.lineTo(40f, -40f)
+            starPath.lineTo(0f, 0f)
+            starPath.lineTo(-40f, -40f)
+//            starPath.close()
 
             // Set the initial position.
             translateStarMatrix.setTranslate(width/2f, height/2f)
@@ -160,7 +172,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
             // Setup the matrix for motion animation ...
             // TODO - use a random direction
-            translateStarMatrix.setTranslate(5f, 5f)
+            translateStarMatrix.setTranslate(1f, 1f)
 
             // TODO - to simplify this, send the entire list as a copy to the PlayingGridView.
             // This way the replacement of the list is atomic because it is a pointer, and is thus thread safe.
@@ -192,14 +204,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
         fun onDraw(canvas: Canvas) {
             // TODO - called by the View's onDraw() function ...
 //            println("#### TODO - draw on the grid canvas ...")
-            starPaint.textSize = 100f
+//            starPaint.textSize = 100f
             starPaint.color = Color.WHITE
 //            canvas.drawText("STAR", 200f, 200f, starPaint)
 
             starPaint.strokeWidth = 6f
-            val radius = 5.0f
-            val corEffect = CornerPathEffect(radius)
-            starPaint.setPathEffect(corEffect)
+//            val radius = 5.0f
+//            val corEffect = CornerPathEffect(radius)
+//            starPaint.setPathEffect(corEffect)
             canvas.drawPath(starPath, starPaint)
         }
     }
