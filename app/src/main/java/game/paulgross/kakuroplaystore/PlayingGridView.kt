@@ -383,7 +383,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         if (measuredWidth == 0 || measuredHeight == 0) {
             return
         }
-
+//        println("#### rescale: measuredWidth = $measuredWidth")
 
         // TODO - pre-allocate the TouchArea for each on screen index so that we can remove the allocation code and boundary intersect code from onDraw().
         resetTouchAreas()

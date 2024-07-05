@@ -23,7 +23,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.shape.MaterialShapeDrawable
-
+import kotlin.random.Random
 
 class KakuroGameplayActivity : AppCompatActivity() {
 
@@ -122,7 +122,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private fun createDelayedRandomStar(message: GameEngine.Message) {
         // NOTE: To allow a sleep without freezing the timer thread, we could add a new timer with a random delay, and then create the star...
-        val randomDelay = 500
+        val randomDelay = Random.nextInt(500, 2000)
         engine.requestDelayedEvent(::createRandomStar, "DelayedStar", randomDelay)
     }
 
@@ -147,32 +147,27 @@ class KakuroGameplayActivity : AppCompatActivity() {
         var done = false
         private val starPaint = Paint()
 
-        init{
-/*            starPath.moveTo(-40f, -40f)
-            starPath.lineTo(0f, 40f)
-            starPath.lineTo(40f, -40f)
-            starPath.lineTo(0f, 0f)
-            starPath.lineTo(0f, -40f)
-            starPath.lineTo(-40f, 40f)
-            starPath.lineTo(0f, 0f)
-            starPath.lineTo(40f, 40f)
-            starPath.lineTo(0f, -40f)
-            starPath.close()*/
+        private val starScale = 10f
 
-            starPath.moveTo(-40f, -40f)
-            starPath.lineTo(0f, 40f)
-            starPath.lineTo(40f, -40f)
+        init{
+            starPath.moveTo(-starScale, -starScale)
+            starPath.lineTo(0f, starScale)
+            starPath.lineTo(starScale, -starScale)
             starPath.lineTo(0f, 0f)
-            starPath.lineTo(-40f, -40f)
-//            starPath.close()
+            starPath.lineTo(-starScale, -starScale)
+            starPath.lineTo(0f, 0f)
+            starPath.lineTo(starScale, starScale)
+            starPath.lineTo(0f, -starScale)
+            starPath.lineTo(-starScale, starScale)
+            starPath.lineTo(0f, 0f)
 
             // Set the initial position.
-            translateStarMatrix.setTranslate(width/2f, height/2f)
+            translateStarMatrix.setTranslate(width * (0.7f * Random.nextFloat()) + 0.15f, height * (0.7f * Random.nextFloat()) + 0.15f)
             starPath.transform(translateStarMatrix)
 
             // Setup the matrix for motion animation ...
-            // TODO - use a random direction
-            translateStarMatrix.setTranslate(1f, 1f)
+            // Scale the speed to the width.
+            translateStarMatrix.setTranslate(width * 0.015f * (Random.nextFloat() -0.5f), width * 0.015f  * (Random.nextFloat() -0.5f))
 
             // TODO - to simplify this, send the entire list as a copy to the PlayingGridView.
             // This way the replacement of the list is atomic because it is a pointer, and is thus thread safe.
