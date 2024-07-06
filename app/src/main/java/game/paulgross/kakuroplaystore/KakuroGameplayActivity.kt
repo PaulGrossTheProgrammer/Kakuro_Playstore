@@ -178,7 +178,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
             starPath.transform(translateStarMatrix)
 
             translateStarMatrix.setTranslate(width * 0.015f * (Random.nextFloat() -0.5f), width * 0.015f  * (Random.nextFloat() -0.5f))
-            // TODO - also add a rotation Matrix so that the star rotates as it moves.
+            // TODO - Figure out how to rotate the star around its own axis. Likely use .preRotate().
+            val rotation = listOf(-3f, 0f, 3f).random()
+            translateStarMatrix.postRotate(rotation, width/2f, height/2f)
 
             // TODO - to simplify this, send the entire list as a copy to the PlayingGridView.
             // This way the replacement of the list is atomic because it is a pointer, and is thus thread safe.
