@@ -56,21 +56,22 @@ class KakuroGameplayActivity : AppCompatActivity() {
         setupTvNav()
 
         findViewById<TextView>(R.id.textViewVersion).text = versionName
-
-        engine = GameEngine.activate(KakuroGameplayDefinition, this)
-
-        enableCallbackMessages()
-
-        engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueCallbackMessage)
     }
 
     override fun onResume() {
         super.onResume()
         println("#### Activity onResume()")
+        engine = GameEngine.activate(KakuroGameplayDefinition, this)
+
+        enableCallbackMessages()
+
+        engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueCallbackMessage)
+
         engine.resumeTimingServer()
         startAnimationLoop(engine)
     }
 
+    // FIXME: Backgrounding the app leaves the animation stars frozen, then adds more moving ones.
     // FIXME: There seems to be a subtle bug where backgronding the app doesn't work properly.
     // The symptom is the next time the back button is pressed, the app stops, but then restarts. Then a second press stops it properly.
     // https://www.geeksforgeeks.org/activity-lifecycle-in-android-with-demo-app/
@@ -80,6 +81,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         stopAnimationLoop(engine)
         engine.queueMessageFromActivity(GameEngine.Message("RequestStopStateChanges"), ::queueCallbackMessage)
         engine.pauseTimingServer()
+
+//        starList.clear() // This doesn't fix the backgrounding animation bug ... so it's commented out for now.
     }
 
     fun onClickSettings(view: View) {
@@ -138,11 +141,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private val starList = mutableListOf<AnimatedStar>()
 
-    fun startAnimationLoop(engine: GameEngine) {
+    private fun startAnimationLoop(engine: GameEngine) {
         engine.requestPeriodicEvent(::animateCallback, "AnimationLoop", 50)
     }
 
-    fun stopAnimationLoop(engine: GameEngine) {
+    private fun stopAnimationLoop(engine: GameEngine) {
         engine.cancelEventsByType("AnimationLoop")
     }
 
