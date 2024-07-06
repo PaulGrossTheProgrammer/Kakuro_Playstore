@@ -68,7 +68,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         super.onResume()
         println("#### Activity onResume()")
         engine.resumeTimingServer()
-//        engine.requestPeriodicEvent(::createDelayedRandomStar, "RandomStar", 3000)
+        startAnimationLoop(engine)
     }
 
     // FIXME: There seems to be a subtle bug where backgronding the app doesn't work properly.
@@ -77,6 +77,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         println("#### Activity onPause()")
+        stopAnimationLoop(engine)
         engine.queueMessageFromActivity(GameEngine.Message("RequestStopStateChanges"), ::queueCallbackMessage)
         engine.pauseTimingServer()
     }
@@ -135,14 +136,51 @@ class KakuroGameplayActivity : AppCompatActivity() {
     **  Animation classes and functions.
     */
 
+    private val starList = mutableListOf<AnimatedStar>()
+
+    fun startAnimationLoop(engine: GameEngine) {
+        engine.requestPeriodicEvent(::animateCallback, "AnimationLoop", 50)
+    }
+
+    fun stopAnimationLoop(engine: GameEngine) {
+        engine.cancelEventsByType("AnimationLoop")
+    }
+
+    private fun animateCallback(message: GameEngine.Message) {
+//        println("#### Animation loop running ...")
+
+        // Remove any stars that have completed their animation.
+        var starChanged = false
+        val iterator = starList.iterator()
+        for (i in iterator) {
+            if (i.isDone()) {
+                iterator.remove()
+            } else {
+                if (i.isChanged()) {
+                    starChanged = true
+                    // TODO - can I break from the loop here?
+                    // Because just one change will force the new list to the View
+                }
+            }
+        }
+
+        if (starChanged) {
+            val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+            playGridView.setStars(starList.toList())
+            playGridView.invalidate()
+        }
+    }
+
     private fun createDelayedRandomStar(message: GameEngine.Message) {
         val randomDelay = Random.nextInt(200 .. 600)
         engine.requestDelayedEvent(::createRandomStar, "SolvedAnimationStar", randomDelay)
     }
 
     private fun createRandomStar(message: GameEngine.Message) {
-        AnimatedStar(engine, this)
+        starList.add(AnimatedStar(engine, this))
     }
+
+//    private fun
 
     // TODO - Use a list of these stars that display simultaneously.
     class AnimatedStar(private val gameEngine: GameEngine, activity: KakuroGameplayActivity) {
@@ -156,6 +194,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private val starPath: Path = Path()
 
         private var done = false
+        private var changed = true  // Changed must be the initial state to force it to be drawn.
         private val starPaint = Paint()
         private val starScale = 14f
 
@@ -187,7 +226,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             // Therefore we store the actual list here in the activity.
             // If we put all this star code in the View, how do we backup and restore the timers???
             // it's probably simpler to have the Star code here and manage the animation timers and animation lists here too.
-            playGridView.addStar(this)
+//            playGridView.addStar(this)
 
             gameEngine.requestFinitePeriodicEvent(::animate, "RandomStarAnimate", 50, 50)
         }
@@ -196,7 +235,15 @@ class KakuroGameplayActivity : AppCompatActivity() {
             return done
         }
 
+        /**
+         * Returns the changed flag while also setting it to false if it's true.
+         */
+        fun isChanged(): Boolean {
+            return changed
+        }
+
         private fun animate(message: GameEngine.Message) {
+            changed = true
             starPath.transform(translateStarMatrix)
 
             // TODO: Also transform the star Path using a rotation matrix.
@@ -211,6 +258,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (!done) {
                 canvas.drawPath(starPath, starPaint)
             }
+            changed = false
         }
     }
 

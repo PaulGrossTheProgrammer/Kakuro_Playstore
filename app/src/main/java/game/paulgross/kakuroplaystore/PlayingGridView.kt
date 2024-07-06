@@ -12,6 +12,7 @@ import android.graphics.Path
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import game.paulgross.kakuroplaystore.KakuroGameplayActivity.AnimatedStar
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -141,6 +142,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     var theStar: KakuroGameplayActivity.AnimatedStar? = null
     fun addStar(star: KakuroGameplayActivity.AnimatedStar) {
         theStar = star
+    }
+
+    var theStars = listOf<AnimatedStar>()
+
+    fun setStars(stars: List<AnimatedStar>) {
+        theStars = stars
     }
 
     fun setGameState(newestGameState: KakuroGameplayDefinition.StateVariables) {
@@ -676,12 +683,16 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             }
         }
 
-        if (theStar != null) {
-            if (theStar?.isDone() == true) {
-                theStar = null
-            } else {
-                theStar?.onDraw(canvas)
-            }
+//        if (theStar != null) {
+//            if (theStar?.isDone() == true) {
+//                theStar = null
+//            } else {
+//                theStar?.onDraw(canvas)
+//            }
+//        }
+
+        for (star in theStars) {
+            star.onDraw(canvas)
         }
     }
 
