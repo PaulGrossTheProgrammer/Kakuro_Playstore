@@ -242,7 +242,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         starList.add(star)
     }
 
-    class AnimatedStar(private val gameEngine: GameEngine, private val width: Int, private val height: Int) {
+    class AnimatedStar(private val gameEngine: GameEngine, private val width: Int, private val height: Int): Sprite {
 
         private val transformStarMatrix = Matrix()
 
@@ -280,14 +280,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
             gameEngine.requestFinitePeriodicEvent(::animateCallback, "RandomStarAnimate", 50, 50)
         }
 
-        fun isDone(): Boolean {
+        override fun isDone(): Boolean {
             return done
         }
 
         /**
          * Returns the changed flag while also setting it to false if it's true.
          */
-        fun isChanged(): Boolean {
+        override fun isChanged(): Boolean {
             return changed
         }
 
@@ -300,7 +300,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             }
         }
 
-        fun onDraw(canvas: Canvas) {
+        override fun onDraw(canvas: Canvas) {
             if (!done) {
                 canvas.drawPath(starPath, starPaint)
             }
