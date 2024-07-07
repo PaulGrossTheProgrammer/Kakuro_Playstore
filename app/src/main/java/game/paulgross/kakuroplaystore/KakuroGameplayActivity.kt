@@ -147,14 +147,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
     interface Sprite {
         fun isDone(): Boolean
         fun isChanged(): Boolean
-//        fun animateCallback(message: GameEngine.Message)  // Do I need this in the interface???
+        fun startAnimation(gameEngine: GameEngine)
+        fun stopAnimation(gameEngine: GameEngine)
+        fun resumeAnimation(gameEngine: GameEngine)
+        fun animateCallback(message: GameEngine.Message)  // Do I need this in the interface???
         fun onDraw(canvas: Canvas)
     }
 
-    /**
-     *
-     */
-    class Animator(private val engine: GameEngine, private val redrawCallback: (spriteList: List<Sprite>) -> Unit) {
+    class SpriteDisplay(private val engine: GameEngine, private val drawCallback: (spriteList: List<Sprite>) -> Unit) {
 
         // TODO - need to determine if I need a setRedrawCallback() func or if it's OK in the constructor.
         // - because the View instance changes when the screen is rotated, and then there is the odd behaviour when the app is backgrounded...
@@ -169,10 +169,49 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
         // provide accessor methods for timers, so that this class can mediate the animation updates.
 
-        fun addSprite(newSprite: Sprite, groupName: String) {
-            // create internal lists of sprites attached to groupNames.
+        val allSprites = mutableListOf<Sprite>()
 
-            // If the groupname doesn;t have a defined order, it gets drawn last.
+        fun addSprite(sprite: Sprite, groupName: String, start: Boolean = false) {
+            allSprites.add(sprite)
+            if (start) {
+                sprite.startAnimation(engine)
+            }
+            // TODO: create internal lists of sprites attached to groupNames.
+
+            // If the groupname doesn't have a defined order, it gets drawn last.
+        }
+
+        fun startAnimation(groupName: String) {
+            // TODO: Only animate sprites in groupName.
+            for (sprite in allSprites) {
+                sprite.startAnimation(engine)
+            }
+        }
+
+        // TODO: for a static animation use stopAnimation() and hideGroup() then start/resumeAnimation() unhideGroup() to toggle visibility.
+        // That way there are no redundant animation callbacks for temporarily unwanted animations.
+        // And then we won;t need to keep creating Sprites, we will just switch them on and off as needed.
+
+        fun stopAnimation(groupName: String) {
+            // TODO - maybe the timer stops and sends a special message that allows the animation to be resumed where it was left off?
+            // The instance will have to save the message and use it for resumeAnimation()
+            for (sprite in allSprites) {
+                sprite.stopAnimation(engine)
+            }
+        }
+
+        fun resumeAnimation(groupName: String) {
+            for (sprite in allSprites) {
+                sprite.resumeAnimation(engine)
+            }
+        }
+
+        fun hideGroup(groupName: String) {
+            // TODO
+        }
+
+        fun unhideGroup() {
+            // TODO
         }
 
         fun defineGroupPriority(orderedList: List<String>) {
@@ -181,17 +220,56 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         private fun animateCallback(message: GameEngine.Message) {
 //            println("#### Animation loop running ...")
-            // TODO - go through all sprites, and remove any where isDone() is true.
+            val doneSprites = mutableListOf<Sprite>()
+            for (sprite in allSprites) {
+                if (sprite.isDone()) {
+                    doneSprites.add(sprite)
+                }
+            }
+            allSprites.removeAll(doneSprites)
 
-            // TODO - Go through all sprites and make an ordered list of sprites to be redrawn
-            val redrawList = mutableListOf<Sprite>()
+            // TODO - Go through all sprites and make a list of visible sprites in drawing order.
+            var anyChangedSprites = false
+            val drawList = mutableListOf<Sprite>()
+            for (sprite in allSprites) {
+                drawList.add(sprite)
+                if (!anyChangedSprites && sprite.isChanged()) {
+                    anyChangedSprites = true
+                }
+            }
 
-            // maybe we can send a message to the gridView that causes it to update the animated classes then call invalidate
-            // Build up a list of changed sprites in draw order...
-            if (redrawList.isNotEmpty()) {
-                redrawCallback.invoke(redrawList)  // This should send a message to the View with all sprites to be redrawn in that order.
+            if (anyChangedSprites) {
+                // This should send a message to the View with all visible sprites.
+                // Note that any previous drawList should continue to be used to draw sprites until this callback is used.
+                drawCallback.invoke(drawList)
             }
         }
+    }
+
+    /**
+     * This is the callback needed by the SpriteDisplay class.
+     *
+     * Create an instance:
+     * val spriteDisplay = SpriteDisplay(engine, ::updateSpriteDisplay)
+     *
+     * Start the animation loop:
+     * spriteDisplay.startAnimationLoop()
+     *
+     * Add sprites:
+     * spriteDisplay.addSprite(AnimatedStar(...), "CompletedStars")
+     *
+     * spriteDisplay.addSprite(VictoryBanner(...), "VictoryBanner")
+     * spriteDisplay.hideGroup("VictoryBanner")
+     *
+     * Then later:
+     * spriteDisplay.startAnimation("VictoryBanner")
+     * spriteDisplay.showGroup("VictoryBanner")
+     *
+     */
+    private fun updateSpriteDisplay(spriteList: List<Sprite>) {
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+//        playGridView.updateSprites(spriteList)
+//        playGridView.invalidate()
     }
 
     private val starList = mutableListOf<AnimatedStar>()
@@ -229,8 +307,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
     }
 
-//    private fun
-
     private fun createDelayedRandomStar(message: GameEngine.Message) {
         val randomDelay = Random.nextInt(200 .. 600)
         engine.requestDelayedEvent(::createRandomStar, "SolvedAnimationStar", randomDelay)
@@ -238,18 +314,25 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     private fun createRandomStar(message: GameEngine.Message) {
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        val star = AnimatedStar(engine, playGridView.width, playGridView.height)
+        val star = AnimatedStar(playGridView.width, playGridView.height)
+        star.startAnimation(engine)
         starList.add(star)
     }
 
-    class AnimatedStar(private val gameEngine: GameEngine, private val width: Int, private val height: Int): Sprite {
+    class AnimatedStar(private val width: Int, private val height: Int): Sprite {
 
         private val transformStarMatrix = Matrix()
 
         private val starPath: Path = Path()
 
+        /**
+         * This is the copy of starPath needed by the thread that calls onDraw().
+         * For Thread safety, changes starPath have to be isolated from the Thread calling onDraw().
+         */
+        private var starPathDrawBuffer: Path = Path()
+
         private var done = false
-        private var changed = true  // Changed must be the initial state to force it to be drawn.
+        private var changed = true  // Changed must be the initial state to request onDraw() to run.
         private val starPaint = Paint()
         private val starScale = 8f
 
@@ -266,10 +349,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
             starPath.lineTo(0f, -starScale)
             starPath.lineTo(-starScale, starScale)
             starPath.lineTo(0f, 0f)
+        }
+
+        override fun startAnimation(gameEngine: GameEngine) {
 
             // Set the initial position.
             transformStarMatrix.setTranslate(width * (0.7f * Random.nextFloat()) + 0.15f, height * (0.7f * Random.nextFloat()) + 0.15f)
             starPath.transform(transformStarMatrix)
+            starPathDrawBuffer = Path(starPath)  // So onDraw() can see the change.
 
             // Set the speed
             transformStarMatrix.setTranslate(width * 0.015f * (Random.nextFloat() -0.5f), width * 0.015f  * (Random.nextFloat() -0.5f))
@@ -280,29 +367,46 @@ class KakuroGameplayActivity : AppCompatActivity() {
             gameEngine.requestFinitePeriodicEvent(::animateCallback, "RandomStarAnimate", 50, 50)
         }
 
+        override fun stopAnimation(gameEngine: GameEngine) {
+            // TODO - modify the TimerEvent class to stop() an animation and return a status message,
+            //  which can be used to later resume the animation where it left off, instead of calling cancel here.
+            gameEngine.cancelEventsByType("RandomStarAnimate")
+        }
+
+        override fun resumeAnimation(gameEngine: GameEngine) {
+            // TODO - when stopAnimation returns an in-progress message,
+            //  pass the message to the Timer system's resume() function, instead of just calling start here.
+            startAnimation(gameEngine)
+        }
+
         override fun isDone(): Boolean {
             return done
         }
 
-        /**
-         * Returns the changed flag while also setting it to false if it's true.
-         */
         override fun isChanged(): Boolean {
             return changed
         }
 
-        fun animateCallback(message: GameEngine.Message) {
-            changed = true
-            starPath.transform(transformStarMatrix)
-
+        /**
+         * This function is called by an external Timer Thread.
+         */
+        override fun animateCallback(message: GameEngine.Message) {
             if (message.getString("final") == "true") {
                 done = true
+            } else {
+                starPath.transform(transformStarMatrix)
+                starPathDrawBuffer = Path(starPath)  // Allow the onDraw() Thread to see the change.
             }
+            changed = true
         }
 
+        /**
+         * This function is called by an external Thread.
+         * starPathDrawBuffer is drawn to avoid the caller's Thread conflicting with the Thread using animateCallback()
+         */
         override fun onDraw(canvas: Canvas) {
             if (!done) {
-                canvas.drawPath(starPath, starPaint)
+                canvas.drawPath(starPathDrawBuffer, starPaint)
             }
             changed = false
         }
