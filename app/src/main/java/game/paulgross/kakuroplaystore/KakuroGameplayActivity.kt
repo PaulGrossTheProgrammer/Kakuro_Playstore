@@ -8,7 +8,6 @@ import android.content.IntentFilter
 import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.CornerPathEffect
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
@@ -44,7 +43,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         if (isTv) {
             Log.d(TAG, "TV DETECTED.")
             // According to Google policy, a TV App is only allowed to use landscape orientation.
-            // (Yes, Google are very stupid. I walk past portrait-oriented TV screens almost every day. Advertisers use portrait mode all the time.)
+            // (Yes, Google are very stupid. I walk past portrait-oriented TV screens almost every day. Outdoor advertisers use portrait mode all the time.)
             setContentView(R.layout.activity_kakurogameplay_landscape)
         } else {
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -82,7 +81,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine.queueMessageFromActivity(GameEngine.Message("RequestStopStateChanges"), ::queueCallbackMessage)
         engine.pauseTimingServer()
 
-//        starList.clear() // This doesn't fix the backgrounding animation bug ... so it's commented out for now.
+        // TODO - does does NOT solve the backgrounding problem where the animation stalls.
+        stopGameServer()
     }
 
     fun onClickSettings(view: View) {
@@ -106,10 +106,15 @@ class KakuroGameplayActivity : AppCompatActivity() {
             engine.queueMessageFromActivity(GameEngine.Message("RequestHelperSets"), ::queueCallbackMessage)
         }
 
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        if (gameState!!.solved) {
+            playGridView.clearSelectedIndex()
+        }
+
         // Manage animation to celebrate the user finding a solution.
         if (gameState!!.solved) {
             if (!displayingSolvedAnimation) {
-                engine.requestPeriodicEvent(::createDelayedRandomStar, "SolvedAnimationStar", 1000)
+                engine.requestPeriodicEvent(::createDelayedRandomStar, "SolvedAnimationStar", 300)
                 displayingSolvedAnimation = true
             }
         } else {
@@ -121,12 +126,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         if (checkForSolved == true) {
             if (gameState!!.solved) {
+                // TODO - replace this with animated text in the grid itself.
                 Toast.makeText(this, "SOLVED!", Toast.LENGTH_LONG).show()
             }
             checkForSolved = false
         }
 
-        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.setGameState(newestGameState)
     }
 
@@ -180,26 +185,21 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     private fun createRandomStar(message: GameEngine.Message) {
-        starList.add(AnimatedStar(engine, this))
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        val star = AnimatedStar(engine, playGridView.width, playGridView.height)
+        starList.add(star)
     }
 
-//    private fun
+    class AnimatedStar(private val gameEngine: GameEngine, private val width: Int, private val height: Int) {
 
-    // TODO - Use a list of these stars that display simultaneously.
-    class AnimatedStar(private val gameEngine: GameEngine, activity: KakuroGameplayActivity) {
-        private val playGridView = activity.findViewById<PlayingGridView>(R.id.viewPlayGrid)
-
-        private val width = playGridView.width
-        private val height = playGridView.height
-
-        private val translateStarMatrix = Matrix()
+        private val transformStarMatrix = Matrix()
 
         private val starPath: Path = Path()
 
         private var done = false
         private var changed = true  // Changed must be the initial state to force it to be drawn.
         private val starPaint = Paint()
-        private val starScale = 14f
+        private val starScale = 8f
 
         init{
             starPaint.color = Color.WHITE
@@ -216,20 +216,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
             starPath.lineTo(0f, 0f)
 
             // Set the initial position.
-            translateStarMatrix.setTranslate(width * (0.7f * Random.nextFloat()) + 0.15f, height * (0.7f * Random.nextFloat()) + 0.15f)
-            starPath.transform(translateStarMatrix)
+            transformStarMatrix.setTranslate(width * (0.7f * Random.nextFloat()) + 0.15f, height * (0.7f * Random.nextFloat()) + 0.15f)
+            starPath.transform(transformStarMatrix)
 
-            translateStarMatrix.setTranslate(width * 0.015f * (Random.nextFloat() -0.5f), width * 0.015f  * (Random.nextFloat() -0.5f))
-            // TODO - Figure out how to rotate the star around its own axis. Likely use .preRotate().
+            // Set the speed
+            transformStarMatrix.setTranslate(width * 0.015f * (Random.nextFloat() -0.5f), width * 0.015f  * (Random.nextFloat() -0.5f))
+            // TODO - Figure out how to rotate the star around its own axis. Likely use .preRotate() instead.
             val rotation = listOf(-3f, 0f, 3f).random()
-            translateStarMatrix.postRotate(rotation, width/2f, height/2f)
-
-            // TODO - to simplify this, send the entire list as a copy to the PlayingGridView.
-            // This way the replacement of the list is atomic because it is a pointer, and is thus thread safe.
-            // Therefore we store the actual list here in the activity.
-            // If we put all this star code in the View, how do we backup and restore the timers???
-            // it's probably simpler to have the Star code here and manage the animation timers and animation lists here too.
-//            playGridView.addStar(this)
+            transformStarMatrix.postRotate(rotation, width/2f, height/2f)
 
             gameEngine.requestFinitePeriodicEvent(::animate, "RandomStarAnimate", 50, 50)
         }
@@ -245,16 +239,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
             return changed
         }
 
-        private fun animate(message: GameEngine.Message) {
+        fun animate(message: GameEngine.Message) {
             changed = true
-            starPath.transform(translateStarMatrix)
-
-            // TODO: Also transform the star Path using a rotation matrix.
+            starPath.transform(transformStarMatrix)
 
             if (message.getString("final") == "true") {
                 done = true
             }
-            playGridView.invalidate()
         }
 
         fun onDraw(canvas: Canvas) {
@@ -768,7 +759,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     private fun exitApp() {
-        stopGameServer()
+        // FIXME - this needs to be called when the app is backgrounded too  ...
+//        stopGameServer()
+
         finishAndRemoveTask()
     }
 

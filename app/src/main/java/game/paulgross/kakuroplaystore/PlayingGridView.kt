@@ -242,6 +242,11 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         return selectedIndex
     }
 
+    fun clearSelectedIndex() {
+        selectedIndex = -1
+        invalidate()
+    }
+
     fun setIndexToDefault() {
         selectedIndex = defaultIndex
         invalidate()
