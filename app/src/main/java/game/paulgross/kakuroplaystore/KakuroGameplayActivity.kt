@@ -144,6 +144,56 @@ class KakuroGameplayActivity : AppCompatActivity() {
     **  Animation classes and functions.
     */
 
+    interface Sprite {
+        fun isDone(): Boolean
+        fun isChanged(): Boolean
+//        fun animateCallback(message: GameEngine.Message)  // Do I need this in the interface???
+        fun onDraw(canvas: Canvas)
+    }
+
+    /**
+     *
+     */
+    class Animator(private val engine: GameEngine, private val redrawCallback: (spriteList: List<Sprite>) -> Unit) {
+
+        // TODO - need to determine if I need a setRedrawCallback() func or if it's OK in the constructor.
+        // - because the View instance changes when the screen is rotated, and then there is the odd behaviour when the app is backgrounded...
+
+        // TODO: Move start and stop animation loop here.
+        fun startAnimationLoop() {
+            engine.requestPeriodicEvent(::animateCallback, "AnimationLoop", 50)
+        }
+
+        fun stopAnimationLoop() {
+            engine.cancelEventsByType("AnimationLoop")
+        }
+        // provide accessor methods for timers, so that this class can mediate the animation updates.
+
+        fun addSprite(newSprite: Sprite, groupName: String) {
+            // create internal lists of sprites attached to groupNames.
+
+            // If the groupname doesn;t have a defined order, it gets drawn last.
+        }
+
+        fun defineGroupPriority(orderedList: List<String>) {
+            // Sets the drawing order of sprites.
+        }
+
+        private fun animateCallback(message: GameEngine.Message) {
+//            println("#### Animation loop running ...")
+            // TODO - go through all sprites, and remove any where isDone() is true.
+
+            // TODO - Go through all sprites and make an ordered list of sprites to be redrawn
+            val redrawList = mutableListOf<Sprite>()
+
+            // maybe we can send a message to the gridView that causes it to update the animated classes then call invalidate
+            // Build up a list of changed sprites in draw order...
+            if (redrawList.isNotEmpty()) {
+                redrawCallback.invoke(redrawList)  // This should send a message to the View with all sprites to be redrawn in that order.
+            }
+        }
+    }
+
     private val starList = mutableListOf<AnimatedStar>()
 
     private fun startAnimationLoop(engine: GameEngine) {
@@ -178,6 +228,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
             playGridView.invalidate()
         }
     }
+
+//    private fun
 
     private fun createDelayedRandomStar(message: GameEngine.Message) {
         val randomDelay = Random.nextInt(200 .. 600)
@@ -225,7 +277,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             val rotation = listOf(-3f, 0f, 3f).random()
             transformStarMatrix.postRotate(rotation, width/2f, height/2f)
 
-            gameEngine.requestFinitePeriodicEvent(::animate, "RandomStarAnimate", 50, 50)
+            gameEngine.requestFinitePeriodicEvent(::animateCallback, "RandomStarAnimate", 50, 50)
         }
 
         fun isDone(): Boolean {
@@ -239,7 +291,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             return changed
         }
 
-        fun animate(message: GameEngine.Message) {
+        fun animateCallback(message: GameEngine.Message) {
             changed = true
             starPath.transform(transformStarMatrix)
 
