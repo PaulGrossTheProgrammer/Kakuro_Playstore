@@ -697,7 +697,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 //        }
 
         for (star in theStars) {
-            star.onDraw(canvas)
+            star.drawCallback(canvas)
         }
     }
 

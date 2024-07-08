@@ -191,7 +191,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (i.isDone()) {
                 iterator.remove()
             } else {
-                if (i.isChanged()) {
+                if (i.isDrawRequired()) {
                     starChanged = true
                     // TODO - can I break from the loop here?
                     // Because just one change will force the new list to the View
@@ -218,7 +218,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         starList.add(star)
     }
 
-    class AnimatedStar(private val width: Int, private val height: Int): Sprite {
+    class AnimatedStar(private val width: Int, private val height: Int): BaseSprite() {
 
         private val transformStarMatrix = Matrix()
 
@@ -282,10 +282,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             return done
         }
 
-        override fun isChanged(): Boolean {
-            return changed
-        }
-
         /**
          * This function is called by an external Timer Thread.
          */
@@ -303,7 +299,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
          * This function is called by an external Thread.
          * starPathDrawBuffer is drawn to avoid the caller's Thread conflicting with the Thread using animateCallback()
          */
-        override fun drawCallBack(canvas: Canvas) {
+        override fun doDraw(canvas: Canvas) {
             if (!done) {
                 canvas.drawPath(starPathDrawBuffer, starPaint)
             }

@@ -4,16 +4,39 @@ import android.graphics.Canvas
 
 interface Sprite {
     fun isDone(): Boolean
-    fun isChanged(): Boolean  // Maybe change this to isRedrawRequired()
+    fun isDrawRequired(): Boolean  // Maybe change this to isRedrawRequired()
+    fun setDrawRequired()
+    fun unsetDrawRequired()
     fun startAnimation(gameEngine: GameEngine)
     fun stopAnimation(gameEngine: GameEngine)
     fun resumeAnimation(gameEngine: GameEngine)
     fun animateCallback(message: GameEngine.Message)  // Do I need this in the interface???
-    fun drawCallBack(canvas: Canvas)
+    fun doDraw(canvas: Canvas)
 }
 
 // TODO - maybe make an abstract class BaseSprite that force-implements the requirement
 // that redrawRequired is initialised to true, and and set to false after every drawCallback.
+
+abstract class BaseSprite: Sprite {
+    private var requireDraw = true  // The initial state of the sprite needs to be drawn.
+
+    final override fun setDrawRequired() {
+        requireDraw = true
+    }
+
+    final override fun unsetDrawRequired() {
+        requireDraw = false
+    }
+
+    final override fun isDrawRequired(): Boolean {
+        return requireDraw
+    }
+
+    final fun drawCallback(canvas: Canvas) {
+        doDraw(canvas)
+        requireDraw = false
+    }
+}
 
 // TODO - implement an abstract class for SimpleSprite that only has drawCallback()
 // This is useful for things like background graphics that never change.
@@ -97,7 +120,7 @@ class SpriteDisplay(private val engine: GameEngine, private val drawCallback: (s
         val drawList = mutableListOf<Sprite>()
         for (sprite in allSprites) {
             drawList.add(sprite)
-            if (!anyChangedSprites && sprite.isChanged()) {
+            if (!anyChangedSprites && sprite.isDrawRequired()) {
                 anyChangedSprites = true
             }
         }
