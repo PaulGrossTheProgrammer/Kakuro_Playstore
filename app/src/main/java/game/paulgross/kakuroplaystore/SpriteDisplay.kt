@@ -7,6 +7,8 @@ interface Sprite {
     fun isDrawRequired(): Boolean  // Maybe change this to isRedrawRequired()
     fun setDrawRequired()
     fun unsetDrawRequired()
+
+    // TODO - change GameEngine to TimingServer
     fun startAnimation(gameEngine: GameEngine)
     fun stopAnimation(gameEngine: GameEngine)
     fun resumeAnimation(gameEngine: GameEngine)
@@ -14,7 +16,7 @@ interface Sprite {
     fun doDraw(canvas: Canvas)
 }
 
-abstract class BaseSprite: Sprite {
+abstract class AnimatedSprite: Sprite {
     private var requireDraw = true  // The initial state of the sprite needs to be drawn.
 
     final override fun setDrawRequired() {
@@ -35,6 +37,32 @@ abstract class BaseSprite: Sprite {
     }
 }
 
+abstract class StaticSprite: Sprite {
+    private var requireDraw = true  // The initial state of the sprite needs to be drawn.
+
+    final override fun setDrawRequired() {
+        requireDraw = true
+    }
+
+    final override fun unsetDrawRequired() {
+        requireDraw = false
+    }
+
+    final override fun isDrawRequired(): Boolean {
+        return requireDraw
+    }
+
+    // Implement all animation functions as empty.
+    final override fun startAnimation(gameEngine: GameEngine) {}
+    final override fun stopAnimation(gameEngine: GameEngine) {}
+    final override fun resumeAnimation(gameEngine: GameEngine) {}
+    final override fun animateCallback(message: GameEngine.Message) {}
+
+    fun drawCallback(canvas: Canvas) {
+        doDraw(canvas)
+        requireDraw = false
+    }
+}
 // TODO - implement an abstract class for SimpleSprite that only has drawCallback()
 // This is useful for things like background graphics that never change.
 

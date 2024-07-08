@@ -215,7 +215,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         starList.add(star)
     }
 
-    class AnimatedStar(private val width: Int, private val height: Int): BaseSprite() {
+    class AnimatedStar(private val width: Int, private val height: Int): AnimatedSprite() {
 
         private val transformStarMatrix = Matrix()
 
@@ -303,7 +303,19 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     }
 
-    class AnimatedMessage(private val size: Int, private val xPos: Float, private val yPos: Float, private val message: String): BaseSprite() {
+    // TODO - add a bitmap and scaling width, height, as the constructor args.
+    class BackgroundSprite(): StaticSprite() {
+        override fun isDone(): Boolean {
+            return false
+        }
+
+        override fun doDraw(canvas: Canvas) {
+            TODO("Not yet implemented")
+        }
+
+    }
+
+    class AnimatedMessage(private val size: Int, private val xPos: Float, private val yPos: Float, private val message: String): AnimatedSprite() {
         private var done = false
         private val paint = Paint()
 
@@ -312,23 +324,29 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         override fun isDone(): Boolean {
-            TODO("Not yet implemented")
+            return done
         }
 
         override fun startAnimation(gameEngine: GameEngine) {
-            TODO("Not yet implemented")
+            // TODO - Get a periodic timer to call ::animateCallback()
         }
 
         override fun stopAnimation(gameEngine: GameEngine) {
-            TODO("Not yet implemented")
+            // TODO - save the periodic timer state.
         }
 
         override fun resumeAnimation(gameEngine: GameEngine) {
-            TODO("Not yet implemented")
+            // TODO - resume using the saved state from stopAnimation()
         }
 
         override fun animateCallback(message: GameEngine.Message) {
-            TODO("Not yet implemented")
+            if (message.getString("final") == "true") {
+                done = true
+            } else {
+                // TODO - Make the text bigger, and then fade it away.
+                // TODO - use the progress indicator in the message to decide when the change the text appearance.
+            }
+            setDrawRequired()
         }
 
         override fun doDraw(canvas: Canvas) {
