@@ -231,7 +231,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var starPathDrawBuffer: Path = Path()
 
         private var done = false
-        private var changed = true  // Changed must be the initial state to request onDraw() to run.
+//        private var changed = true  // Changed must be the initial state to request onDraw() to run.
         private val starPaint = Paint()
         private val starScale = 8f
 
@@ -292,7 +292,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 starPath.transform(transformStarMatrix)
                 starPathDrawBuffer = Path(starPath)  // Allow the onDraw() Thread to see the change.
             }
-            changed = true
+            setDrawRequired()
         }
 
         /**
@@ -303,7 +303,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (!done) {
                 canvas.drawPath(starPathDrawBuffer, starPaint)
             }
-            changed = false
         }
     }
 

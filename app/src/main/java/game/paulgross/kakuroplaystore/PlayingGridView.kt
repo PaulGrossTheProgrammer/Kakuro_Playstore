@@ -688,14 +688,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             }
         }
 
-//        if (theStar != null) {
-//            if (theStar?.isDone() == true) {
-//                theStar = null
-//            } else {
-//                theStar?.onDraw(canvas)
-//            }
-//        }
-
         for (star in theStars) {
             star.drawCallback(canvas)
         }
