@@ -9,11 +9,12 @@ interface Sprite {
     fun unsetDrawRequired()
 
     // TODO - change GameEngine to TimingServer
-    fun startAnimation(gameEngine: GameEngine)
-    fun stopAnimation(gameEngine: GameEngine)
-    fun resumeAnimation(gameEngine: GameEngine)
+    fun startAnimation(timingServer: GameEngine.TimingServer)
+    fun stopAnimation(timingServer: GameEngine.TimingServer)
+    fun resumeAnimation(timingServer: GameEngine.TimingServer)
     fun animateCallback(message: GameEngine.Message)  // Do I need this in the interface???
     fun doDraw(canvas: Canvas)
+    fun drawCallback(canvas: Canvas)
 }
 
 abstract class AnimatedSprite: Sprite {
@@ -31,7 +32,7 @@ abstract class AnimatedSprite: Sprite {
         return requireDraw
     }
 
-    fun drawCallback(canvas: Canvas) {
+    final override fun drawCallback(canvas: Canvas) {
         doDraw(canvas)
         requireDraw = false
     }
@@ -53,12 +54,12 @@ abstract class StaticSprite: Sprite {
     }
 
     // Implement all animation functions as empty.
-    final override fun startAnimation(gameEngine: GameEngine) {}
-    final override fun stopAnimation(gameEngine: GameEngine) {}
-    final override fun resumeAnimation(gameEngine: GameEngine) {}
+    final override fun startAnimation(timingServer: GameEngine.TimingServer) {}
+    final override fun stopAnimation(timingServer: GameEngine.TimingServer) {}
+    final override fun resumeAnimation(timingServer: GameEngine.TimingServer) {}
     final override fun animateCallback(message: GameEngine.Message) {}
 
-    fun drawCallback(canvas: Canvas) {
+    final override fun drawCallback(canvas: Canvas) {
         doDraw(canvas)
         requireDraw = false
     }
@@ -66,27 +67,27 @@ abstract class StaticSprite: Sprite {
 // TODO - implement an abstract class for SimpleSprite that only has drawCallback()
 // This is useful for things like background graphics that never change.
 
-class SpriteDisplay(private val engine: GameEngine, private val drawCallback: (spriteList: List<Sprite>) -> Unit) {
+class SpriteDisplay(private val timingServer: GameEngine.TimingServer, private val drawCallback: (spriteList: Array<Sprite>) -> Unit) {
 
     // TODO - need to determine if I need a setRedrawCallback() func or if it's OK in the constructor.
     // - because the View instance changes when the screen is rotated, and then there is the odd behaviour when the app is backgrounded...
 
     // TODO: Move start and stop animation loop here.
     fun startAnimationLoop() {
-        engine.requestPeriodicEvent(::animateCallback, "AnimationLoop", 50)
+        timingServer.addPeriodicEvent(::animateCallback, "AnimationLoop", 500)
     }
 
     fun stopAnimationLoop() {
-        engine.cancelEventsByType("AnimationLoop")
+        timingServer.cancelEventsByType("AnimationLoop")
     }
     // provide accessor methods for timers, so that this class can mediate the animation updates.
 
-    val allSprites = mutableListOf<Sprite>()
+    private val allSprites = mutableListOf<Sprite>()
 
     fun addSprite(sprite: Sprite, groupName: String, start: Boolean = false) {
         allSprites.add(sprite)
         if (start) {
-            sprite.startAnimation(engine)
+            sprite.startAnimation(timingServer)
         }
         // TODO: create internal lists of sprites attached to groupNames.
 
@@ -96,7 +97,7 @@ class SpriteDisplay(private val engine: GameEngine, private val drawCallback: (s
     fun startAnimation(groupName: String) {
         // TODO: Only animate sprites in groupName.
         for (sprite in allSprites) {
-            sprite.startAnimation(engine)
+            sprite.startAnimation(timingServer)
         }
     }
 
@@ -108,13 +109,13 @@ class SpriteDisplay(private val engine: GameEngine, private val drawCallback: (s
         // TODO - maybe the timer stops and sends a special message that allows the animation to be resumed where it was left off?
         // The instance will have to save the message and use it for resumeAnimation()
         for (sprite in allSprites) {
-            sprite.stopAnimation(engine)
+            sprite.stopAnimation(timingServer)
         }
     }
 
     fun resumeAnimation(groupName: String) {
         for (sprite in allSprites) {
-            sprite.resumeAnimation(engine)
+            sprite.resumeAnimation(timingServer)
         }
     }
 
@@ -131,17 +132,19 @@ class SpriteDisplay(private val engine: GameEngine, private val drawCallback: (s
     }
 
     private fun animateCallback(message: GameEngine.Message) {
-//            println("#### Animation loop running ...")
+        var anyChangedSprites = false
         val doneSprites = mutableListOf<Sprite>()
         for (sprite in allSprites) {
             if (sprite.isDone()) {
                 doneSprites.add(sprite)
+                if (sprite.isDrawRequired()) {
+                    anyChangedSprites = true
+                }
             }
         }
         allSprites.removeAll(doneSprites)
 
         // TODO - Go through all sprites and make a list of visible sprites in drawing order.
-        var anyChangedSprites = false
         val drawList = mutableListOf<Sprite>()
         for (sprite in allSprites) {
             drawList.add(sprite)
@@ -153,7 +156,7 @@ class SpriteDisplay(private val engine: GameEngine, private val drawCallback: (s
         if (anyChangedSprites) {
             // This should send a message to the View with all visible sprites.
             // Note that any previous drawList should continue to be used to draw sprites until this callback is used.
-            drawCallback.invoke(drawList)
+            drawCallback.invoke(drawList.toTypedArray())
         }
     }
 }

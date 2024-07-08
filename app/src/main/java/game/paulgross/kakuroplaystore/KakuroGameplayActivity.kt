@@ -57,6 +57,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.textViewVersion).text = versionName
     }
 
+    var spriteDisplay: SpriteDisplay? = null
+
     override fun onResume() {
         super.onResume()
         println("#### Activity onResume()")
@@ -67,7 +69,19 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueCallbackMessage)
 
         engine.resumeTimingServer()
-        startAnimationLoop(engine)
+        startAnimationLoop(engine) // Old code
+
+        // New sprite code
+        // TODO - Maybe put a static reference to the TimingServer in the companion object??
+        val timingServer = engine.getTimingServer()
+        if (timingServer != null) {
+            spriteDisplay = SpriteDisplay(timingServer, ::sendSpritesToGrid)
+            // Setup SpriteDisplay here. . .
+            val sprite = AnimatedMessage(100f, 100f, 100f, "Test Message")
+            spriteDisplay?.addSprite(sprite, "Messages", start = true)
+
+            spriteDisplay?.startAnimationLoop()
+        }
     }
 
     // FIXME: Backgrounding the app leaves the animation stars frozen, then adds more moving ones.
@@ -80,6 +94,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         stopAnimationLoop(engine)
         engine.queueMessageFromActivity(GameEngine.Message("RequestStopStateChanges"), ::queueCallbackMessage)
         engine.pauseTimingServer()
+
+        if (spriteDisplay != null) {
+            spriteDisplay?.stopAnimationLoop()
+            spriteDisplay = null
+        }
 
         // TODO - does does NOT solve the backgrounding problem where the animation stalls.
         stopGameServer()
@@ -165,10 +184,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
      * spriteDisplay.showGroup("VictoryBanner")
      *
      */
-    private fun updateSpriteDisplay(spriteList: List<Sprite>) {
+    private fun sendSpritesToGrid(spriteArray: Array<Sprite>) {
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-//        playGridView.updateSprites(spriteList)
-//        playGridView.invalidate()
+        playGridView.updateSprites(spriteArray)
+        playGridView.invalidate()
     }
 
     private val starList = mutableListOf<AnimatedStar>()
@@ -209,10 +228,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     private fun createRandomStar(message: GameEngine.Message) {
-        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        val star = AnimatedStar(playGridView.width, playGridView.height)
-        star.startAnimation(engine)
-        starList.add(star)
+        val ts = engine.getTimingServer()
+        if (ts != null) {
+            val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+            val star = AnimatedStar(playGridView.width, playGridView.height)
+            star.startAnimation(ts)
+            starList.add(star)
+        }
     }
 
     class AnimatedStar(private val width: Int, private val height: Int): AnimatedSprite() {
@@ -246,7 +268,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             starPath.lineTo(0f, 0f)
         }
 
-        override fun startAnimation(gameEngine: GameEngine) {
+        override fun startAnimation(timingServer: GameEngine.TimingServer) {
 
             // Set the initial position.
             transformStarMatrix.setTranslate(width * (0.7f * Random.nextFloat()) + 0.15f, height * (0.7f * Random.nextFloat()) + 0.15f)
@@ -259,19 +281,19 @@ class KakuroGameplayActivity : AppCompatActivity() {
             val rotation = listOf(-3f, 0f, 3f).random()
             transformStarMatrix.postRotate(rotation, width/2f, height/2f)
 
-            gameEngine.requestFinitePeriodicEvent(::animateCallback, "RandomStarAnimate", 50, 50)
+            timingServer.addFinitePeriodicEvent(::animateCallback, "RandomStarAnimate", 50, 50)
         }
 
-        override fun stopAnimation(gameEngine: GameEngine) {
+        override fun stopAnimation(timingServer: GameEngine.TimingServer) {
             // TODO - modify the TimerEvent class to stop() an animation and return a status message,
             //  which can be used to later resume the animation where it left off, instead of calling cancel here.
-            gameEngine.cancelEventsByType("RandomStarAnimate")
+            timingServer.cancelEventsByType("RandomStarAnimate")
         }
 
-        override fun resumeAnimation(gameEngine: GameEngine) {
+        override fun resumeAnimation(timingServer: GameEngine.TimingServer) {
             // TODO - when stopAnimation returns an in-progress message,
             //  pass the message to the Timer system's resume() function, instead of just calling start here.
-            startAnimation(gameEngine)
+            startAnimation(timingServer)
         }
 
         override fun isDone(): Boolean {
@@ -315,27 +337,28 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     }
 
-    class AnimatedMessage(private val size: Int, private val xPos: Float, private val yPos: Float, private val message: String): AnimatedSprite() {
+    class AnimatedMessage(private val size: Float, private val xPos: Float, private val yPos: Float, private val message: String): AnimatedSprite() {
         private var done = false
         private val paint = Paint()
 
         init {
             paint.color = Color.WHITE
+            paint.textSize = size
         }
 
         override fun isDone(): Boolean {
             return done
         }
 
-        override fun startAnimation(gameEngine: GameEngine) {
-            // TODO - Get a periodic timer to call ::animateCallback()
+        override fun startAnimation(timingServer: GameEngine.TimingServer) {
+            timingServer.addDelayedEvent(::animateCallback, "AnimatedMessage", 2000)
         }
 
-        override fun stopAnimation(gameEngine: GameEngine) {
+        override fun stopAnimation(timingServer: GameEngine.TimingServer) {
             // TODO - save the periodic timer state.
         }
 
-        override fun resumeAnimation(gameEngine: GameEngine) {
+        override fun resumeAnimation(timingServer: GameEngine.TimingServer) {
             // TODO - resume using the saved state from stopAnimation()
         }
 

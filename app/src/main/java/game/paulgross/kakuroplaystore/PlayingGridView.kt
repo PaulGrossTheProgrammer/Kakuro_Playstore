@@ -150,6 +150,12 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         theStars = stars
     }
 
+    private var spriteArray: Array<Sprite> = arrayOf()
+
+    fun updateSprites(newSprites: Array<Sprite>) {
+        spriteArray = newSprites
+    }
+
     fun setGameState(newestGameState: KakuroGameplayDefinition.StateVariables) {
         var prevKey = ""
         if (gameState != null) {
@@ -688,8 +694,14 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             }
         }
 
+        // OLD STAR CODE
         for (star in theStars) {
             star.drawCallback(canvas)
+        }
+
+        // New Sprite code
+        for (sprite in spriteArray) {
+            sprite.drawCallback(canvas)
         }
     }
 

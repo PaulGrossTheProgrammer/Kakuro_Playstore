@@ -216,6 +216,10 @@ class GameEngine(): Thread() {
         Log.d(TAG, "The Game Server has shut down.")
     }
 
+    fun getTimingServer(): TimingServer? {
+        return timingServer
+    }
+
     fun resumeTimingServer() {
         // FIXME - timing server doesn't resume saved timers after screen rotation.
         if (null != timingServer) {
