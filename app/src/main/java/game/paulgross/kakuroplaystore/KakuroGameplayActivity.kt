@@ -182,8 +182,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     private fun animateCallback(message: GameEngine.Message) {
-//        println("#### Animation loop running ...")
-
         // Remove any stars that have completed their animation.
         var starChanged = false
         val iterator = starList.iterator()
@@ -193,15 +191,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
             } else {
                 if (i.isDrawRequired()) {
                     starChanged = true
-                    // TODO - can I break from the loop here?
-                    // Because just one change will force the new list to the View
                 }
             }
         }
 
+        // Any changed star will send a complete Array of stars to the Grid for display.
         if (starChanged) {
             val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-            playGridView.setStars(starList.toList())
+            playGridView.setStars(starList.toTypedArray())
             playGridView.invalidate()
         }
     }
@@ -231,7 +228,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var starPathDrawBuffer: Path = Path()
 
         private var done = false
-//        private var changed = true  // Changed must be the initial state to request onDraw() to run.
         private val starPaint = Paint()
         private val starScale = 8f
 
@@ -304,7 +300,44 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 canvas.drawPath(starPathDrawBuffer, starPaint)
             }
         }
+
     }
+
+    class AnimatedMessage(private val size: Int, private val xPos: Float, private val yPos: Float, private val message: String): BaseSprite() {
+        private var done = false
+        private val paint = Paint()
+
+        init {
+            paint.color = Color.WHITE
+        }
+
+        override fun isDone(): Boolean {
+            TODO("Not yet implemented")
+        }
+
+        override fun startAnimation(gameEngine: GameEngine) {
+            TODO("Not yet implemented")
+        }
+
+        override fun stopAnimation(gameEngine: GameEngine) {
+            TODO("Not yet implemented")
+        }
+
+        override fun resumeAnimation(gameEngine: GameEngine) {
+            TODO("Not yet implemented")
+        }
+
+        override fun animateCallback(message: GameEngine.Message) {
+            TODO("Not yet implemented")
+        }
+
+        override fun doDraw(canvas: Canvas) {
+            if (!done) {
+                canvas.drawText(message, xPos, yPos, paint)
+            }
+        }
+    }
+
 
     //
     // Controller handling: D-pad used by Google TV

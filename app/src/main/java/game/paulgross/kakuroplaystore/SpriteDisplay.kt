@@ -14,9 +14,6 @@ interface Sprite {
     fun doDraw(canvas: Canvas)
 }
 
-// TODO - maybe make an abstract class BaseSprite that force-implements the requirement
-// that redrawRequired is initialised to true, and and set to false after every drawCallback.
-
 abstract class BaseSprite: Sprite {
     private var requireDraw = true  // The initial state of the sprite needs to be drawn.
 
@@ -32,7 +29,7 @@ abstract class BaseSprite: Sprite {
         return requireDraw
     }
 
-    final fun drawCallback(canvas: Canvas) {
+    fun drawCallback(canvas: Canvas) {
         doDraw(canvas)
         requireDraw = false
     }

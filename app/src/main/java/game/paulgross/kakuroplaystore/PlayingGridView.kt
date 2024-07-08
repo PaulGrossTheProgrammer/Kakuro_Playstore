@@ -144,9 +144,9 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         theStar = star
     }
 
-    var theStars = listOf<AnimatedStar>()
+    private var theStars = arrayOf<AnimatedStar>()
 
-    fun setStars(stars: List<AnimatedStar>) {
+    fun setStars(stars: Array<AnimatedStar>) {
         theStars = stars
     }
 
