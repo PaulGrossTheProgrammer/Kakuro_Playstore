@@ -137,19 +137,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         setOnTouchListener(CustomListener(this))
     }
 
-    // TODO - Make the stars into a list to allow mutiple stars.
-    // TODO - find a thread-safe way to pass multiple stars from the Activity to this View.
-    var theStar: KakuroGameplayActivity.AnimatedStar? = null
-    fun addStar(star: KakuroGameplayActivity.AnimatedStar) {
-        theStar = star
-    }
-
-    private var theStars = arrayOf<AnimatedStar>()
-
-    fun setStars(stars: Array<AnimatedStar>) {
-        theStars = stars
-    }
-
     private var spriteArray: Array<Sprite> = arrayOf()
 
     fun updateSprites(newSprites: Array<Sprite>) {
@@ -401,7 +388,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         if (measuredWidth == 0 || measuredHeight == 0) {
             return
         }
-//        println("#### rescale: measuredWidth = $measuredWidth")
 
         // TODO - pre-allocate the TouchArea for each on screen index so that we can remove the allocation code and boundary intersect code from onDraw().
         resetTouchAreas()
@@ -694,12 +680,6 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             }
         }
 
-        // OLD STAR CODE
-        for (star in theStars) {
-            star.drawCallback(canvas)
-        }
-
-        // New Sprite code
         for (sprite in spriteArray) {
             sprite.drawCallback(canvas)
         }

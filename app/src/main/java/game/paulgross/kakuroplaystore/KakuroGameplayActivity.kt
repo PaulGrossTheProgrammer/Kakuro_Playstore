@@ -69,7 +69,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueCallbackMessage)
 
         engine.resumeTimingServer()
-        startAnimationLoop(engine) // Old code
+//        startAnimationLoop(engine) // Old code
 
         // New sprite code
         // TODO - Maybe put a static reference to the TimingServer in the companion object??
@@ -89,7 +89,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         println("#### Activity onPause()")
-        stopAnimationLoop(engine)
+//        stopAnimationLoop(engine)
         engine.queueMessageFromActivity(GameEngine.Message("RequestStopStateChanges"), ::queueCallbackMessage)
         engine.pauseTimingServer()
 
@@ -144,10 +144,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
         if (checkForSolved == true) {
             if (gameState!!.solved) {
                 // TODO - replace this with animated text in the grid itself.
-                Toast.makeText(this, "SOLVED!", Toast.LENGTH_LONG).show()
+//                Toast.makeText(this, "SOLVED!", Toast.LENGTH_LONG).show()
 
                 println("#### Adding AnimatedMessage.")
-                val sprite = AnimatedMessage( 100f, 400f,"SOLVED!",60f, 1.03f,)
+                val sprite = AnimatedMessage( 100f, 400f,"WINNER!",60f, 1.03f,)
                 spriteDisplay?.addSprite(sprite, "Messages", start = true)
 
             }
@@ -193,54 +193,17 @@ class KakuroGameplayActivity : AppCompatActivity() {
         playGridView.invalidate()
     }
 
-    private val starList = mutableListOf<AnimatedStar>()
-
-    private fun startAnimationLoop(engine: GameEngine) {
-        engine.requestPeriodicEvent(::animateCallback, "AnimationLoop", 50)
-    }
-
-    private fun stopAnimationLoop(engine: GameEngine) {
-        engine.cancelEventsByType("AnimationLoop")
-    }
-
-    private fun animateCallback(message: GameEngine.Message) {
-        // Remove any stars that have completed their animation.
-        var starChanged = false
-        val iterator = starList.iterator()
-        for (i in iterator) {
-            if (i.isDone()) {
-                iterator.remove()
-            } else {
-                if (i.isDrawRequired()) {
-                    starChanged = true
-                }
-            }
-        }
-
-        // Any changed star will send a complete Array of stars to the Grid for display.
-        if (starChanged) {
-            val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-            playGridView.setStars(starList.toTypedArray())
-            playGridView.invalidate()
-        }
-    }
-
     private fun createDelayedRandomStar(message: GameEngine.Message) {
         val randomDelay = Random.nextInt(200 .. 600)
         engine.requestDelayedEvent(::createRandomStar, "SolvedAnimationStar", randomDelay)
     }
 
     private fun createRandomStar(message: GameEngine.Message) {
-        val ts = engine.getTimingServer()
-        if (ts != null) {
-            val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-            val star = AnimatedStar(playGridView.width, playGridView.height)
-            star.startAnimation(ts)
-            starList.add(star)
-        }
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        val sprite = AnimatedStar(playGridView.width, playGridView.height)
+        spriteDisplay?.addSprite(sprite, "SolvedAnimationStar", start = true)
     }
 
-    // TODO - move this to the new animator system.
     class AnimatedStar(private val width: Int, private val height: Int): AnimatedSprite() {
 
         private val transformStarMatrix = Matrix()
@@ -299,9 +262,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             startAnimation(timingServer)
         }
 
-        /**
-         * This function is called by an external Timer Thread.
-         */
+
         override fun animateCallback(message: GameEngine.Message) {
             if (message.getString("final") == "true") {
                 setDone()
@@ -312,10 +273,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             setDrawRequired()
         }
 
-        /**
-         * This function is called by an external Thread.
-         * starPathDrawBuffer is drawn to avoid the caller's Thread conflicting with the Thread using animateCallback()
-         */
         override fun doDraw(canvas: Canvas) {
             canvas.drawPath(starPathDrawBuffer, starPaint)
         }
