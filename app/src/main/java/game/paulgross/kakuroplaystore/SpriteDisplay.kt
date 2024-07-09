@@ -4,6 +4,11 @@ import android.graphics.Canvas
 
 interface Sprite {
     fun isDone(): Boolean
+    fun setDone()
+
+    fun isVisible(): Boolean
+    fun setVisibilityState(visibility: Boolean)
+
     fun isDrawRequired(): Boolean  // Maybe change this to isRedrawRequired()
 
     fun setDrawRequired()
@@ -14,19 +19,38 @@ interface Sprite {
     fun startAnimation(timingServer: GameEngine.TimingServer)
     fun stopAnimation(timingServer: GameEngine.TimingServer)
     fun resumeAnimation(timingServer: GameEngine.TimingServer)
-    fun animateCallback(message: GameEngine.Message)  // Do I need this in the interface???
+    fun animateCallback(message: GameEngine.Message)
+
+    /**
+     * The animation Thread will call this to draw the sprite.
+     */
     fun doDraw(canvas: Canvas)
     fun drawCallback(canvas: Canvas)
 }
 
 abstract class AnimatedSprite: Sprite {
     private var requireDraw = true  // The initial state of the sprite needs to be drawn.
+    private var done = false
+    private var visible = true
+
+    final override fun isDone(): Boolean {
+        return done
+    }
+
+    final override fun setDone() {
+        done = true
+    }
+
+    final override fun isVisible(): Boolean {
+        return visible
+    }
+
+    final override fun setVisibilityState(state: Boolean) {
+        visible = state
+    }
 
     /**
      * Call this function whenever the sprite has changed appearance in any way.
-     * This means that the animation thread can call doDraw() via drawCallback() on it's next cycle,
-     * and then isDrawRequired becomes False again.
-     * Note that the animator still might not call doDraw() on it's next cycle, for example if the sprite is hidden.
      */
     final override fun setDrawRequired() {
         requireDraw = true
@@ -36,20 +60,31 @@ abstract class AnimatedSprite: Sprite {
         requireDraw = false
     }
 
+    /**
+     * If this returns True, then the animation thread knows that it can call doDraw() via drawCallback() on it's next cycle.
+     * After the animation thread calls drawCallback(), isDrawRequired() returns False again.
+     *
+     * Note that the animator still might not call doDraw() on it's next cycle, for example if the sprite is hidden.
+     */
     final override fun isDrawRequired(): Boolean {
         return requireDraw
     }
 
+    /**
+     * The animation thread calls this function if it needs to draw this sprite on the canvas via onDraw().
+     * After onDraw(), isDrawRequired() returns False again.
+     */
     final override fun drawCallback(canvas: Canvas) {
-        doDraw(canvas)
-        requireDraw = false
+        if (!done && visible) {
+            doDraw(canvas)
+            requireDraw = false
+        }
     }
 
-    // Default empty implementations, which can be overridden:
+    // Default empty function implementations, which can optionally be overridden:
     override fun startAnimation(timingServer: GameEngine.TimingServer){}
     override fun stopAnimation(timingServer: GameEngine.TimingServer){}
     override fun resumeAnimation(timingServer: GameEngine.TimingServer){}
-
 }
 
 abstract class StaticSprite: Sprite {
@@ -146,6 +181,8 @@ class SpriteDisplay(private val timingServer: GameEngine.TimingServer, val perio
     }
 
     private fun animateCallback(message: GameEngine.Message) {
+//        println("#### SpriteDisplay - animateCallback() running...")
+//        println("#### SpriteDisplay - checking ${allSprites.size} sprites...")
         var anyChangedSprites = false
         val doneSprites = mutableListOf<Sprite>()
         for (sprite in allSprites) {

@@ -145,6 +145,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (gameState!!.solved) {
                 // TODO - replace this with animated text in the grid itself.
                 Toast.makeText(this, "SOLVED!", Toast.LENGTH_LONG).show()
+
+                println("#### Adding AnimatedMessage.")
                 val sprite = AnimatedMessage( 100f, 400f,"SOLVED!",60f, 1.03f,)
                 spriteDisplay?.addSprite(sprite, "Messages", start = true)
 
@@ -251,7 +253,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
          */
         private var starPathDrawBuffer: Path = Path()
 
-        private var done = false
         private val starPaint = Paint()
         private val starScale = 8f
 
@@ -298,16 +299,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
             startAnimation(timingServer)
         }
 
-        override fun isDone(): Boolean {
-            return done
-        }
-
         /**
          * This function is called by an external Timer Thread.
          */
         override fun animateCallback(message: GameEngine.Message) {
             if (message.getString("final") == "true") {
-                done = true
+                setDone()
             } else {
                 starPath.transform(transformStarMatrix)
                 starPathDrawBuffer = Path(starPath)  // Allow the onDraw() Thread to see the change.
@@ -320,28 +317,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
          * starPathDrawBuffer is drawn to avoid the caller's Thread conflicting with the Thread using animateCallback()
          */
         override fun doDraw(canvas: Canvas) {
-            if (!done) {
-                canvas.drawPath(starPathDrawBuffer, starPaint)
-            }
-        }
-
-    }
-
-    // TODO - add a bitmap and scaling width, height, as the constructor args.
-    class BackgroundSprite(): StaticSprite() {
-        override fun isDone(): Boolean {
-            return false
-        }
-
-        override fun doDraw(canvas: Canvas) {
-            TODO("Not yet implemented")
+            canvas.drawPath(starPathDrawBuffer, starPaint)
         }
 
     }
 
     // TODO - add args for screen dimensions, duration. Also relative x, y position.
     class AnimatedMessage(private val xPos: Float, private val yPos: Float, private val message: String, private val size: Float, val growthRate: Float): AnimatedSprite() {
-        private var done = false
         private val paint = Paint()
 
         init {
@@ -349,13 +331,14 @@ class KakuroGameplayActivity : AppCompatActivity() {
             paint.textSize = size
         }
 
-        override fun isDone(): Boolean {
-            return done
+        override fun startAnimation(timingServer: GameEngine.TimingServer) {
+            // TODO - base the period and repeats on a new duration arg.
+            timingServer.addFinitePeriodicEvent(::animateCallback, "AnimatedMessage", 50, 30)
         }
 
         override fun animateCallback(message: GameEngine.Message) {
             if (message.getString("final") == "true") {
-                done = true
+                setDone()
             } else {
                 paint.textSize *= growthRate
                 // TODO - Fade text away. Use "repeat" count in message to trigger
@@ -364,9 +347,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         override fun doDraw(canvas: Canvas) {
-            if (!done) {
-                canvas.drawText(message, xPos, yPos, paint)
-            }
+            canvas.drawText(message, xPos, yPos, paint)
         }
     }
 
