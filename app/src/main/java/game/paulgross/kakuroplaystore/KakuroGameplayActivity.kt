@@ -75,11 +75,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
         // TODO - Maybe put a static reference to the TimingServer in the companion object??
         val timingServer = engine.getTimingServer()
         if (timingServer != null) {
-            spriteDisplay = SpriteDisplay(timingServer, ::sendSpritesToGrid)
-            // Setup SpriteDisplay here. . .
-            val sprite = AnimatedMessage(100f, 100f, 100f, "Test Message")
-            spriteDisplay?.addSprite(sprite, "Messages", start = true)
-
+            // TODO - add screen dimensions here.
+            // TODO - Adding sprites give access to the screen dimensions via a callback.
+            spriteDisplay = SpriteDisplay(timingServer, 25, ::sendSpritesToGrid)
             spriteDisplay?.startAnimationLoop()
         }
     }
@@ -147,6 +145,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
             if (gameState!!.solved) {
                 // TODO - replace this with animated text in the grid itself.
                 Toast.makeText(this, "SOLVED!", Toast.LENGTH_LONG).show()
+                val sprite = AnimatedMessage( 100f, 400f,"SOLVED!",60f, 1.03f,)
+                spriteDisplay?.addSprite(sprite, "Messages", start = true)
+
             }
             checkForSolved = false
         }
@@ -237,6 +238,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
     }
 
+    // TODO - move this to the new animator system.
     class AnimatedStar(private val width: Int, private val height: Int): AnimatedSprite() {
 
         private val transformStarMatrix = Matrix()
@@ -337,7 +339,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
     }
 
-    class AnimatedMessage(private val size: Float, private val xPos: Float, private val yPos: Float, private val message: String): AnimatedSprite() {
+    // TODO - add args for screen dimensions, duration. Also relative x, y position.
+    class AnimatedMessage(private val xPos: Float, private val yPos: Float, private val message: String, private val size: Float, val growthRate: Float): AnimatedSprite() {
         private var done = false
         private val paint = Paint()
 
@@ -351,23 +354,25 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         override fun startAnimation(timingServer: GameEngine.TimingServer) {
-            timingServer.addDelayedEvent(::animateCallback, "AnimatedMessage", 2000)
+            timingServer.addFinitePeriodicEvent(::animateCallback, "AnimatedMessage", 50, 30)
         }
 
         override fun stopAnimation(timingServer: GameEngine.TimingServer) {
-            // TODO - save the periodic timer state.
+            done = true
         }
 
         override fun resumeAnimation(timingServer: GameEngine.TimingServer) {
-            // TODO - resume using the saved state from stopAnimation()
+            // No resume for this message
         }
 
         override fun animateCallback(message: GameEngine.Message) {
+            println("#### AminatedMessage timer message = ${message.asString()}")
             if (message.getString("final") == "true") {
                 done = true
             } else {
+                paint.textSize *= growthRate
                 // TODO - Make the text bigger, and then fade it away.
-                // TODO - use the progress indicator in the message to decide when the change the text appearance.
+                // TODO - use the progress indicator in the message to decide when to change the text appearance.
             }
             setDrawRequired()
         }

@@ -8,7 +8,8 @@ interface Sprite {
     fun setDrawRequired()
     fun unsetDrawRequired()
 
-    // TODO - change GameEngine to TimingServer
+    // TODO - maybe have a pause animation and a cancel animation
+
     fun startAnimation(timingServer: GameEngine.TimingServer)
     fun stopAnimation(timingServer: GameEngine.TimingServer)
     fun resumeAnimation(timingServer: GameEngine.TimingServer)
@@ -67,14 +68,14 @@ abstract class StaticSprite: Sprite {
 // TODO - implement an abstract class for SimpleSprite that only has drawCallback()
 // This is useful for things like background graphics that never change.
 
-class SpriteDisplay(private val timingServer: GameEngine.TimingServer, private val drawCallback: (spriteList: Array<Sprite>) -> Unit) {
+class SpriteDisplay(private val timingServer: GameEngine.TimingServer, val period: Int, private val drawCallback: (spriteList: Array<Sprite>) -> Unit) {
 
     // TODO - need to determine if I need a setRedrawCallback() func or if it's OK in the constructor.
     // - because the View instance changes when the screen is rotated, and then there is the odd behaviour when the app is backgrounded...
 
     // TODO: Move start and stop animation loop here.
     fun startAnimationLoop() {
-        timingServer.addPeriodicEvent(::animateCallback, "AnimationLoop", 500)
+        timingServer.addPeriodicEvent(::animateCallback, "AnimationLoop", period)
     }
 
     fun stopAnimationLoop() {
