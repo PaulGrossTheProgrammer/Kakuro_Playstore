@@ -5,14 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.CornerPathEffect
 import android.graphics.Matrix
 import android.graphics.Paint
-import android.graphics.Path
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import game.paulgross.kakuroplaystore.KakuroGameplayActivity.AnimatedStar
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -681,7 +678,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         }
 
         for (sprite in spriteArray) {
-            sprite.drawCallback(canvas)
+            sprite.drawSpriteDisplayCallback(canvas)
         }
     }
 

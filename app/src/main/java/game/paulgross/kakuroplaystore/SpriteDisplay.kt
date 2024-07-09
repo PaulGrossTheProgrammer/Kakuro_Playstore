@@ -24,8 +24,8 @@ interface Sprite {
     /**
      * The animation Thread will call this to draw the sprite.
      */
-    fun doDraw(canvas: Canvas)
     fun drawCallback(canvas: Canvas)
+    fun drawSpriteDisplayCallback(canvas: Canvas)
 }
 
 abstract class AnimatedSprite: Sprite {
@@ -74,9 +74,9 @@ abstract class AnimatedSprite: Sprite {
      * The animation thread calls this function if it needs to draw this sprite on the canvas via onDraw().
      * After onDraw(), isDrawRequired() returns False again.
      */
-    final override fun drawCallback(canvas: Canvas) {
+    final override fun drawSpriteDisplayCallback(canvas: Canvas) {
         if (!done && visible) {
-            doDraw(canvas)
+            drawCallback(canvas)
             requireDraw = false
         }
     }
@@ -108,31 +108,33 @@ abstract class StaticSprite: Sprite {
     final override fun resumeAnimation(timingServer: GameEngine.TimingServer) {}
     final override fun animateCallback(message: GameEngine.Message) {}
 
-    final override fun drawCallback(canvas: Canvas) {
-        doDraw(canvas)
+    final override fun drawSpriteDisplayCallback(canvas: Canvas) {
+        drawCallback(canvas)
         requireDraw = false
     }
 }
 // TODO - implement an abstract class for SimpleSprite that only has drawCallback()
 // This is useful for things like background graphics that never change.
 
-class SpriteDisplay(private val timingServer: GameEngine.TimingServer, val period: Int, private val drawCallback: (spriteList: Array<Sprite>) -> Unit) {
+class SpriteDisplay(private val timingServer: GameEngine.TimingServer, private val period: Int, private val drawCallback: (spriteList: Array<Sprite>) -> Unit) {
 
-    // TODO - need to determine if I need a setRedrawCallback() func or if it's OK in the constructor.
+    // TODO - need to determine if I need a setDrawCallback() func, or if it's still OK in the constructor.
     // - because the View instance changes when the screen is rotated, and then there is the odd behaviour when the app is backgrounded...
 
     // TODO: Move start and stop animation loop here.
-    fun startAnimationLoop() {
-        timingServer.addPeriodicEvent(::animateCallback, "AnimationLoop", period)
+    fun startSpriteDisplayLoop() {
+        timingServer.addPeriodicEvent(::periodicCheckCallback, "SpriteDisplayLoop", period)
     }
 
-    fun stopAnimationLoop() {
-        timingServer.cancelEventsByType("AnimationLoop")
+    fun stopSpriteDisplayLoop() {
+        timingServer.cancelEventsByType("SpriteDisplayLoop")
     }
     // provide accessor methods for timers, so that this class can mediate the animation updates.
 
     private val allSprites = mutableListOf<Sprite>()
 
+    // TODO - added Sprites should have their setScreenDimensions() function called here?
+    // Because for Android, the screen dimensions can change, for example due to screen rotation.
     fun addSprite(sprite: Sprite, groupName: String, start: Boolean = false) {
         allSprites.add(sprite)
         if (start) {
@@ -180,9 +182,7 @@ class SpriteDisplay(private val timingServer: GameEngine.TimingServer, val perio
         // Sets the drawing order of sprites.
     }
 
-    private fun animateCallback(message: GameEngine.Message) {
-//        println("#### SpriteDisplay - animateCallback() running...")
-//        println("#### SpriteDisplay - checking ${allSprites.size} sprites...")
+    private fun periodicCheckCallback(message: GameEngine.Message) {
         var anyChangedSprites = false
         val doneSprites = mutableListOf<Sprite>()
         for (sprite in allSprites) {
@@ -195,18 +195,21 @@ class SpriteDisplay(private val timingServer: GameEngine.TimingServer, val perio
         }
         allSprites.removeAll(doneSprites)
 
-        // TODO - Go through all sprites and make a list of visible sprites in drawing order.
+        // Go through all sprites and make a list of visible sprites in drawing order.
+        // Also see if anything has changed.
         val drawList = mutableListOf<Sprite>()
         for (sprite in allSprites) {
-            drawList.add(sprite)
-            if (!anyChangedSprites && sprite.isDrawRequired()) {
-                anyChangedSprites = true
+            if (sprite.isVisible()) {
+                drawList.add(sprite) // Would it be faster to use an Array??? Just shrink the Array later, when invoking the callback below???
+                if (!anyChangedSprites && sprite.isDrawRequired()) {
+                    anyChangedSprites = true
+                }
             }
         }
 
         if (anyChangedSprites) {
-            // This should send a message to the View with all visible sprites.
-            // Note that any previous drawList should continue to be used to draw sprites until this callback is used.
+            // Send a message to the View with all visible sprites.
+            // Note that any previous drawList message should continue to be used to draw sprites until this callback is used.
             drawCallback.invoke(drawList.toTypedArray())
         }
     }

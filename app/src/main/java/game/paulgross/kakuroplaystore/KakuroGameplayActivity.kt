@@ -17,7 +17,6 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -69,16 +68,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueCallbackMessage)
 
         engine.resumeTimingServer()
-//        startAnimationLoop(engine) // Old code
-
-        // New sprite code
-        // TODO - Maybe put a static reference to the TimingServer in the companion object??
         val timingServer = engine.getTimingServer()
         if (timingServer != null) {
             // TODO - add screen dimensions here.
-            // TODO - Adding sprites give access to the screen dimensions via a callback.
-            spriteDisplay = SpriteDisplay(timingServer, 25, ::sendSpritesToGrid)
-            spriteDisplay?.startAnimationLoop()
+            // TODO - Added sprites can access to the screen dimensions via a callback.
+            spriteDisplay = SpriteDisplay(timingServer, 50, ::sendSpritesToGrid)
+            spriteDisplay?.startSpriteDisplayLoop()
         }
     }
 
@@ -94,7 +89,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine.pauseTimingServer()
 
         if (spriteDisplay != null) {
-            spriteDisplay?.stopAnimationLoop()
+            spriteDisplay?.stopSpriteDisplayLoop()
             spriteDisplay = null
         }
 
@@ -143,13 +138,8 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         if (checkForSolved == true) {
             if (gameState!!.solved) {
-                // TODO - replace this with animated text in the grid itself.
-//                Toast.makeText(this, "SOLVED!", Toast.LENGTH_LONG).show()
-
-                println("#### Adding AnimatedMessage.")
                 val sprite = AnimatedMessage( 100f, 400f,"WINNER!",60f, 1.03f,)
                 spriteDisplay?.addSprite(sprite, "Messages", start = true)
-
             }
             checkForSolved = false
         }
@@ -214,7 +204,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
          * This is the copy of starPath needed by the thread that calls onDraw().
          * For Thread safety, changes starPath have to be isolated from the Thread calling onDraw().
          */
-        private var starPathDrawBuffer: Path = Path()
+        private var starPathForOnDraw: Path = Path()
 
         private val starPaint = Paint()
         private val starScale = 8f
@@ -239,7 +229,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             // Set the initial position.
             transformStarMatrix.setTranslate(width * (0.7f * Random.nextFloat()) + 0.15f, height * (0.7f * Random.nextFloat()) + 0.15f)
             starPath.transform(transformStarMatrix)
-            starPathDrawBuffer = Path(starPath)  // So onDraw() can see the change.
+            starPathForOnDraw = Path(starPath)  // So onDraw() can see the change.
 
             // Set the speed
             transformStarMatrix.setTranslate(width * 0.015f * (Random.nextFloat() -0.5f), width * 0.015f  * (Random.nextFloat() -0.5f))
@@ -268,13 +258,16 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 setDone()
             } else {
                 starPath.transform(transformStarMatrix)
-                starPathDrawBuffer = Path(starPath)  // Allow the onDraw() Thread to see the change.
+
+                // For thread safety, copy the Path so that doDraw() can use it.
+                starPathForOnDraw = Path(starPath)
             }
             setDrawRequired()
         }
 
-        override fun doDraw(canvas: Canvas) {
-            canvas.drawPath(starPathDrawBuffer, starPaint)
+        override fun drawCallback(canvas: Canvas) {
+            // For thread safety, only draw with the latest copy of starPath in starPathForOnDraw.
+            canvas.drawPath(starPathForOnDraw, starPaint)
         }
 
     }
@@ -303,7 +296,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             setDrawRequired()
         }
 
-        override fun doDraw(canvas: Canvas) {
+        override fun drawCallback(canvas: Canvas) {
             canvas.drawText(message, xPos, yPos, paint)
         }
     }
