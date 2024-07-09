@@ -353,26 +353,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
             return done
         }
 
-        override fun startAnimation(timingServer: GameEngine.TimingServer) {
-            timingServer.addFinitePeriodicEvent(::animateCallback, "AnimatedMessage", 50, 30)
-        }
-
-        override fun stopAnimation(timingServer: GameEngine.TimingServer) {
-            done = true
-        }
-
-        override fun resumeAnimation(timingServer: GameEngine.TimingServer) {
-            // No resume for this message
-        }
-
         override fun animateCallback(message: GameEngine.Message) {
-            println("#### AminatedMessage timer message = ${message.asString()}")
             if (message.getString("final") == "true") {
                 done = true
             } else {
                 paint.textSize *= growthRate
-                // TODO - Make the text bigger, and then fade it away.
-                // TODO - use the progress indicator in the message to decide when to change the text appearance.
+                // TODO - Fade text away. Use "repeat" count in message to trigger
             }
             setDrawRequired()
         }

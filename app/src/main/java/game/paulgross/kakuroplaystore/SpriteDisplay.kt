@@ -5,6 +5,7 @@ import android.graphics.Canvas
 interface Sprite {
     fun isDone(): Boolean
     fun isDrawRequired(): Boolean  // Maybe change this to isRedrawRequired()
+
     fun setDrawRequired()
     fun unsetDrawRequired()
 
@@ -21,6 +22,12 @@ interface Sprite {
 abstract class AnimatedSprite: Sprite {
     private var requireDraw = true  // The initial state of the sprite needs to be drawn.
 
+    /**
+     * Call this function whenever the sprite has changed appearance in any way.
+     * This means that the animation thread can call doDraw() via drawCallback() on it's next cycle,
+     * and then isDrawRequired becomes False again.
+     * Note that the animator still might not call doDraw() on it's next cycle, for example if the sprite is hidden.
+     */
     final override fun setDrawRequired() {
         requireDraw = true
     }
@@ -37,6 +44,12 @@ abstract class AnimatedSprite: Sprite {
         doDraw(canvas)
         requireDraw = false
     }
+
+    // Default empty implementations, which can be overridden:
+    override fun startAnimation(timingServer: GameEngine.TimingServer){}
+    override fun stopAnimation(timingServer: GameEngine.TimingServer){}
+    override fun resumeAnimation(timingServer: GameEngine.TimingServer){}
+
 }
 
 abstract class StaticSprite: Sprite {
