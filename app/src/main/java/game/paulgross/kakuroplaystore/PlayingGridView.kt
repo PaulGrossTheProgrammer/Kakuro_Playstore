@@ -56,6 +56,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
     private val downHelpSets = HelpSets()
     private val acrossHelpSets = HelpSets()
 
+    private var sizeChangedCallback: ((width: Int, height: Int) -> Unit)? = null
+
     /*
     // Animation variables
     */
@@ -134,7 +136,7 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         setOnTouchListener(CustomListener(this))
     }
 
-    private var spriteArray: Array<Sprite> = arrayOf()
+    private var spriteArray: Array<Sprite> = arrayOf() // TODO - simplify this Array to a set of function calls taking a Canvas object.
 
     fun updateSprites(newSprites: Array<Sprite>) {
         spriteArray = newSprites
@@ -445,6 +447,18 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
 
         resetTouchAreas()
         saveUIState()
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+
+        if (changed) {
+            sizeChangedCallback?.invoke(right-left, bottom-top)
+        }
+    }
+
+    fun setSizeChangedCallback(callback: (width: Int, height: Int) -> Unit) {
+        sizeChangedCallback = callback
     }
 
     override fun onDraw(canvas: Canvas) {

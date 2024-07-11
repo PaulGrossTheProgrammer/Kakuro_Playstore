@@ -68,17 +68,16 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine.queueMessageFromActivity(GameEngine.Message("RequestStateChanges"), ::queueCallbackMessage)
 
         engine.resumeTimingServer()
+        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+        playGridView.setSizeChangedCallback(::spriteDisplaySizeChangedCallback)
+    }
+
+    private fun spriteDisplaySizeChangedCallback(width: Int, height: Int) {
+        println("#### spriteDisplaySizeChangedCallback() ...")
+        println("#### width = $width, height = $height")
         val timingServer = engine.getTimingServer()
         if (timingServer != null) {
-            // TODO - add screen dimensions here.
-            // TODO - Added sprites can access to the screen dimensions via a callback.
-            val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-
-            // FIXME - when onResume() is called, the grid dimensions are 0!!! Need a way to get valid values to resize the SpriteDisplay ...
-            println("#### onResume(): Grid width = ${playGridView.width}, Grid height = ${playGridView.height}")
-            // TODO - replace these fudged height and width values with real values ...
-//            spriteDisplay = SpriteDisplay(playGridView.width, playGridView.height, timingServer, 50, ::sendSpritesToGrid)
-            spriteDisplay = SpriteDisplay(800, 800, timingServer, 50, ::sendSpritesToGrid)
+            spriteDisplay = SpriteDisplay(width, height, timingServer,50, ::sendSpritesToGrid)
             spriteDisplay?.startSpriteDisplayLoop()
         }
     }
