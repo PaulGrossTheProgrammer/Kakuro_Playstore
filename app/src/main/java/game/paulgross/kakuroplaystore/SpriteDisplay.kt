@@ -134,6 +134,14 @@ class SpriteDisplay(private var width: Int, private var height: Int, private val
     // - because the View instance changes when the screen is rotated, and then there is the odd behaviour when the app is backgrounded...
 
     // TODO - do we need an update call for width and height?
+    fun updateWidthAndHeight(width: Int, height: Int) {
+        this.width = width
+        this.height = height
+
+        // TODO - iterate allSprites and update with setWidthAndHeightCallback()
+        // allSprites
+    }
+
 
     // TODO: Move start and stop animation loop here.
     fun startSpriteDisplayLoop() {

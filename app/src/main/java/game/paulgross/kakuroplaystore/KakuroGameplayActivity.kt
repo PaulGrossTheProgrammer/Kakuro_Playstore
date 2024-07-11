@@ -73,9 +73,17 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         // Note that if the app was backgrounded, this seems to be needed to setup sprite display again ... investigate ...
         // From a full start, playGridView.height and playGridView.width are both zero ...
-        if (playGridView.height != 0 && playGridView.width != 0) {
+        if (playGridView.width != 0 && playGridView.height != 0) {
             // TODO Maybe there is a sprite display in memory already??
-            startSpriteDisplay(playGridView.height, playGridView.width)
+            if (spriteDisplay != null) {
+                // What to do here???
+                println("#### onResume() - there is already a spritedisplay .... so update it???")
+                // But maybe it points to the wrong View - an old one that is no longer displayed?
+                // But the callback is this class, so it should use  sendSpritesToGrid() and get the latest
+                spriteDisplay?.updateWidthAndHeight(playGridView.width, playGridView.height)
+            } else {
+                startSpriteDisplay(playGridView.width, playGridView.height)
+            }
         }
     }
 
@@ -196,6 +204,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
      *
      */
     private fun sendSpritesToGrid(spriteArray: Array<Sprite>) {
+        // TODO - send an Array of function calls instead. Only drawCallback() is needed.
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.updateSprites(spriteArray)
         playGridView.invalidate()
