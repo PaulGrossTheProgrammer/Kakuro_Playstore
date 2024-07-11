@@ -3,6 +3,9 @@ package game.paulgross.kakuroplaystore
 import android.graphics.Canvas
 
 interface Sprite {
+
+    fun setWidthAndHeightCallback(width: Int, height: Int)
+
     fun isDone(): Boolean
     fun setDone()
 
@@ -32,6 +35,15 @@ abstract class AnimatedSprite: Sprite {
     private var requireDraw = true  // The initial state of the sprite needs to be drawn.
     private var done = false
     private var visible = true
+
+    // FIXME - disallow setters other than setWidthAndHeightCallback
+    var containerWidth = 0
+    var containerHeight = 0
+
+    final override fun setWidthAndHeightCallback(width: Int, height: Int) {
+        containerWidth = width
+        containerHeight = width
+    }
 
     final override fun isDone(): Boolean {
         return done
@@ -116,10 +128,12 @@ abstract class StaticSprite: Sprite {
 // TODO - implement an abstract class for SimpleSprite that only has drawCallback()
 // This is useful for things like background graphics that never change.
 
-class SpriteDisplay(private val timingServer: GameEngine.TimingServer, private val period: Int, private val drawCallback: (spriteList: Array<Sprite>) -> Unit) {
+class SpriteDisplay(private var width: Int, private var height: Int, private val timingServer: GameEngine.TimingServer, private val period: Int, private val drawCallback: (spriteList: Array<Sprite>) -> Unit) {
 
     // TODO - need to determine if I need a setDrawCallback() func, or if it's still OK in the constructor.
     // - because the View instance changes when the screen is rotated, and then there is the odd behaviour when the app is backgrounded...
+
+    // TODO - do we need an update call for width and height?
 
     // TODO: Move start and stop animation loop here.
     fun startSpriteDisplayLoop() {
@@ -136,6 +150,7 @@ class SpriteDisplay(private val timingServer: GameEngine.TimingServer, private v
     // TODO - added Sprites should have their setScreenDimensions() function called here?
     // Because for Android, the screen dimensions can change, for example due to screen rotation.
     fun addSprite(sprite: Sprite, groupName: String, start: Boolean = false) {
+        sprite.setWidthAndHeightCallback(width, height)
         allSprites.add(sprite)
         if (start) {
             sprite.startAnimation(timingServer)

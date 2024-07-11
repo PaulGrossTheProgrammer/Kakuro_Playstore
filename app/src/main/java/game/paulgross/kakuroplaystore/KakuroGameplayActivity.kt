@@ -72,7 +72,13 @@ class KakuroGameplayActivity : AppCompatActivity() {
         if (timingServer != null) {
             // TODO - add screen dimensions here.
             // TODO - Added sprites can access to the screen dimensions via a callback.
-            spriteDisplay = SpriteDisplay(timingServer, 50, ::sendSpritesToGrid)
+            val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
+
+            // FIXME - when onResume() is called, the grid dimensions are 0!!! Need a way to get valid values to resize the SpriteDisplay ...
+            println("#### onResume(): Grid width = ${playGridView.width}, Grid height = ${playGridView.height}")
+            // TODO - replace these fudged height and width values with real values ...
+//            spriteDisplay = SpriteDisplay(playGridView.width, playGridView.height, timingServer, 50, ::sendSpritesToGrid)
+            spriteDisplay = SpriteDisplay(800, 800, timingServer, 50, ::sendSpritesToGrid)
             spriteDisplay?.startSpriteDisplayLoop()
         }
     }
@@ -138,7 +144,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         if (checkForSolved == true) {
             if (gameState!!.solved) {
-                val sprite = AnimatedMessage( 100f, 400f,"WINNER!",60f, 1.03f,)
+                val sprite = AnimatedMessage("WINNER!",60f, 1.02f,)
                 spriteDisplay?.addSprite(sprite, "Messages", start = true)
             }
             checkForSolved = false
@@ -273,31 +279,38 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     // TODO - add args for screen dimensions, duration. Also relative x, y position.
-    class AnimatedMessage(private val xPos: Float, private val yPos: Float, private val message: String, private val size: Float, val growthRate: Float): AnimatedSprite() {
-        private val paint = Paint()
+    class AnimatedMessage(private val message: String, private val size: Float, val growthRate: Float): AnimatedSprite() {
+        private val textPaint = Paint()
+        private var xPos = 0f
+        private var yPos = 0f
 
         init {
-            paint.color = Color.WHITE
-            paint.textSize = size
+            textPaint.setTextAlign(Paint.Align.CENTER)
+            textPaint.color = Color.WHITE
+            textPaint.textSize = size
         }
 
         override fun startAnimation(timingServer: GameEngine.TimingServer) {
+            println("#### AnimatedMessage: width = $containerWidth, height = $containerHeight")
+            xPos = 0.5f * containerWidth
+            yPos = 0.5f * containerHeight - 0.5f * (textPaint.descent() + textPaint.ascent())
+
             // TODO - base the period and repeats on a new duration arg.
-            timingServer.addFinitePeriodicEvent(::animateCallback, "AnimatedMessage", 50, 30)
+            timingServer.addFinitePeriodicEvent(::animateCallback, "AnimatedMessage", 50, 50)
         }
 
         override fun animateCallback(message: GameEngine.Message) {
             if (message.getString("final") == "true") {
                 setDone()
             } else {
-                paint.textSize *= growthRate
+                textPaint.textSize *= growthRate
                 // TODO - Fade text away. Use "repeat" count in message to trigger
             }
             setDrawRequired()
         }
 
         override fun drawCallback(canvas: Canvas) {
-            canvas.drawText(message, xPos, yPos, paint)
+            canvas.drawText(message, xPos, yPos, textPaint)
         }
     }
 
