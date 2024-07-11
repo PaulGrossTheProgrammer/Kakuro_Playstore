@@ -70,10 +70,23 @@ class KakuroGameplayActivity : AppCompatActivity() {
         engine.resumeTimingServer()
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.setSizeChangedCallback(::spriteDisplaySizeChangedCallback)
+
+        // Note that if the app was backgrounded, this seems to be needed to setup sprite display again ... investigate ...
+        // From a full start, playGridView.height and playGridView.width are both zero ...
+        if (playGridView.height != 0 && playGridView.width != 0) {
+            // TODO Maybe there is a sprite display in memory already??
+            startSpriteDisplay(playGridView.height, playGridView.width)
+        }
     }
 
     private fun spriteDisplaySizeChangedCallback(width: Int, height: Int) {
         println("#### spriteDisplaySizeChangedCallback() ...")
+        println("#### width = $width, height = $height")
+        startSpriteDisplay(width, height)
+    }
+
+    private fun startSpriteDisplay(width: Int, height: Int) {
+        println("#### startSpriteDisplay() ...")
         println("#### width = $width, height = $height")
         val timingServer = engine.getTimingServer()
         if (timingServer != null) {
