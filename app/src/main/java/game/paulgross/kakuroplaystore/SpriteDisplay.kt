@@ -3,13 +3,15 @@ package game.paulgross.kakuroplaystore
 import android.graphics.Canvas
 import kotlin.reflect.KFunction1
 
+data class ContainerDimensions(val height: Int, val width: Int)
+
 interface DoesDraw {
     fun drawCallback(canvas: Canvas)
 }
 
 interface Sprite: DoesDraw {
 
-    fun setContainerWidthAndHeightCallback(width: Int, height: Int)
+    fun setContainerDimensionsCallback(dimensions: ContainerDimensions)
 
     fun isDone(): Boolean
     fun setDone()
@@ -42,17 +44,6 @@ abstract class AnimatedSprite: Sprite {
     private var done = false
     private var visible = true
 
-    // FIXME - disallow setters other than setWidthAndHeightCallback
-    var containerWidth = 0
-    var containerHeight = 0
-
-    final override fun setContainerWidthAndHeightCallback(width: Int, height: Int) {
-        containerWidth = width
-        containerHeight = width
-
-        // TODO - this call needs to cascade to a callback function that the implementer can override.
-        // Also, for multithreading safety, send width and height as a pair in a data class.
-    }
 
     final override fun isDone(): Boolean {
         return done
@@ -103,6 +94,7 @@ abstract class AnimatedSprite: Sprite {
     }
 
     // Default empty function implementations, which can optionally be overridden:
+    override fun setContainerDimensionsCallback(dimensions: ContainerDimensions) {}
     override fun startAnimation(timingServer: GameEngine.TimingServer){}
     override fun stopAnimation(timingServer: GameEngine.TimingServer){}
     override fun resumeAnimation(timingServer: GameEngine.TimingServer){}
@@ -137,18 +129,20 @@ abstract class StaticSprite: Sprite {
 // TODO - implement an abstract class for SimpleSprite that only has drawCallback()
 // This is useful for things like background graphics that never change.
 
-class SpriteDisplay(private var width: Int, private var height: Int, private val timingServer: GameEngine.TimingServer, private val period: Int, private val drawCallback: KFunction1<Array<DoesDraw>, Unit>) {
+class SpriteDisplay(private var containerDimensions: ContainerDimensions, private val timingServer: GameEngine.TimingServer, private val period: Int, private val drawCallback: KFunction1<Array<DoesDraw>, Unit>) {
 
     // TODO - need to determine if I need a setDrawCallback() func, or if it's still OK in the constructor.
     // - because the View instance changes when the screen is rotated, and then there is the odd behaviour when the app is backgrounded...
 
     // TODO - do we need an update call for width and height?
-    fun updateWidthAndHeight(width: Int, height: Int) {
-        this.width = width
-        this.height = height
+    fun setContainerDimensions(containerDimensions: ContainerDimensions) {
+        this.containerDimensions = containerDimensions
 
         // TODO - iterate allSprites and update with setWidthAndHeightCallback()
         // allSprites
+        for (sprite in allSprites) {
+            sprite.setContainerDimensionsCallback(this.containerDimensions)
+        }
     }
 
 
@@ -164,10 +158,12 @@ class SpriteDisplay(private var width: Int, private var height: Int, private val
 
     private val allSprites = mutableListOf<Sprite>()
 
-    // TODO - added Sprites should have their setContainerDimensions() function called here?
-    // Because for Android, the screen dimensions can change, for example due to screen rotation.
+    /*
+    ** Added Sprites have their setContainerDimensions() function called,
+    ** and if start == true, then startAnimationCallback() is then called.
+     */
     fun addSprite(sprite: Sprite, groupName: String, start: Boolean = false) {
-        sprite.setContainerWidthAndHeightCallback(width, height)
+        sprite.setContainerDimensionsCallback(containerDimensions)
         allSprites.add(sprite)
         if (start) {
             sprite.startAnimation(timingServer)

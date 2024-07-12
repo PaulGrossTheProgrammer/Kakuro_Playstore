@@ -85,7 +85,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private fun startSpriteDisplay(width: Int, height: Int) {
         val timingServer = engine.getTimingServer()
         if (timingServer != null) {
-            spriteDisplay = SpriteDisplay(width, height, timingServer,50, ::sendDrawCallbacksToGrid)
+            spriteDisplay = SpriteDisplay(ContainerDimensions(width, height), timingServer,50, ::sendDrawCallbacksToGrid)
             spriteDisplay?.startSpriteDisplayLoop()
         }
     }
@@ -185,6 +185,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         spriteDisplay?.addSprite(sprite, "SolvedAnimationStar", start = true)
     }
 
+    // TODO - get width and height from setContainerDimensionsCallback() instead of constructor.
     class AnimatedStar(private val width: Int, private val height: Int): AnimatedSprite() {
 
         private val transformStarMatrix = Matrix()
@@ -275,12 +276,20 @@ class KakuroGameplayActivity : AppCompatActivity() {
             textPaint.textSize = size
         }
 
-        override fun startAnimation(timingServer: GameEngine.TimingServer) {
-            xPos = 0.5f * containerWidth
-            yPos = 0.5f * containerHeight - 0.5f * (textPaint.descent() + textPaint.ascent())
+        private var containerDimensions: ContainerDimensions? = null
 
-            // TODO - base the period and repeats on a new duration arg.
-            timingServer.addFinitePeriodicEvent(::animateCallback, "AnimatedMessage", 50, 50)
+        override fun setContainerDimensionsCallback(dimensions: ContainerDimensions) {
+            containerDimensions = dimensions
+        }
+
+        override fun startAnimation(timingServer: GameEngine.TimingServer) {
+            if (containerDimensions != null) {
+                xPos = 0.5f * containerDimensions!!.width
+                yPos = 0.5f * containerDimensions!!.height - 0.5f * (textPaint.descent() + textPaint.ascent())
+
+                // TODO - base the period and repeats on a new duration arg.
+                timingServer.addFinitePeriodicEvent(::animateCallback, "AnimatedMessage", 50, 50)
+            }
         }
 
         override fun animateCallback(message: GameEngine.Message) {
