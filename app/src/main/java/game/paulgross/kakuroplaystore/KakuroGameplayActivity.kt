@@ -165,9 +165,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     /*
-    **  Animation classes and functions.
-    */
+        Animation classes and functions:
+     */
 
+    /**
+     * This callback function is needed by the SpriteDisplay to notify the GridView of any visible changes to the sprites.
+     */
     private fun sendDrawCallbacksToGrid(callbackArray: Array<DoesDraw>) {
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.updateDrawingCallbacks(callbackArray)
@@ -180,14 +183,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     private fun createRandomStar(message: GameEngine.Message) {
-        val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        val sprite = AnimatedStar(playGridView.width, playGridView.height)
-        spriteDisplay?.addSprite(sprite, "SolvedAnimationStar", start = true)
+        spriteDisplay?.addSprite(AnimatedStar(), "SolvedAnimationStar", start = true)
     }
 
-    // TODO - get width and height from setContainerDimensionsCallback() instead of constructor.
-    class AnimatedStar(private val width: Int, private val height: Int): AnimatedSprite() {
+    class AnimatedStar(): AnimatedSprite() {
 
+        private val startPositionStarMatrix = Matrix()
         private val transformStarMatrix = Matrix()
 
         private val starPath: Path = Path()
@@ -199,11 +200,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var starPathForOnDraw: Path = Path()
 
         private val starPaint = Paint()
-        private val starScale = 8f
+        private var starScale = 10f
 
         init{
             starPaint.color = Color.WHITE
 
+            // TODO: Move this to setContainerDimensionsCallback
             starPath.moveTo(-starScale, -starScale)
             starPath.lineTo(0f, starScale)
             starPath.lineTo(starScale, -starScale)
@@ -216,18 +218,31 @@ class KakuroGameplayActivity : AppCompatActivity() {
             starPath.lineTo(0f, 0f)
         }
 
+        private var containerDimensions: ContainerDimensions? = null
+
+        override fun setContainerDimensionsCallback(dimensions: ContainerDimensions) {
+            containerDimensions = dimensions
+            starScale = containerDimensions!!.width * 0.01f
+
+            // TODO - build startPositionStarMatrix and transformStarMatrix here.
+            // And Need to adjust if the screen changes size after sprite is moving too.
+        }
+
         override fun startAnimation(timingServer: GameEngine.TimingServer) {
+            if (containerDimensions == null) {
+                return
+            }
 
             // Set the initial position.
-            transformStarMatrix.setTranslate(width * (0.7f * Random.nextFloat()) + 0.15f, height * (0.7f * Random.nextFloat()) + 0.15f)
-            starPath.transform(transformStarMatrix)
+            startPositionStarMatrix.setTranslate(containerDimensions!!.width * (0.7f * Random.nextFloat()) + 0.15f, containerDimensions!!.height * (0.7f * Random.nextFloat()) + 0.15f)
+            starPath.transform(startPositionStarMatrix)
             starPathForOnDraw = Path(starPath)  // So onDraw() can see the change.
 
             // Set the speed
-            transformStarMatrix.setTranslate(width * 0.015f * (Random.nextFloat() -0.5f), width * 0.015f  * (Random.nextFloat() -0.5f))
+            transformStarMatrix.setTranslate(containerDimensions!!.width * 0.015f * (Random.nextFloat() -0.5f), containerDimensions!!.width * 0.015f  * (Random.nextFloat() -0.5f))
             // TODO - Figure out how to rotate the star around its own axis. Likely use .preRotate() instead.
             val rotation = listOf(-3f, 0f, 3f).random()
-            transformStarMatrix.postRotate(rotation, width/2f, height/2f)
+            transformStarMatrix.postRotate(rotation, containerDimensions!!.width/2f, containerDimensions!!.height/2f)
 
             timingServer.addFinitePeriodicEvent(::animateCallback, "RandomStarAnimate", 50, 50)
         }
@@ -280,13 +295,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         override fun setContainerDimensionsCallback(dimensions: ContainerDimensions) {
             containerDimensions = dimensions
+            xPos = 0.5f * containerDimensions!!.width
+            yPos = 0.5f * containerDimensions!!.height - 0.5f * (textPaint.descent() + textPaint.ascent())
         }
 
         override fun startAnimation(timingServer: GameEngine.TimingServer) {
             if (containerDimensions != null) {
-                xPos = 0.5f * containerDimensions!!.width
-                yPos = 0.5f * containerDimensions!!.height - 0.5f * (textPaint.descent() + textPaint.ascent())
-
                 // TODO - base the period and repeats on a new duration arg.
                 timingServer.addFinitePeriodicEvent(::animateCallback, "AnimatedMessage", 50, 50)
             }
@@ -311,9 +325,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
     //
     // Controller handling: D-pad used by Google TV
     //
-//  https://developer.android.com/training/tv/start/navigation
-//    https://developer.android.com/training/game-controllers/controller-input
-//    https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
+    //  https://developer.android.com/training/tv/start/navigation
+    //  https://developer.android.com/training/game-controllers/controller-input
+    //  https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
 
     // The current control selected by the D-pad
     private var currSelectedView: View? = null
