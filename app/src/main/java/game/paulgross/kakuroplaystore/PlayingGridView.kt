@@ -136,10 +136,10 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
         setOnTouchListener(CustomListener(this))
     }
 
-    private var spriteArray: Array<Sprite> = arrayOf() // TODO - simplify this Array to a set of function calls taking a Canvas object.
+    private var drawingCallbacks: Array<DoesDraw> = arrayOf()
 
-    fun updateSprites(newSprites: Array<Sprite>) {
-        spriteArray = newSprites
+    fun updateDrawingCallbacks(newSprites: Array<DoesDraw>) {
+        drawingCallbacks = newSprites
     }
 
     fun setGameState(newestGameState: KakuroGameplayDefinition.StateVariables) {
@@ -691,8 +691,8 @@ class PlayingGridView(context: Context?, attrs: AttributeSet?) : View(context, a
             }
         }
 
-        for (sprite in spriteArray) {
-            sprite.drawSpriteDisplayCallback(canvas)
+        for (callback in drawingCallbacks) {
+            callback.drawCallback(canvas)
         }
     }
 

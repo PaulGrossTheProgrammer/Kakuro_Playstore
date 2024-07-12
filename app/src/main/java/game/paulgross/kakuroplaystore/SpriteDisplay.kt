@@ -1,10 +1,15 @@
 package game.paulgross.kakuroplaystore
 
 import android.graphics.Canvas
+import kotlin.reflect.KFunction1
 
-interface Sprite {
+interface DoesDraw {
+    fun drawCallback(canvas: Canvas)
+}
 
-    fun setWidthAndHeightCallback(width: Int, height: Int)
+interface Sprite: DoesDraw {
+
+    fun setContainerWidthAndHeightCallback(width: Int, height: Int)
 
     fun isDone(): Boolean
     fun setDone()
@@ -24,11 +29,12 @@ interface Sprite {
     fun resumeAnimation(timingServer: GameEngine.TimingServer)
     fun animateCallback(message: GameEngine.Message)
 
+    fun spriteDrawCallback(canvas: Canvas)  // TODO: Need a better name ...
+
     /**
-     * The animation Thread will call this to draw the sprite.
+     * The animation Thread needs to call this function to draw the sprite.
      */
-    fun drawCallback(canvas: Canvas)
-    fun drawSpriteDisplayCallback(canvas: Canvas)
+    override fun drawCallback(canvas: Canvas)
 }
 
 abstract class AnimatedSprite: Sprite {
@@ -40,9 +46,12 @@ abstract class AnimatedSprite: Sprite {
     var containerWidth = 0
     var containerHeight = 0
 
-    final override fun setWidthAndHeightCallback(width: Int, height: Int) {
+    final override fun setContainerWidthAndHeightCallback(width: Int, height: Int) {
         containerWidth = width
         containerHeight = width
+
+        // TODO - this call needs to cascade to a callback function that the implementer can override.
+        // Also, for multithreading safety, send width and height as a pair in a data class.
     }
 
     final override fun isDone(): Boolean {
@@ -86,9 +95,9 @@ abstract class AnimatedSprite: Sprite {
      * The animation thread calls this function if it needs to draw this sprite on the canvas via onDraw().
      * After onDraw(), isDrawRequired() returns False again.
      */
-    final override fun drawSpriteDisplayCallback(canvas: Canvas) {
+    final override fun drawCallback(canvas: Canvas) {
         if (!done && visible) {
-            drawCallback(canvas)
+            spriteDrawCallback(canvas)
             requireDraw = false
         }
     }
@@ -120,15 +129,15 @@ abstract class StaticSprite: Sprite {
     final override fun resumeAnimation(timingServer: GameEngine.TimingServer) {}
     final override fun animateCallback(message: GameEngine.Message) {}
 
-    final override fun drawSpriteDisplayCallback(canvas: Canvas) {
-        drawCallback(canvas)
+    final override fun drawCallback(canvas: Canvas) {
+        spriteDrawCallback(canvas)
         requireDraw = false
     }
 }
 // TODO - implement an abstract class for SimpleSprite that only has drawCallback()
 // This is useful for things like background graphics that never change.
 
-class SpriteDisplay(private var width: Int, private var height: Int, private val timingServer: GameEngine.TimingServer, private val period: Int, private val drawCallback: (spriteList: Array<Sprite>) -> Unit) {
+class SpriteDisplay(private var width: Int, private var height: Int, private val timingServer: GameEngine.TimingServer, private val period: Int, private val drawCallback: KFunction1<Array<DoesDraw>, Unit>) {
 
     // TODO - need to determine if I need a setDrawCallback() func, or if it's still OK in the constructor.
     // - because the View instance changes when the screen is rotated, and then there is the odd behaviour when the app is backgrounded...
@@ -155,10 +164,10 @@ class SpriteDisplay(private var width: Int, private var height: Int, private val
 
     private val allSprites = mutableListOf<Sprite>()
 
-    // TODO - added Sprites should have their setScreenDimensions() function called here?
+    // TODO - added Sprites should have their setContainerDimensions() function called here?
     // Because for Android, the screen dimensions can change, for example due to screen rotation.
     fun addSprite(sprite: Sprite, groupName: String, start: Boolean = false) {
-        sprite.setWidthAndHeightCallback(width, height)
+        sprite.setContainerWidthAndHeightCallback(width, height)
         allSprites.add(sprite)
         if (start) {
             sprite.startAnimation(timingServer)

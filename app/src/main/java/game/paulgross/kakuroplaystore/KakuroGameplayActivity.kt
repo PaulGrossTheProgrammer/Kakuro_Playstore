@@ -71,36 +71,21 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.setSizeChangedCallback(::spriteDisplaySizeChangedCallback)
 
-        // Note that if the app was backgrounded, this seems to be needed to setup sprite display again ... investigate ...
-        // From a full start, playGridView.height and playGridView.width are both zero ...
-        println("#### onResume() - playGridView.width = ${playGridView.width}, playGridView.height = $playGridView.height{}")
+        // From a full start, playGridView.height and playGridView.width are both zero, otherwise they have coherent values.
         if (playGridView.width != 0 && playGridView.height != 0) {
-            // TODO Maybe there is a sprite display in memory already??
-            if (spriteDisplay != null) {
-                // The section doesn't seem to be needed???
-                println("#### onResume() - there is already a spritedisplay .... so update it???")
-                // But maybe it points to the wrong View - an old one that is no longer displayed?
-                // But the callback is this class, so it should use  sendSpritesToGrid() and get the latest
-                spriteDisplay?.updateWidthAndHeight(playGridView.width, playGridView.height)
-            } else {
-                println("#### onResume() - starting a new spritedisplay.")
-                startSpriteDisplay(playGridView.width, playGridView.height)
-            }
+            println("#### onResume() - starting a new spritedisplay.")
+            startSpriteDisplay(playGridView.width, playGridView.height)
         }
     }
 
     private fun spriteDisplaySizeChangedCallback(width: Int, height: Int) {
-        println("#### spriteDisplaySizeChangedCallback() ...")
-        println("#### width = $width, height = $height")
         startSpriteDisplay(width, height)
     }
 
     private fun startSpriteDisplay(width: Int, height: Int) {
-        println("#### startSpriteDisplay() ...")
-        println("#### width = $width, height = $height")
         val timingServer = engine.getTimingServer()
         if (timingServer != null) {
-            spriteDisplay = SpriteDisplay(width, height, timingServer,50, ::sendSpritesToGrid)
+            spriteDisplay = SpriteDisplay(width, height, timingServer,50, ::sendDrawCallbacksToGrid)
             spriteDisplay?.startSpriteDisplayLoop()
         }
     }
@@ -112,7 +97,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         println("#### Activity onPause()")
-//        stopAnimationLoop(engine)
         engine.queueMessageFromActivity(GameEngine.Message("RequestStopStateChanges"), ::queueCallbackMessage)
         engine.pauseTimingServer()
 
@@ -121,7 +105,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             spriteDisplay = null
         }
 
-        // TODO - does does NOT solve the backgrounding problem where the animation stalls.
         stopGameServer()
     }
 
@@ -132,6 +115,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private var gameState: KakuroGameplayDefinition.StateVariables? = null
 
     private var displayingSolvedAnimation = false;
+
 
     /**
      * Update the custom playGridView with the new state and request a redraw.
@@ -184,31 +168,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
     **  Animation classes and functions.
     */
 
-
-    /**
-     * This is the callback needed by the SpriteDisplay class.
-     *
-     * Create an instance:
-     * val spriteDisplay = SpriteDisplay(engine, ::updateSpriteDisplay)
-     *
-     * Start the animation loop:
-     * spriteDisplay.startAnimationLoop()
-     *
-     * Add sprites:
-     * spriteDisplay.addSprite(AnimatedStar(...), "CompletedStars")
-     *
-     * spriteDisplay.addSprite(VictoryBanner(...), "VictoryBanner")
-     * spriteDisplay.hideGroup("VictoryBanner")
-     *
-     * Then later:
-     * spriteDisplay.startAnimation("VictoryBanner")
-     * spriteDisplay.showGroup("VictoryBanner")
-     *
-     */
-    private fun sendSpritesToGrid(spriteArray: Array<Sprite>) {
-        // TODO - send an Array of function calls instead. Only drawCallback() is needed.
+    private fun sendDrawCallbacksToGrid(callbackArray: Array<DoesDraw>) {
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
-        playGridView.updateSprites(spriteArray)
+        playGridView.updateDrawingCallbacks(callbackArray)
         playGridView.invalidate()
     }
 
@@ -281,7 +243,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
             startAnimation(timingServer)
         }
 
-
         override fun animateCallback(message: GameEngine.Message) {
             if (message.getString("final") == "true") {
                 setDone()
@@ -294,7 +255,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             setDrawRequired()
         }
 
-        override fun drawCallback(canvas: Canvas) {
+        override fun spriteDrawCallback(canvas: Canvas) {
             // For thread safety, only draw with the latest copy of starPath in starPathForOnDraw.
             canvas.drawPath(starPathForOnDraw, starPaint)
         }
@@ -302,19 +263,19 @@ class KakuroGameplayActivity : AppCompatActivity() {
     }
 
     // TODO - add args for screen dimensions, duration. Also relative x, y position.
-    class AnimatedMessage(private val message: String, private val size: Float, val growthRate: Float): AnimatedSprite() {
+    class AnimatedMessage(private val message: String, private val size: Float, private val growthRate: Float): AnimatedSprite() {
+
         private val textPaint = Paint()
         private var xPos = 0f
         private var yPos = 0f
 
         init {
-            textPaint.setTextAlign(Paint.Align.CENTER)
+            textPaint.textAlign = Paint.Align.CENTER
             textPaint.color = Color.WHITE
             textPaint.textSize = size
         }
 
         override fun startAnimation(timingServer: GameEngine.TimingServer) {
-            println("#### AnimatedMessage: width = $containerWidth, height = $containerHeight")
             xPos = 0.5f * containerWidth
             yPos = 0.5f * containerHeight - 0.5f * (textPaint.descent() + textPaint.ascent())
 
@@ -332,7 +293,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             setDrawRequired()
         }
 
-        override fun drawCallback(canvas: Canvas) {
+        override fun spriteDrawCallback(canvas: Canvas) {
             canvas.drawText(message, xPos, yPos, textPaint)
         }
     }

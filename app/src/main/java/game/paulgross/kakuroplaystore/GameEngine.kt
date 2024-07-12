@@ -774,11 +774,7 @@ class GameEngine(): Thread() {
     }
 
     private fun pushStateToClients() {
-        // FIXME - the number of clients is rising without any new clients.
-        // FIXME - likely the resume() call is creating extra requests...
-        println("#### Pushing State to [${stateChangeCallbacks.size}] clients...")
         stateChangeCallbacks.forEach { callbackClient ->
-            //encodeState()?.let { callback(it) }
             val newMessage = encodeStateFunction?.invoke()
             if (newMessage != null) {
                 callbackClient.callback.invoke(newMessage)
