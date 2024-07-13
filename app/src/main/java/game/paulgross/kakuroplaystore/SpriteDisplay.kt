@@ -1,7 +1,10 @@
 package game.paulgross.kakuroplaystore
 
+import android.content.res.Resources
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Paint
 import kotlin.reflect.KFunction1
 
 
@@ -130,6 +133,51 @@ abstract class AnimatedSprite: Sprite {
     override fun startAnimation(timingServer: GameEngine.TimingServer){}
     override fun stopAnimation(timingServer: GameEngine.TimingServer){}
     override fun resumeAnimation(timingServer: GameEngine.TimingServer){}
+}
+
+class AnimatedFramesSprite(bitmap: Bitmap, cols: Int, rows: Int, indexList: List<Int>?, var type: String, var period: Int, var repeats: Int): AnimatedSprite() {
+    // https://opengameart.org/content/sparkles
+
+    private val paint = Paint()
+    private var xPos = 0f
+    private var yPos = 0f
+    private var frameArray: Array<Bitmap> = arrayOf()
+    private var currFrame = 0
+
+    init {
+        frameArray = loadFrames(bitmap, cols, rows, indexList)
+    }
+
+    override fun setContainerDimensionsCallback(dimensions: ContainerDimensions) {
+        xPos = 0.5f * dimensions.width - 0.5f * frameArray[0].width
+        yPos = 0.5f * dimensions.height - 0.5f * frameArray[0].height
+    }
+
+    override fun startAnimation(timingServer: GameEngine.TimingServer) {
+        timingServer.addFinitePeriodicEvent(::animateCallback, type, period, repeats)
+    }
+
+    /**
+     * Callback needed by the TimingServer Thread for every frame of animation.
+     */
+    override fun animateCallback(message: GameEngine.Message) {
+        if (message.getString("final") == "true") {
+            setDone()
+        } else {
+            currFrame++
+            if (currFrame >= frameArray.size) {
+                currFrame = 0
+            }
+        }
+        setDrawRequired()
+    }
+
+    /**
+     * Callback needed by the Android UI Thread
+     */
+    override fun spriteDrawCallback(canvas: Canvas) {
+        canvas.drawBitmap(frameArray[currFrame], xPos, yPos, paint)
+    }
 }
 
 abstract class StaticSprite: Sprite {

@@ -94,8 +94,15 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         // FIXME: TEST ONLY
-        val sprite = AnimatedSparkle(applicationContext.resources)
-        spriteDisplay?.addSprite(sprite, "TEST", start = true)
+//        val sprite = AnimatedSparkle(applicationContext.resources)
+        var sparkleSpriteBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.sparkle)
+        val sprite1 = AnimatedFramesSprite(sparkleSpriteBitmap, 8, 4, listOf(0,1,2,3, 8,9,10,11, 16,17,18,19, 24,25,26,27), "YellowSparkle", 50, 100)
+        val sprite2 = AnimatedFramesSprite(sparkleSpriteBitmap, 8, 4, listOf(4,5,6,7, 12,13,14,15, 20,21,22,23, 28,29,30,31), "WhiteSparkle", 50, 100)
+
+        var explosionSpriteSheetBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.explosion1)
+        val sprite3 = AnimatedFramesSprite(explosionSpriteSheetBitmap, 4, 4, null, "Explosion", 50, 100)
+
+        spriteDisplay?.addSprite(sprite3, "TEST", start = true)
     }
 
     // FIXME: Backgrounding the app leaves the animation stars frozen, then adds more moving ones.
