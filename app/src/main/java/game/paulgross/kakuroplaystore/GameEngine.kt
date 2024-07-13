@@ -398,6 +398,7 @@ class GameEngine(): Thread() {
         }
     }
 
+    // TODO - move this to its own class file.
     class TimingServer() : Thread() {
 
         private var serverThread: TimingServer? = null
@@ -480,6 +481,8 @@ class GameEngine(): Thread() {
                         responseMessage.setKeyString("overrun", (currDelay - configuredDelay).toString())
                         responseMessage.setKeyString("repeat", et.getCurrRepeat().toString())
                         responseMessage.setKeyString("final", et.isFinalEvent().toString())
+
+                        // TODO - allow the response to be set up as a new Thread id if this invoke is expected to take a long time to execute.
                         et.responseFunction.invoke(responseMessage)
 
                         if (et.isFinalEvent()) {
@@ -521,6 +524,9 @@ class GameEngine(): Thread() {
             serverThread?.interrupt()
         }
 
+
+        // TODO - add a flag that forces a new Thread to invoke the response function.
+        // MAYBE an annotation @ForceThread ???
         public fun addDelayedEvent(responseFunction: (message: Message) -> Unit, theType: String, delay: Int): EventTimer {
             val et = EventTimer(responseFunction, theType, delay, 0, System.currentTimeMillis())
             newEventTimerQueue.add(et)

@@ -6,6 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
+import android.content.res.Resources
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
@@ -76,6 +79,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             println("#### onResume() - starting a new spritedisplay.")
             startSpriteDisplay(playGridView.width, playGridView.height)
         }
+
     }
 
     private fun spriteDisplaySizeChangedCallback(width: Int, height: Int) {
@@ -88,6 +92,10 @@ class KakuroGameplayActivity : AppCompatActivity() {
             spriteDisplay = SpriteDisplay(ContainerDimensions(width, height), timingServer,50, ::sendDrawCallbacksToGrid)
             spriteDisplay?.startSpriteDisplayLoop()
         }
+
+        // FIXME: TEST ONLY
+        val sprite = AnimatedSparkle(applicationContext.resources)
+        spriteDisplay?.addSprite(sprite, "TEST", start = true)
     }
 
     // FIXME: Backgrounding the app leaves the animation stars frozen, then adds more moving ones.
@@ -276,6 +284,46 @@ class KakuroGameplayActivity : AppCompatActivity() {
             canvas.drawPath(starPathForOnDraw, starPaint)
         }
 
+    }
+
+    class AnimatedSparkle(resources: Resources): AnimatedSprite() {
+        // https://opengameart.org/content/sparkles
+
+        private val paint = Paint()
+        private var xPos = 0f
+        private var yPos = 0f
+
+        // TODO - use a spritesheet instead ...
+        // Args for a spritesheet bitmap: R.drawable.name, columns, rows, sequenceArray, cycle time.
+        private var sparkleBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.sparkle_singleframe)
+
+        override fun setContainerDimensionsCallback(dimensions: ContainerDimensions) {
+            xPos = 0.5f * dimensions.width - 0.5f * sparkleBitmap.width
+            yPos = 0.5f * dimensions.height - 0.5f * sparkleBitmap.height
+        }
+
+        override fun startAnimation(timingServer: GameEngine.TimingServer) {
+            timingServer.addDelayedEvent(::sparkleFinish, "SparkleFinish", 5000)
+        }
+
+        private fun sparkleFinish(message: GameEngine.Message) {
+            setDone()
+            setDrawRequired()
+        }
+
+        /**
+         * Callback needed by the TimingServer Thread for every frame of animation.
+         */
+        override fun animateCallback(message: GameEngine.Message) {
+            // TODO - use a spritesheet and switch individual frames ...
+        }
+
+        /**
+         * Callback needed by the Android UI Thread
+         */
+        override fun spriteDrawCallback(canvas: Canvas) {
+            canvas.drawBitmap(sparkleBitmap, xPos, yPos, paint)
+        }
     }
 
     // TODO - add args for screen dimensions, duration. Also relative x, y position.
