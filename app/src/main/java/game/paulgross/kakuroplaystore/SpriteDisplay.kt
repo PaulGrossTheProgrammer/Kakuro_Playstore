@@ -135,14 +135,13 @@ abstract class AnimatedSprite: Sprite {
     override fun resumeAnimation(timingServer: GameEngine.TimingServer){}
 }
 
-class AnimatedFramesSprite(bitmap: Bitmap, cols: Int, rows: Int, indexList: List<Int>?, var type: String, var period: Int, var repeats: Int): AnimatedSprite() {
-    // https://opengameart.org/content/sparkles
+open class AnimatedFramesSprite(bitmap: Bitmap, cols: Int, rows: Int, indexList: List<Int>? = null): AnimatedSprite() {
 
-    private val paint = Paint()
-    private var xPos = 0f
-    private var yPos = 0f
-    private var frameArray: Array<Bitmap> = arrayOf()
-    private var currFrame = 0
+    val paint = Paint()
+    var xPos = 0f
+    var yPos = 0f
+    var frameArray: Array<Bitmap> = arrayOf()
+    var currFrame = 0
 
     init {
         frameArray = loadFrames(bitmap, cols, rows, indexList)
@@ -154,7 +153,11 @@ class AnimatedFramesSprite(bitmap: Bitmap, cols: Int, rows: Int, indexList: List
     }
 
     override fun startAnimation(timingServer: GameEngine.TimingServer) {
-        timingServer.addFinitePeriodicEvent(::animateCallback, type, period, repeats)
+        val type = "Sprite"
+        val period = 50
+//        val repeats = 100
+//        timingServer.addFinitePeriodicEvent(::animateCallback, type, period, repeats)
+        timingServer.addPeriodicEvent(::animateCallback, type, period)
     }
 
     /**

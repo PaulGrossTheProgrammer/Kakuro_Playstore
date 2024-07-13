@@ -95,14 +95,40 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         // FIXME: TEST ONLY
 //        val sprite = AnimatedSparkle(applicationContext.resources)
-        var sparkleSpriteBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.sparkle)
-        val sprite1 = AnimatedFramesSprite(sparkleSpriteBitmap, 8, 4, listOf(0,1,2,3, 8,9,10,11, 16,17,18,19, 24,25,26,27), "YellowSparkle", 50, 100)
-        val sprite2 = AnimatedFramesSprite(sparkleSpriteBitmap, 8, 4, listOf(4,5,6,7, 12,13,14,15, 20,21,22,23, 28,29,30,31), "WhiteSparkle", 50, 100)
+        val sparkleSpriteBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.sparkle)
+        val sprite1 = AnimatedFramesSprite(sparkleSpriteBitmap, 8, 4, listOf(0,1,2,3, 8,9,10,11, 16,17,18,19, 24,25,26,27))
+        val sprite2 = AnimatedFramesSprite(sparkleSpriteBitmap, 8, 4, listOf(4,5,6,7, 12,13,14,15, 20,21,22,23, 28,29,30,31))
 
-        var explosionSpriteSheetBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.explosion1)
-        val sprite3 = AnimatedFramesSprite(explosionSpriteSheetBitmap, 4, 4, null, "Explosion", 50, 100)
+        val explosionSpriteSheetBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.explosion1)
+        val sprite3 = AnimatedFramesSprite(explosionSpriteSheetBitmap, 4, 4)
 
-        spriteDisplay?.addSprite(sprite3, "TEST", start = true)
+        val sprite4 = RotatingSprite(explosionSpriteSheetBitmap, 4, 4)
+
+        spriteDisplay?.addSprite(sprite4, "TEST", start = true)
+    }
+
+    class RotatingSprite(var bitmap: Bitmap, var cols: Int, var rows: Int): AnimatedFramesSprite(bitmap, cols, rows) {
+        val rotateMatrix = Matrix()
+        var rotateAngle = 0f
+        val rotateStep = 3f
+        var rotatedBitmap: Bitmap? = null
+
+        override fun animateCallback(message: GameEngine.Message) {
+            super.animateCallback(message)
+
+            val currFrame = frameArray[currFrame]
+            rotateAngle += rotateStep
+            rotateMatrix.setRotate(rotateAngle,0.5f * currFrame.width,0.5f * currFrame.height)
+
+            // Cache the rotated matrix for draw
+            rotatedBitmap = Bitmap.createBitmap(currFrame, 0, 0, currFrame.width, currFrame.height, rotateMatrix, true)
+        }
+
+        override fun spriteDrawCallback(canvas: Canvas) {
+            if (rotatedBitmap != null) {
+                canvas.drawBitmap(rotatedBitmap!!, xPos, yPos, paint)
+            }
+        }
     }
 
     // FIXME: Backgrounding the app leaves the animation stars frozen, then adds more moving ones.
