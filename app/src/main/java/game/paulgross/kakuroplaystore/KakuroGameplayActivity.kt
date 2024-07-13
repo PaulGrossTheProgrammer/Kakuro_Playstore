@@ -102,9 +102,11 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val explosionSpriteSheetBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.explosion1)
         val sprite3 = AnimatedFramesSprite(explosionSpriteSheetBitmap, 4, 4)
 
-        val sprite4 = RotatingSprite(explosionSpriteSheetBitmap, 4, 4)
 
-        spriteDisplay?.addSprite(sprite4, "TEST", start = true)
+        val redStarSpriteSheetBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.staroutareaelipsered)
+        val sprite4 = RotatingSprite(redStarSpriteSheetBitmap, 5, 8)
+
+        spriteDisplay?.addSprite(sprite3, "TEST", start = true)
     }
 
     class RotatingSprite(var bitmap: Bitmap, var cols: Int, var rows: Int): AnimatedFramesSprite(bitmap, cols, rows) {
