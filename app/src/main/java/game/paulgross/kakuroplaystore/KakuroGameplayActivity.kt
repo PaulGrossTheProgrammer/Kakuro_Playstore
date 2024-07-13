@@ -295,54 +295,19 @@ class KakuroGameplayActivity : AppCompatActivity() {
         private var frameArray: Array<Bitmap> = arrayOf()
         private var currFrame = 0
 
-        // Args for a spritesheet bitmap: R.drawable.name, columns, rows, sequenceArray, cycle time.
-        private var sparkleBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.sparkle_singleframe)
         private var sparkleSpriteBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.sparkle)
 
+        init {
+            frameArray = loadFrames(sparkleSpriteBitmap, 8, 4, listOf(0,1,2,3, 8,9,10,11, 16,17,18,19, 24,25,26,27))
+        }
+
         override fun setContainerDimensionsCallback(dimensions: ContainerDimensions) {
-            xPos = 0.5f * dimensions.width - 0.5f * sparkleBitmap.width
-            yPos = 0.5f * dimensions.height - 0.5f * sparkleBitmap.height
+            xPos = 0.5f * dimensions.width - 0.5f * frameArray[0].width
+            yPos = 0.5f * dimensions.height - 0.5f * frameArray[0].height
         }
 
         override fun startAnimation(timingServer: GameEngine.TimingServer) {
-            val cols = 8
-            val rows = 4
-            val sheetWidth = sparkleSpriteBitmap.width
-            val sheetHeight = sparkleSpriteBitmap.height
-            val frameWidth = sheetWidth.div(cols)
-            val frameHeight = sheetHeight.div(rows)
-
-            val frames = mutableListOf<Bitmap>()
-
-            val indexList = listOf(0,1,2,3, 8,9,10,11, 16,17,18,19, 24,25,26,27)
-
-            var index = 0
-            var yCurr = 0
-            var currRow = 0
-            while (currRow < rows) {
-                var xCurr = 0
-                var currCol = 0
-                while (currCol < cols) {
-                    if (indexList.contains(index)) {
-                        val resizedBmp = Bitmap.createBitmap(sparkleSpriteBitmap, xCurr, yCurr, frameWidth, frameHeight)
-                        frames.add(resizedBmp)
-                    }
-                    xCurr += frameWidth
-                    currCol++
-                    index++
-                }
-                yCurr += frameHeight
-                currRow++
-            }
-
-            frameArray = frames.toTypedArray()
-
             timingServer.addFinitePeriodicEvent(::animateCallback, "AnimatedMessage", 50, 100)
-        }
-
-        private fun sparkleFinish(message: GameEngine.Message) {
-            setDone()
-            setDrawRequired()
         }
 
         /**
@@ -364,7 +329,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
          * Callback needed by the Android UI Thread
          */
         override fun spriteDrawCallback(canvas: Canvas) {
-//            canvas.drawBitmap(sparkleBitmap, xPos, yPos, paint)
             canvas.drawBitmap(frameArray[currFrame], xPos, yPos, paint)
         }
     }

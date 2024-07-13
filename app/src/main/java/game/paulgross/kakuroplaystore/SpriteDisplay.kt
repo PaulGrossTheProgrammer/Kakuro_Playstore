@@ -1,7 +1,39 @@
 package game.paulgross.kakuroplaystore
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import kotlin.reflect.KFunction1
+
+
+fun loadFrames(bitmap: Bitmap, cols: Int, rows: Int, indexList: List<Int>?): Array<Bitmap> {
+    val sheetWidth = bitmap.width
+    val sheetHeight = bitmap.height
+    val frameWidth = sheetWidth.div(cols)
+    val frameHeight = sheetHeight.div(rows)
+
+    val frames = mutableListOf<Bitmap>()
+
+    var index = 0
+    var yCurr = 0
+    var currRow = 0
+    while (currRow < rows) {
+        var xCurr = 0
+        var currCol = 0
+        while (currCol < cols) {
+            if (indexList == null || indexList.contains(index)) {
+                val resizedBmp = Bitmap.createBitmap(bitmap, xCurr, yCurr, frameWidth, frameHeight)
+                frames.add(resizedBmp)
+            }
+            xCurr += frameWidth
+            currCol++
+            index++
+        }
+        yCurr += frameHeight
+        currRow++
+    }
+
+    return frames.toTypedArray()
+}
 
 data class ContainerDimensions(val height: Int, val width: Int)
 
