@@ -140,8 +140,6 @@ abstract class AnimatedSprite: Sprite {
             requireDraw = false
         }
     }
-
-
 }
 
 // TODO - create a SpriteBitmap class that has spritesheet capabilities, and can optionally cache rotated bitmaps.
@@ -150,35 +148,53 @@ abstract class AnimatedSprite: Sprite {
 // Pass this SpriteBitmap as an arg to create Sprites.
 // The SpriteBitmap is shared by all the sprites that reference it. So be careful if caching Bitmaps.
 
-class SpriteSingleBitmap(private val bitmap: Bitmap, private val center: Boolean = true) {
+interface SpriteBitmap {
+    fun getDimensions(): Dimensions
+    fun isCenter(): Boolean
+    fun nextFrame()
+    fun prevFrame()
+    fun draw(canvas: Canvas, position: Position, paint: Paint)
+}
+
+class SpriteSingleBitmap(private val bitmap: Bitmap, private val center: Boolean = true): SpriteBitmap {
     private val dimensions: Dimensions = Dimensions(bitmap.width, bitmap.height)
     private val drawOffsetX: Float = when(center) { false -> 0f else -> -0.5f * bitmap.width }
     private val drawOffsetY: Float = when(center) { false -> 0f else -> -0.5f * bitmap.height }
-    private val paint = Paint()
 
-    fun isCenter(): Boolean {
+    override fun getDimensions(): Dimensions {
+        return dimensions
+    }
+
+    override fun isCenter(): Boolean {
         return center
     }
 
-    fun draw(canvas: Canvas, position: Position) {
+    override fun nextFrame() {}
+    override fun prevFrame() {}
+
+    override fun draw(canvas: Canvas, position: Position, paint: Paint) {
         canvas.drawBitmap(bitmap, position.xPos - drawOffsetX, position.yPos - drawOffsetY, paint)
     }
 }
 
 /**
  * Creates a sequence of bitmap frames from the original bitmap.
- * By default the frames are numbered, starting from 0, from left to right, top to bottom.
- * To number the frames from top-to-bottom, then left-to-right, call setHorizontalSequence().
- * To use a custom sequence, call setIndexSequence() with an list of the default index.
+ * By default the frames are numbered, starting from 0, from left-to-right, then top-to-bottom.
+ * To renumber the frames from top-to-bottom, then left-to-right, call setHorizontalSequence().
+ * To use a custom renumbering sequence, call setIndexSequence() with an list using the default index, in the desired new sequence.
  */
-class SpriteSheetBitmap(private val bitmap: Bitmap, private val cols: Int, private val rows: Int, center: Boolean = true) {
+class SpriteSheetBitmap(private val bitmap: Bitmap, private val cols: Int, private val rows: Int, private val center: Boolean = true): SpriteBitmap {
     private var dimensions: Dimensions = Dimensions(bitmap.width.div(cols), bitmap.height.div(rows))
     private var frameArray = loadFrames(bitmap, cols, rows)
+    private var originalFrameArray = frameArray
     private val drawOffsetX: Float = when(center) { false -> 0f else -> -0.5f * bitmap.width }
     private val drawOffsetY: Float = when(center) { false -> 0f else -> -0.5f * bitmap.height }
-    private val paint = Paint()
     private var currIndex = 0
 
+    /*
+        Creates an array of Bitmaps by extracting the frames from the sheet.
+        Frames are extracted from left-to-right, top-to-bottom.
+     */
     private fun loadFrames(bitmap: Bitmap, cols: Int, rows: Int): Array<Bitmap> {
         val frames = mutableListOf<Bitmap>()
 
@@ -203,28 +219,39 @@ class SpriteSheetBitmap(private val bitmap: Bitmap, private val cols: Int, priva
         return frames.toTypedArray()
     }
 
+    override fun getDimensions(): Dimensions {
+        return dimensions
+    }
+
+    override fun isCenter(): Boolean {
+        return center
+    }
+
     /**
-     * Sets the custom order that the frames of the original sheet of frames will appear in.
+     * Sets the custom sequence for the frames of the original sheet.
      */
     fun setIndexSequence(indexArray: Array<Int>) {
         currIndex = 0
         val newFrameOrder = mutableListOf<Bitmap>()
         for (index in indexArray) {
-            newFrameOrder.add(frameArray[index])
+            newFrameOrder.add(originalFrameArray[index])
         }
 
         frameArray = newFrameOrder.toTypedArray()
     }
 
     /**
-     * The frames in the original sheet are indexed top to bottom, then left to right.
+     * The frames in the original sheet are re-indexed from top-to-bottom, then left-to-right.
      */
     fun setHorizontalSequence() {
         currIndex = 0
         // TODO ...
     }
 
-    fun nextFrame() {
+    /**
+     * Changes the current frame to the next frame in the sequence, resetting to the first frame at the end.
+     */
+    override fun nextFrame() {
         if (currIndex < frameArray.size - 1) {
             currIndex++
         } else {
@@ -232,11 +259,17 @@ class SpriteSheetBitmap(private val bitmap: Bitmap, private val cols: Int, priva
         }
     }
 
-    fun draw(canvas: Canvas, position: Position) {
+    override fun prevFrame() {
+        // TODO ...
+    }
+
+    /**
+     * Draws the current frame at the given position on the canvas.
+     */
+    override fun draw(canvas: Canvas, position: Position, paint: Paint) {
         canvas.drawBitmap(frameArray[currIndex], position.xPos - drawOffsetX, position.yPos - drawOffsetY, paint)
     }
 }
-
 
 open class AnimatedFramesSprite(bitmap: Bitmap, cols: Int, rows: Int, indexList: List<Int>? = null): AnimatedSprite() {
 
@@ -268,7 +301,7 @@ open class AnimatedFramesSprite(bitmap: Bitmap, cols: Int, rows: Int, indexList:
      * Callback needed by the TimingServer Thread for every frame of animation.
      */
     override fun animateCallback(message: GameEngine.Message) {
-        if (message.getString("done") == "true") {
+        if (message.hasString("done")) {
             setDone()
         } else {
             currFrame++
