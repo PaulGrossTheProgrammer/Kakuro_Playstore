@@ -93,7 +93,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             spriteDisplay?.startSpriteDisplayLoop()
         }
 
-        // FIXME: TEST ONLY
+/*        // FIXME: TEST ONLY
 //        val sprite = AnimatedSparkle(applicationContext.resources)
         val sparkleSpriteBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.sparkle)
         val sprite1 = AnimatedFramesSprite(sparkleSpriteBitmap, 8, 4, listOf(0,1,2,3, 8,9,10,11, 16,17,18,19, 24,25,26,27))
@@ -106,7 +106,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val redStarSpriteSheetBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.staroutareaelipsered)
         val sprite4 = RotatingSprite(redStarSpriteSheetBitmap, 5, 8)
 
-        spriteDisplay?.addSprite(sprite3, "TEST", start = true)
+        spriteDisplay?.addSprite(sprite3, "TEST", start = true)*/
     }
 
     class RotatingSprite(var bitmap: Bitmap, var cols: Int, var rows: Int): AnimatedFramesSprite(bitmap, cols, rows) {
