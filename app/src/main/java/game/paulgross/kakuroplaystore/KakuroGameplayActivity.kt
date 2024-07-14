@@ -89,7 +89,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private fun startSpriteDisplay(width: Int, height: Int) {
         val timingServer = engine.getTimingServer()
         if (timingServer != null) {
-            spriteDisplay = SpriteDisplay(ContainerDimensions(width, height), timingServer,50, ::sendDrawCallbacksToGrid)
+            spriteDisplay = SpriteDisplay(Dimensions(width, height), timingServer,50, ::sendDrawCallbacksToGrid)
             spriteDisplay?.startSpriteDisplayLoop()
         }
 
@@ -261,9 +261,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
             starPath.lineTo(0f, 0f)
         }
 
-        private var containerDimensions: ContainerDimensions? = null
+        private var containerDimensions: Dimensions? = null
 
-        override fun setContainerDimensionsCallback(dimensions: ContainerDimensions) {
+        override fun setContainerDimensionsCallback(dimensions: Dimensions) {
             containerDimensions = dimensions
             starScale = containerDimensions!!.width * 0.01f
 
@@ -336,7 +336,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
             frameArray = loadFrames(sparkleSpriteBitmap, 8, 4, listOf(0,1,2,3, 8,9,10,11, 16,17,18,19, 24,25,26,27))
         }
 
-        override fun setContainerDimensionsCallback(dimensions: ContainerDimensions) {
+        override fun setContainerDimensionsCallback(dimensions: Dimensions) {
             xPos = 0.5f * dimensions.width - 0.5f * frameArray[0].width
             yPos = 0.5f * dimensions.height - 0.5f * frameArray[0].height
         }
@@ -387,9 +387,9 @@ class KakuroGameplayActivity : AppCompatActivity() {
             textPaint.textSize = size
         }
 
-        private var containerDimensions: ContainerDimensions? = null
+        private var containerDimensions: Dimensions? = null
 
-        override fun setContainerDimensionsCallback(dimensions: ContainerDimensions) {
+        override fun setContainerDimensionsCallback(dimensions: Dimensions) {
             containerDimensions = dimensions
             xPos = 0.5f * containerDimensions!!.width
             yPos = 0.5f * containerDimensions!!.height - 0.5f * (textPaint.descent() + textPaint.ascent())

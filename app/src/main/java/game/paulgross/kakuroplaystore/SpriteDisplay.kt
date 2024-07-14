@@ -38,7 +38,7 @@ fun loadFrames(bitmap: Bitmap, cols: Int, rows: Int, indexList: List<Int>?): Arr
     return frames.toTypedArray()
 }
 
-data class ContainerDimensions(val height: Int, val width: Int)
+data class Dimensions(val height: Int, val width: Int)
 data class Position(val xPos: Float, val yPos: Float)
 
 interface DoesDraw {
@@ -47,7 +47,7 @@ interface DoesDraw {
 
 interface Sprite: DoesDraw {
 
-    fun setContainerDimensionsCallback(dimensions: ContainerDimensions)
+    fun setContainerDimensionsCallback(dimensions: Dimensions)
 
     fun isDone(): Boolean
     fun setDone()
@@ -150,6 +150,33 @@ abstract class AnimatedSprite: Sprite {
 // Pass this SpriteBitmap as an arg to create Sprites.
 // The SpriteBitmap is shared by all the sprites that reference it. So be careful if caching Bitmaps.
 
+class SpriteSingleBitmap(private val bitmap: Bitmap, private val center: Boolean = true) {
+    private val dimensions: Dimensions = Dimensions(bitmap.width, bitmap.height)
+    private val drawOffsetX: Float = when(center) { false -> 0f else -> -0.5f * bitmap.width }
+    private val drawOffsetY: Float = when(center) { false -> 0f else -> -0.5f * bitmap.height }
+    private val paint = Paint()
+
+    fun isCenter(): Boolean {
+        return center
+    }
+
+    fun draw(canvas: Canvas, position: Position) {
+        canvas.drawBitmap(bitmap, position.xPos - drawOffsetX, position.yPos - drawOffsetY, paint)
+    }
+}
+
+class SpriteSheetBitmap(private val bitmap: Bitmap, val cols: Int, val rows: Int) {
+    private lateinit var dimensions: Dimensions
+
+    init {
+        // FIXME - adjust dimensions according to single frame size.
+        dimensions = Dimensions(bitmap.width, bitmap.height)
+    }
+
+    // TODO...
+}
+
+
 open class AnimatedFramesSprite(bitmap: Bitmap, cols: Int, rows: Int, indexList: List<Int>? = null): AnimatedSprite() {
 
     val paint = Paint()
@@ -160,7 +187,7 @@ open class AnimatedFramesSprite(bitmap: Bitmap, cols: Int, rows: Int, indexList:
         frameArray = loadFrames(bitmap, cols, rows, indexList)
     }
 
-    override fun setContainerDimensionsCallback(dimensions: ContainerDimensions) {
+    override fun setContainerDimensionsCallback(dimensions: Dimensions) {
         val newPos = Position(0.5f * dimensions.width - 0.5f * frameArray[0].width, 0.5f * dimensions.height - 0.5f * frameArray[0].height)
         setPosition(newPos)
     }
@@ -199,13 +226,13 @@ open class AnimatedFramesSprite(bitmap: Bitmap, cols: Int, rows: Int, indexList:
     }
 }
 
-class SpriteDisplay(private var containerDimensions: ContainerDimensions, private val timingServer: GameEngine.TimingServer, private val period: Int, private val drawCallback: KFunction1<Array<DoesDraw>, Unit>) {
+class SpriteDisplay(private var containerDimensions: Dimensions, private val timingServer: GameEngine.TimingServer, private val period: Int, private val drawCallback: KFunction1<Array<DoesDraw>, Unit>) {
 
     // TODO - need to determine if I need a setDrawCallback() func, or if it's still OK in the constructor.
     // - because the View instance changes when the screen is rotated, and then there is the odd behaviour when the app is backgrounded...
 
     // TODO - do we need an update call for width and height?
-    fun setContainerDimensions(containerDimensions: ContainerDimensions) {
+    fun setContainerDimensions(containerDimensions: Dimensions) {
         this.containerDimensions = containerDimensions
 
         // TODO - iterate allSprites and update with setWidthAndHeightCallback()
