@@ -187,8 +187,8 @@ class SpriteSheetBitmap(private val bitmap: Bitmap, private val cols: Int, priva
     private var dimensions: Dimensions = Dimensions(bitmap.width.div(cols), bitmap.height.div(rows))
     private var frameArray = loadFrames(bitmap, cols, rows)
     private var originalFrameArray = frameArray
-    private val drawOffsetX: Float = when(center) { false -> 0f else -> -0.5f * bitmap.width }
-    private val drawOffsetY: Float = when(center) { false -> 0f else -> -0.5f * bitmap.height }
+    private val drawOffsetX: Float = when(center) { false -> 0f else -> 0.5f * dimensions.width }
+    private val drawOffsetY: Float = when(center) { false -> 0f else -> 0.5f * dimensions.height }
     private var currIndex = 0
 
     /*
@@ -271,6 +271,119 @@ class SpriteSheetBitmap(private val bitmap: Bitmap, private val cols: Int, priva
     }
 }
 
+class FramesetSprite(val name: String, private val spriteBitmap: SpriteBitmap, private val period: Int, private val duration: Int = -1): Sprite {
+    private var containerDimensions: Dimensions = Dimensions(0, 0)
+    private var position: Position = Position(0f, 0f)
+    private var requireDraw = true  // The initial state of the sprite needs to be drawn.
+    private var done = false
+    private var visible = true
+    private val paint = Paint()
+    private var timingServer: GameEngine.TimingServer? = null
+
+    override fun setPosition(newPos: Position) {
+        position = newPos
+    }
+
+    override fun getPosition(): Position {
+        return position
+    }
+
+    final override fun isDone(): Boolean {
+        return done
+    }
+
+    final override fun setDone() {
+        done = true
+    }
+
+    final override fun isVisible(): Boolean {
+        return visible
+    }
+
+    final override fun setVisibilityState(state: Boolean) {
+        visible = state
+        requireDraw = true
+    }
+
+    /**
+     * Call this function whenever the sprite has changed appearance in any way.
+     */
+    final override fun setDrawRequired() {
+        requireDraw = true
+    }
+
+    final override fun unsetDrawRequired() {
+        requireDraw = false
+    }
+
+    /**
+     * If this returns True, then the animation thread knows that it can call doDraw() via drawCallback() on it's next cycle.
+     * After the animation thread calls drawCallback(), isDrawRequired() returns False again.
+     *
+     * Note that the animator still might not call doDraw() on it's next cycle, for example if the sprite is hidden.
+     */
+    final override fun isDrawRequired(): Boolean {
+        return requireDraw
+    }
+
+    override fun setContainerDimensionsCallback(dimensions: Dimensions) {
+        // TODO - give the sprite the same relative position inside the frame container.
+        if (containerDimensions.width == 0 || containerDimensions.width == 0) {
+//            val newPos = Position(0.5f * dimensions.width, 0.5f * dimensions.height)
+//            setPosition(newPos)
+        }
+        containerDimensions = dimensions
+    }
+
+    override fun startAnimation(timingServer: GameEngine.TimingServer) {
+        val type = "$name-NextFrame"
+        timingServer.addPeriodicEvent(::animateCallback, "$name-NextFrame", period)
+
+        if (duration != -1) {
+            this.timingServer = timingServer
+            timingServer.addDelayedEvent(::doneCallback, "$name-Done", duration)
+        }
+    }
+
+    private fun doneCallback(message: GameEngine.Message) {
+        timingServer?.cancelEventsByType("$name-NextFrame")
+        setDone()
+    }
+
+    override fun stopAnimation(timingServer: GameEngine.TimingServer){}
+    override fun resumeAnimation(timingServer: GameEngine.TimingServer){}
+
+    /**
+     * Callback needed by the TimingServer Thread for every frame of animation.
+     */
+    override fun animateCallback(message: GameEngine.Message) {
+        if (message.hasString("done")) {
+            setDone()
+        } else {
+            spriteBitmap.nextFrame()
+        }
+        setDrawRequired()
+    }
+
+    /**
+     * Callback needed by the Android UI Thread
+     */
+    override fun spriteDrawCallback(canvas: Canvas) {
+        spriteBitmap.draw(canvas, position, paint)
+    }
+
+    /**
+     * The animation thread calls this function if it needs to draw this sprite on the canvas via onDraw().
+     * After onDraw(), isDrawRequired() returns False again.
+     */
+    override fun drawCallback(canvas: Canvas) {
+        if (!done && visible) {
+            spriteDrawCallback(canvas)
+            requireDraw = false
+        }
+    }
+}
+
 open class AnimatedFramesSprite(bitmap: Bitmap, cols: Int, rows: Int, indexList: List<Int>? = null): AnimatedSprite() {
 
     val paint = Paint()
@@ -288,9 +401,7 @@ open class AnimatedFramesSprite(bitmap: Bitmap, cols: Int, rows: Int, indexList:
 
     override fun startAnimation(timingServer: GameEngine.TimingServer) {
         val type = "Sprite"
-        val period = 50
-//        val repeats = 100
-//        timingServer.addFinitePeriodicEvent(::animateCallback, type, period, repeats)
+        val period = 50 // TODO - decide how to set this...
         timingServer.addPeriodicEvent(::animateCallback, type, period)
     }
 
@@ -322,8 +433,13 @@ open class AnimatedFramesSprite(bitmap: Bitmap, cols: Int, rows: Int, indexList:
 
 class SpriteDisplay(private var containerDimensions: Dimensions, private val timingServer: GameEngine.TimingServer, private val period: Int, private val drawCallback: KFunction1<Array<DoesDraw>, Unit>) {
 
-    // TODO - need to determine if I need a setDrawCallback() func, or if it's still OK in the constructor.
-    // - because the View instance changes when the screen is rotated, and then there is the odd behaviour when the app is backgrounded...
+    fun getPeriod(): Int {
+        return period
+    }
+
+    fun getContainerDimensions(): Dimensions {
+        return containerDimensions
+    }
 
     // TODO - do we need an update call for width and height?
     fun setContainerDimensions(containerDimensions: Dimensions) {

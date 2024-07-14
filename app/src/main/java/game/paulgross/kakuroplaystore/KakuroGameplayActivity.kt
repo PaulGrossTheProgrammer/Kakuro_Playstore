@@ -109,8 +109,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
         spriteDisplay?.addSprite(sprite3, "TEST", start = true)*/
         val explosionSpriteSheetBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.explosion1)
         val spriteBitmap = SpriteSheetBitmap(explosionSpriteSheetBitmap, 4, 4)
-        val sprite5 = FramesetSprite(spriteBitmap)
-        spriteDisplay?.addSprite(sprite5, "TEST", start = true)
+
+        if (spriteDisplay != null) {
+            val sprite5 = FramesetSprite("Explosion", spriteBitmap, spriteDisplay!!.getPeriod(), duration = 5000)
+            sprite5.setPosition(Position(0.5f * spriteDisplay!!.getContainerDimensions().width, 0.5f * spriteDisplay!!.getContainerDimensions().height))
+            spriteDisplay!!.addSprite(sprite5, "TEST", start = true)
+        }
     }
 
     class RotatingSprite(var bitmap: Bitmap, var cols: Int, var rows: Int): AnimatedFramesSprite(bitmap, cols, rows) {
@@ -222,109 +226,6 @@ class KakuroGameplayActivity : AppCompatActivity() {
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
         playGridView.updateDrawingCallbacks(callbackArray)
         playGridView.invalidate()
-    }
-
-    class FramesetSprite(private val spriteBitmap: SpriteBitmap): Sprite {
-        private var containerDimensions: Dimensions = Dimensions(0, 0)
-        private var position: Position = Position(0f, 0f)
-        private var requireDraw = true  // The initial state of the sprite needs to be drawn.
-        private var done = false
-        private var visible = true
-        private val paint = Paint()
-
-        override fun setPosition(newPos: Position) {
-            position = newPos
-        }
-
-        override fun getPosition(): Position {
-            return position
-        }
-
-        final override fun isDone(): Boolean {
-            return done
-        }
-
-        final override fun setDone() {
-            done = true
-        }
-
-        final override fun isVisible(): Boolean {
-            return visible
-        }
-
-        final override fun setVisibilityState(state: Boolean) {
-            visible = state
-        }
-
-        /**
-         * Call this function whenever the sprite has changed appearance in any way.
-         */
-        final override fun setDrawRequired() {
-            requireDraw = true
-        }
-
-        final override fun unsetDrawRequired() {
-            requireDraw = false
-        }
-
-        /**
-         * If this returns True, then the animation thread knows that it can call doDraw() via drawCallback() on it's next cycle.
-         * After the animation thread calls drawCallback(), isDrawRequired() returns False again.
-         *
-         * Note that the animator still might not call doDraw() on it's next cycle, for example if the sprite is hidden.
-         */
-        final override fun isDrawRequired(): Boolean {
-            return requireDraw
-        }
-
-        override fun setContainerDimensionsCallback(dimensions: Dimensions) {
-            val newPos = Position(
-                0.5f * dimensions.width - 0.5f * spriteBitmap.getDimensions().width,
-                0.5f * dimensions.height - 0.5f * spriteBitmap.getDimensions().height
-            )
-            setPosition(newPos)
-        }
-
-        override fun startAnimation(timingServer: GameEngine.TimingServer) {
-            val type = "Sprite"
-            val period = 50
-//        val repeats = 100
-//        timingServer.addFinitePeriodicEvent(::animateCallback, type, period, repeats)
-            timingServer.addPeriodicEvent(::animateCallback, type, period)
-        }
-
-        override fun stopAnimation(timingServer: GameEngine.TimingServer){}
-        override fun resumeAnimation(timingServer: GameEngine.TimingServer){}
-
-        /**
-         * Callback needed by the TimingServer Thread for every frame of animation.
-         */
-        override fun animateCallback(message: GameEngine.Message) {
-            if (message.hasString("done")) {
-                setDone()
-            } else {
-                spriteBitmap.nextFrame()
-            }
-            setDrawRequired()
-        }
-
-        /**
-         * Callback needed by the Android UI Thread
-         */
-        override fun spriteDrawCallback(canvas: Canvas) {
-            spriteBitmap.draw(canvas, position, paint)
-        }
-
-        /**
-         * The animation thread calls this function if it needs to draw this sprite on the canvas via onDraw().
-         * After onDraw(), isDrawRequired() returns False again.
-         */
-        final override fun drawCallback(canvas: Canvas) {
-            if (!done && visible) {
-                spriteDrawCallback(canvas)
-                requireDraw = false
-            }
-        }
     }
 
     private fun createDelayedRandomStar(message: GameEngine.Message) {
