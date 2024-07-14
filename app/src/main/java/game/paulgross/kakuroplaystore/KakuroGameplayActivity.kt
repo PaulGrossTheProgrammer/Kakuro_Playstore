@@ -126,7 +126,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
 
         override fun spriteDrawCallback(canvas: Canvas) {
             if (rotatedBitmap != null) {
-                canvas.drawBitmap(rotatedBitmap!!, xPos, yPos, paint)
+                canvas.drawBitmap(rotatedBitmap!!, getPosition().xPos, getPosition().yPos, paint)
             }
         }
     }
@@ -301,7 +301,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         override fun animateCallback(message: GameEngine.Message) {
-            if (message.getString("final") == "true") {
+            if (message.getString("done") == "true") {
                 setDone()
             } else {
                 starPath.transform(transformStarMatrix)
@@ -347,7 +347,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
          * Callback needed by the TimingServer Thread for every frame of animation.
          */
         override fun animateCallback(message: GameEngine.Message) {
-            if (message.getString("final") == "true") {
+            if (message.getString("done") == "true") {
                 setDone()
             } else {
                 currFrame++
@@ -395,7 +395,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
 
         override fun animateCallback(message: GameEngine.Message) {
-            if (message.getString("final") == "true") {
+            if (message.getString("done") == "true") {
                 setDone()
             } else {
                 textPaint.textSize *= growthRate
@@ -933,7 +933,7 @@ class KakuroGameplayActivity : AppCompatActivity() {
     private fun animateNewDigitCallback(message: GameEngine.Message) {
         val playGridView = findViewById<PlayingGridView>(R.id.viewPlayGrid)
 
-        if (message.getString("final").equals("true")) {
+        if (message.getString("done").equals("true")) {
             playGridView.flashIndex = -1
             playGridView.flashIndexRatio = 1.0f
         } else {

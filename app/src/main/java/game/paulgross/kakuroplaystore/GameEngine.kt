@@ -480,7 +480,9 @@ class GameEngine(): Thread() {
                         responseMessage.setKeyString("type", et.theType)
                         responseMessage.setKeyString("overrun", (currDelay - configuredDelay).toString())
                         responseMessage.setKeyString("repeat", et.getCurrRepeat().toString())
-                        responseMessage.setKeyString("final", et.isFinalEvent().toString())
+                        if (et.isFinalEvent()) {
+                            responseMessage.setKeyString("done", "true")
+                        }
 
                         // TODO - allow the response to be set up as a new Thread id if this invoke is expected to take a long time to execute.
                         et.responseFunction.invoke(responseMessage)
