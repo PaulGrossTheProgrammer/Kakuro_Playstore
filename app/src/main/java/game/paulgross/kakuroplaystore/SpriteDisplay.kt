@@ -165,15 +165,76 @@ class SpriteSingleBitmap(private val bitmap: Bitmap, private val center: Boolean
     }
 }
 
-class SpriteSheetBitmap(private val bitmap: Bitmap, val cols: Int, val rows: Int) {
-    private lateinit var dimensions: Dimensions
+/**
+ * Creates a sequence of bitmap frames from the original bitmap.
+ * By default the frames are numbered, starting from 0, from left to right, top to bottom.
+ * To number the frames from top-to-bottom, then left-to-right, call setHorizontalSequence().
+ * To use a custom sequence, call setIndexSequence() with an list of the default index.
+ */
+class SpriteSheetBitmap(private val bitmap: Bitmap, private val cols: Int, private val rows: Int, center: Boolean = true) {
+    private var dimensions: Dimensions = Dimensions(bitmap.width.div(cols), bitmap.height.div(rows))
+    private var frameArray = loadFrames(bitmap, cols, rows)
+    private val drawOffsetX: Float = when(center) { false -> 0f else -> -0.5f * bitmap.width }
+    private val drawOffsetY: Float = when(center) { false -> 0f else -> -0.5f * bitmap.height }
+    private val paint = Paint()
+    private var currIndex = 0
 
-    init {
-        // FIXME - adjust dimensions according to single frame size.
-        dimensions = Dimensions(bitmap.width, bitmap.height)
+    private fun loadFrames(bitmap: Bitmap, cols: Int, rows: Int): Array<Bitmap> {
+        val frames = mutableListOf<Bitmap>()
+
+        var index = 0
+        var yCurr = 0
+        var currRow = 0
+        while (currRow < rows) {
+            var xCurr = 0
+            var currCol = 0
+            while (currCol < cols) {
+                val resizedBmp = Bitmap.createBitmap(bitmap, xCurr, yCurr, dimensions.width, dimensions.height)
+                frames.add(resizedBmp)
+
+                xCurr += dimensions.width
+                currCol++
+                index++
+            }
+            yCurr += dimensions.height
+            currRow++
+        }
+
+        return frames.toTypedArray()
     }
 
-    // TODO...
+    /**
+     * Sets the custom order that the frames of the original sheet of frames will appear in.
+     */
+    fun setIndexSequence(indexArray: Array<Int>) {
+        currIndex = 0
+        val newFrameOrder = mutableListOf<Bitmap>()
+        for (index in indexArray) {
+            newFrameOrder.add(frameArray[index])
+        }
+
+        frameArray = newFrameOrder.toTypedArray()
+    }
+
+    /**
+     * The frames in the original sheet are indexed top to bottom, then left to right.
+     */
+    fun setHorizontalSequence() {
+        currIndex = 0
+        // TODO ...
+    }
+
+    fun nextFrame() {
+        if (currIndex < frameArray.size - 1) {
+            currIndex++
+        } else {
+            currIndex = 0
+        }
+    }
+
+    fun draw(canvas: Canvas, position: Position) {
+        canvas.drawBitmap(frameArray[currIndex], position.xPos - drawOffsetX, position.yPos - drawOffsetY, paint)
+    }
 }
 
 
