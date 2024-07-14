@@ -343,6 +343,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
             timingServer.addFinitePeriodicEvent(::animateCallback, "AnimatedMessage", 50, 100)
         }
 
+        override fun stopAnimation(timingServer: GameEngine.TimingServer) {
+        }
+
+        override fun resumeAnimation(timingServer: GameEngine.TimingServer) {
+        }
+
         /**
          * Callback needed by the TimingServer Thread for every frame of animation.
          */
@@ -392,6 +398,12 @@ class KakuroGameplayActivity : AppCompatActivity() {
                 // TODO - base the period and repeats on a new duration arg.
                 timingServer.addFinitePeriodicEvent(::animateCallback, "AnimatedMessage", 50, 50)
             }
+        }
+
+        override fun stopAnimation(timingServer: GameEngine.TimingServer) {
+        }
+
+        override fun resumeAnimation(timingServer: GameEngine.TimingServer) {
         }
 
         override fun animateCallback(message: GameEngine.Message) {
