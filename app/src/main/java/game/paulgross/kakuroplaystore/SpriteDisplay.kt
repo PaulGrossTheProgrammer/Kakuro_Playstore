@@ -1,8 +1,6 @@
 package game.paulgross.kakuroplaystore
 
-import android.content.res.Resources
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import kotlin.reflect.KFunction1
@@ -326,13 +324,17 @@ class FramesetSprite(val name: String, private val spriteBitmap: SpriteBitmap, p
         return requireDraw
     }
 
-    override fun setContainerDimensionsCallback(dimensions: Dimensions) {
-        // TODO - give the sprite the same relative position inside the frame container.
-        if (containerDimensions.width == 0 || containerDimensions.width == 0) {
-//            val newPos = Position(0.5f * dimensions.width, 0.5f * dimensions.height)
-//            setPosition(newPos)
+    override fun setContainerDimensionsCallback(newDimensions: Dimensions) {
+        if (containerDimensions.width != 0 && containerDimensions.height != 0) {
+            // Move the sprite the same relative position inside the frame container.
+            val xGrowthRatio: Float = (newDimensions.width / containerDimensions.width).toFloat()
+            val yGrowthRatio: Float = (newDimensions.height / containerDimensions.height).toFloat()
+
+            val newPos = Position(xGrowthRatio * position.xPos, yGrowthRatio * position.yPos)
+            setPosition(newPos)
         }
-        containerDimensions = dimensions
+        containerDimensions = newDimensions
+        setDrawRequired()
     }
 
     override fun startAnimation(timingServer: GameEngine.TimingServer) {

@@ -24,6 +24,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.shape.MaterialShapeDrawable
+import game.paulgross.kakuroplaystore.GameEngine.Message
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -116,6 +117,37 @@ class KakuroGameplayActivity : AppCompatActivity() {
             spriteDisplay!!.addSprite(sprite5, "TEST", start = true)
         }
     }
+
+    // TODO - develop a plug annotation concept here for extending sprite classes...
+    class RawClass() {
+        // Declare a special function pointer
+        private var pluginFunction: (() -> Unit)? = null
+
+        fun rawFunction() {
+            pluginFunction?.invoke()
+        }
+
+        fun customise(javaClass: Class<Any>) {
+            // TODO: Search the class for annotations, and attach the @PluginFunction1 to pluginFunction
+
+        }
+    }
+
+    annotation class PluginFunction1
+
+    class CustomSprite(spriteBitmap: SpriteBitmap, period: Int, duration: Int) {
+        val sprite = RawClass()
+
+        init {
+            sprite.customise(this.javaClass)
+        }
+
+        @PluginFunction1
+        fun specialFunction() {
+
+        }
+    }
+
 
     class RotatingSprite(var bitmap: Bitmap, var cols: Int, var rows: Int): AnimatedFramesSprite(bitmap, cols, rows) {
         val rotateMatrix = Matrix()
