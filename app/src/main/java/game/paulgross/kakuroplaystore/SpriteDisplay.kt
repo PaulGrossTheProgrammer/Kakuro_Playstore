@@ -3,6 +3,7 @@ package game.paulgross.kakuroplaystore
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import java.lang.reflect.Method
 import kotlin.reflect.KFunction1
 
 
@@ -269,6 +270,111 @@ class SpriteSheetBitmap(private val bitmap: Bitmap, private val cols: Int, priva
     }
 }
 
+// TODO - try a BaseSprite with
+//  - takes SpriteBitmap as an arg
+//  - managed the requireDraw flag internally
+//  - uses PluginFunctions to extend it
+
+// TODO - check that we can pass a Canvas to the Plugin function ...
+data class PluginFunction(val instance: Any, val method: Method)
+
+/**
+ * To make an actual sprite from this BaseSprite, create a BaseSprite() instance,
+ * then call extend(this) to plugin the startAnimation() and doDraw() functions.
+ * There are also optional plugins like the one triggered by setContainerDimensionsCallback().
+ * Then add the sprite to the SpriteDisplay.
+ *
+ * TODO - annotations for marking plugins
+ */
+class BaseSprite(private val spriteBitmap: SpriteBitmap): Sprite {
+
+    private var containerDimensions: Dimensions? = null
+    private var done = false
+    private var visible = true
+    private var drawRequired = true
+
+    private var position: Position = Position(0f, 0f)
+
+    fun extend(instance: Any) {
+        // TODO - search the provided instance with reflection to get Annotated functions and plug them into BaseSprite().
+    }
+
+    override fun setContainerDimensionsCallback(dimensions: Dimensions) {
+        containerDimensions = dimensions
+        // TODO - extend here - with a function that takes old new Dimensions.
+    }
+
+    override fun isDone(): Boolean {
+        return done
+    }
+
+    override fun setDone() {
+        done = true
+    }
+
+    override fun isVisible(): Boolean {
+        return visible
+    }
+
+    override fun setVisibilityState(visibility: Boolean) {
+        visible = visibility
+    }
+
+    override fun isDrawRequired(): Boolean {
+        return drawRequired
+    }
+
+    override fun setDrawRequired() {
+        drawRequired = true
+    }
+
+    override fun unsetDrawRequired() {
+        drawRequired = false
+    }
+
+    override fun getPosition(): Position {
+        return position
+    }
+
+    override fun setPosition(newPos: Position) {
+        position = newPos
+        // TODO - allow plugin here...
+    }
+
+    override fun startAnimation(timingServer: GameEngine.TimingServer) {
+        // FIXME - DON'T USE THE TimingServer argument.
+        // NO DEFAULT BEHAVIOUR
+        // Instead allow a plugin to implement how the animation starts.
+        // The plugin can access the TimingServer itself
+        // The plugin MUST call this instance's drawRequired() for drawCallback() below to be triggered.
+        // In turn, drawCallback() will call a plugin to actually change the canvas.
+    }
+
+    override fun stopAnimation(timingServer: GameEngine.TimingServer) {
+        TODO("Not yet implemented")
+    }
+
+    override fun resumeAnimation(timingServer: GameEngine.TimingServer) {
+        TODO("Not yet implemented")
+    }
+
+    override fun animateCallback(message: GameEngine.Message) {
+        // FIXME - deprecated - replaced with plugin in startAnimation that decides its own callbacks.
+    }
+
+    override fun spriteDrawCallback(canvas: Canvas) {
+        // FIXME - deprecated...
+    }
+
+    override fun drawCallback(canvas: Canvas) {
+        // THIS IS USED BY THE SpriteDisplay
+        // Plugin a function here ...
+        // TODO - call a plugin.
+        drawRequired = false
+    }
+}
+
+// FIXME - Which is better FramesetSprite. or below  AnimatedFramesSprite
 class FramesetSprite(val name: String, private val spriteBitmap: SpriteBitmap, private val period: Int, private val duration: Int = -1): Sprite {
     private var containerDimensions: Dimensions = Dimensions(0, 0)
     private var position: Position = Position(0f, 0f)
