@@ -118,37 +118,47 @@ class KakuroGameplayActivity : AppCompatActivity() {
         }
     }
 
-    // TODO - develop a plug annotation concept here for extending sprite classes...
-    class RawClass() {
-        // Declare a special function pointer
-        private var pluginFunction: (() -> Unit)? = null
+    class SpriteAnimator(private val spriteBitmap: SpriteBitmap, private val timingServer: GameEngine.TimingServer) {
+        private val sprite = BitmapSprite(spriteBitmap)
+        private val period = 50
+        private val duration = 5000
 
-        fun rawFunction() {
-            pluginFunction?.invoke()
+        private val name = "TODO" // Maybe add the unique instance id as well???
+
+        // TODO - the addinf of the srpite to the display should somehow result in:
+        // 1. The display container dimensions being sent to the sprite: sprite.setContainerDimensionsCallback()
+        // 2. The sprite gets it's setPosition() called too. But the sprite should define this in a relative manner.
+        //   Maybe like bottom-right, or in a tile, or in the middle, and this results in sprite.setPosition() being called.
+        // Also, the animateCallback() should be able to access these relative positions,
+        // as well as a relative velocity within the display pixel area - set velocity relative to the size of the display.
+        // We need to support "fixed" location sprites like the score and map displays, as well as mobile sprites.
+        // The score type sprites should have it's own setDrawRequired() flag when the score changes, not when it moves...
+
+        fun startAnimation() {
+            val type = "$name-NextFrame"
+            timingServer.addPeriodicEvent(::animateCallback, "$name-NextFrame", period)
+
+            if (duration != -1) {
+                timingServer.addDelayedEvent(::doneCallback, "$name-Done", duration)
+            }
         }
 
-        fun customise(javaClass: Class<Any>) {
-            // TODO: Search the class for annotations, and attach the @PluginFunction1 to pluginFunction
+        private fun doneCallback(message: GameEngine.Message) {
+            timingServer?.cancelEventsByType("$name-NextFrame")
+            sprite.setDone()
+        }
 
+        fun animateCallback(message: GameEngine.Message) {
+            if (message.hasString("done")) {
+                sprite.setDone()
+            } else {
+                spriteBitmap.nextFrame()
+            }
+            sprite.setDrawRequired()
         }
     }
 
-    annotation class PluginFunction1
-
-    class CustomSprite(spriteBitmap: SpriteBitmap, period: Int, duration: Int) {
-        val sprite = RawClass()
-
-        init {
-            sprite.customise(this.javaClass)
-        }
-
-        @PluginFunction1
-        fun specialFunction() {
-
-        }
-    }
-
-
+    // TODO - move rotation code into SpriteBitmap Classes.
     class RotatingSprite(var bitmap: Bitmap, var cols: Int, var rows: Int): AnimatedFramesSprite(bitmap, cols, rows) {
         val rotateMatrix = Matrix()
         var rotateAngle = 0f

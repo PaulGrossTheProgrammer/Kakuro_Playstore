@@ -278,6 +278,36 @@ class SpriteSheetBitmap(private val bitmap: Bitmap, private val cols: Int, priva
 // TODO - check that we can pass a Canvas to the Plugin function ...
 data class PluginFunction(val instance: Any, val method: Method)
 
+// TODO - this is intended to simplify and replace Sprite
+interface NewSprite: DoesDraw {
+
+    fun setContainerDimensionsCallback(dimensions: Dimensions)
+
+    fun isDone(): Boolean
+    fun setDone()
+
+    fun isVisible(): Boolean
+    fun setVisibilityState(visibility: Boolean)
+
+    fun isDrawRequired(): Boolean  // Maybe change this to isRedrawRequired()
+
+    fun setDrawRequired()
+    fun unsetDrawRequired()
+
+    fun getPosition(): Position
+    fun setPosition(newPos: Position)
+
+    fun getAngle(): Int
+    fun setAngle(degrees: Int)
+
+    /**
+     * The animation Thread needs to call this function to draw the sprite.
+     */
+    override fun drawCallback(canvas: Canvas)
+}
+
+// TODO - we also need a BaseSprite for when we don't use a SpriteBitmap.
+
 /**
  * To make an actual sprite from this BaseSprite, create a BaseSprite() instance,
  * then call extend(this) to plugin the startAnimation() and doDraw() functions.
@@ -286,7 +316,7 @@ data class PluginFunction(val instance: Any, val method: Method)
  *
  * TODO - annotations for marking plugins
  */
-class BaseSprite(private val spriteBitmap: SpriteBitmap): Sprite {
+class BitmapSprite(private val spriteBitmap: SpriteBitmap): NewSprite {
 
     private var containerDimensions: Dimensions? = null
     private var done = false
@@ -341,29 +371,12 @@ class BaseSprite(private val spriteBitmap: SpriteBitmap): Sprite {
         // TODO - allow plugin here...
     }
 
-    override fun startAnimation(timingServer: GameEngine.TimingServer) {
-        // FIXME - DON'T USE THE TimingServer argument.
-        // NO DEFAULT BEHAVIOUR
-        // Instead allow a plugin to implement how the animation starts.
-        // The plugin can access the TimingServer itself
-        // The plugin MUST call this instance's drawRequired() for drawCallback() below to be triggered.
-        // In turn, drawCallback() will call a plugin to actually change the canvas.
-    }
-
-    override fun stopAnimation(timingServer: GameEngine.TimingServer) {
+    override fun getAngle(): Int {
         TODO("Not yet implemented")
     }
 
-    override fun resumeAnimation(timingServer: GameEngine.TimingServer) {
+    override fun setAngle(degrees: Int) {
         TODO("Not yet implemented")
-    }
-
-    override fun animateCallback(message: GameEngine.Message) {
-        // FIXME - deprecated - replaced with plugin in startAnimation that decides its own callbacks.
-    }
-
-    override fun spriteDrawCallback(canvas: Canvas) {
-        // FIXME - deprecated...
     }
 
     override fun drawCallback(canvas: Canvas) {
