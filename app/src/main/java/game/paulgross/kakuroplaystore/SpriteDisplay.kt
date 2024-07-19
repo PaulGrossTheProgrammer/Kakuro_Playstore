@@ -279,7 +279,22 @@ class SpriteSheetBitmap(private val bitmap: Bitmap, private val cols: Int, priva
 data class PluginFunction(val instance: Any, val method: Method)
 
 // TODO - this is intended to simplify and replace Sprite
-interface NewSprite: DoesDraw {
+// TODO - Sprites need to handle movement (position and rotation, scaling) as well as visibility.
+// TODO - ant any of these changes need to be triggered externally
+// TODO - either by animator timing events, or by external events such as updateScore() or bump().
+// Which means that the animator needs to wrap the spite (extend it).
+// So - how do external non-animator events effect the sprite?
+// If we extend it, we need to build the animator and the external events into the same extend instance.
+// The extended instance calls underlying sprite functions to effect the timing and other effects.
+// In the case that the extended sprite has many facets, like direction, death etc,
+// we can embed many Sprites into the extended object.
+// We would need a setFrame() to match the appearance when we switch sprites.
+// This is in addition to the nextFrame() command.
+// To do this, we could call getFrame() on the old spriteView, then setFrame() on the new.
+// We can support a SpriteViewer factory that rotates and scales all the frames in an existing sprite.
+// TODO - does the SpriteView track its own position in the container, or does the wrapper do that?
+// And do we track all positins as container relative (0 - 100%) of width and height???
+interface SpriteView: DoesDraw {
 
     fun setContainerDimensionsCallback(dimensions: Dimensions)
 
@@ -316,7 +331,7 @@ interface NewSprite: DoesDraw {
  *
  * TODO - annotations for marking plugins
  */
-class BitmapSprite(private val spriteBitmap: SpriteBitmap): NewSprite {
+class BitmapSprite(private val spriteBitmap: SpriteBitmap): SpriteView {
 
     private var containerDimensions: Dimensions? = null
     private var done = false
