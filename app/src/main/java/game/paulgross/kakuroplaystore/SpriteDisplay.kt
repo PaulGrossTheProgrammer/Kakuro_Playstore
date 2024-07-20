@@ -292,9 +292,9 @@ data class PluginFunction(val instance: Any, val method: Method)
 // This is in addition to the nextFrame() command.
 // To do this, we could call getFrame() on the old spriteView, then setFrame() on the new.
 // We can support a SpriteViewer factory that rotates and scales all the frames in an existing sprite.
-// TODO - does the SpriteView track its own position in the container, or does the wrapper do that?
+// TODO - does the DrawnImage track its own position in the container, or does the wrapper do that?
 // And do we track all positins as container relative (0 - 100%) of width and height???
-interface SpriteView: DoesDraw {
+interface DrawnImage: DoesDraw {
 
     fun setContainerDimensionsCallback(dimensions: Dimensions)
 
@@ -331,7 +331,7 @@ interface SpriteView: DoesDraw {
  *
  * TODO - annotations for marking plugins
  */
-class BitmapSprite(private val spriteBitmap: SpriteBitmap): SpriteView {
+class BitmapSprite(private val spriteBitmap: SpriteBitmap): DrawnImage {
 
     private var containerDimensions: Dimensions? = null
     private var done = false
