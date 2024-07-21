@@ -293,33 +293,144 @@ data class PluginFunction(val instance: Any, val method: Method)
 // To do this, we could call getFrame() on the old spriteView, then setFrame() on the new.
 // We can support a SpriteViewer factory that rotates and scales all the frames in an existing sprite.
 // TODO - does the DrawnImage track its own position in the container, or does the wrapper do that?
-// And do we track all positins as container relative (0 - 100%) of width and height???
+// And do we track all positions as container relative (0 - 100%) of width and height???
 interface DrawnImage: DoesDraw {
 
     fun setContainerDimensionsCallback(dimensions: Dimensions)
 
-    fun isDone(): Boolean
-    fun setDone()
-
-    fun isVisible(): Boolean
-    fun setVisibilityState(visibility: Boolean)
+    fun getImageDimensions()
 
     fun isDrawRequired(): Boolean  // Maybe change this to isRedrawRequired()
 
     fun setDrawRequired()
     fun unsetDrawRequired()
 
-    fun getPosition(): Position
-    fun setPosition(newPos: Position)
-
     fun getAngle(): Int
     fun setAngle(degrees: Int)
+
+    fun getScale(): Int
+    fun setScale(degrees: Int)
 
     /**
      * The animation Thread needs to call this function to draw the sprite.
      */
     override fun drawCallback(canvas: Canvas)
+
+    fun drawAt(canvas: Canvas, xPos: Int, yPos: Int)
 }
+
+class SingleDrawnImage(bitmap: Bitmap) {
+
+}
+
+// TODO - implement DrawnImage
+class FramesetDrawnImage(framesetBitmap: Bitmap, ) {
+
+    var frameIndex = 0
+
+    fun setCurrFrameIndex(newIndex: Int) {
+        frameIndex = newIndex
+    }
+
+    fun getCurrFrameIndex(): Int {
+        return frameIndex
+    }
+
+    fun drawAt(canvas: Canvas, xPos: Int, yPos: Int) {
+        // TODO
+    }
+}
+
+data class RelativePosition(val xRelative: Float, val yRelative: Float)
+
+// The intent is that animated images can contain one or more DrawnImages.
+// The animated images are drawn at a position selected by implementations of this interface.
+class AnimatedImage: DoesDraw {
+
+    /**
+     * Changes to the container will be notified here,
+     * and should cause any DrawnImage objects to be repositioned and rescaled to suit the new dimensions.
+     */
+    fun setContainerDimensionsCallback(dimensions: Dimensions) {}
+
+    private var relativePosition = RelativePosition(0f, 0f)
+
+    // This is a RELATIVE position inside the container dimensions.
+    fun getRelativePosition(): RelativePosition {
+        return relativePosition
+    }
+    fun setRelativePosition(newRelativePosition: RelativePosition) {
+        relativePosition = newRelativePosition
+    }
+
+    // Turtle-style commands:
+
+    fun setDirectionDegrees(direction: Float) {
+        // TODO
+    }
+
+    fun setDirectionRadians(direction: Float) {
+        // TODO
+    }
+
+    fun moveForward(relativeDistance: Float) {
+        // TODO - moves in the current direction.
+    }
+
+    // TODO - speed and velocity need the Timer...
+    fun setRelativeSpeed(speed: Float) {
+        // TODO
+    }
+
+    fun setRelativeVelocityDegrees(speed: Float, direction: Float) {
+        // TODO
+    }
+
+    fun isDone(): Boolean {
+        return false  // TODO
+    }
+    fun setDone() {}
+
+    fun isVisible(): Boolean {
+        return true // TODO
+    }
+    fun setVisibilityState(visibility: Boolean) {}
+
+    fun setDrawRequired() {}
+    fun unsetDrawRequired() {}
+    fun isDrawRequired(): Boolean {
+        return true // TODO
+    }  // Maybe change this to isRedrawRequired()
+
+    val imageList = mutableListOf<DrawnImage>()
+
+    fun addImage() {
+        // TODO - do I need this? If I add images to a list, then I need to index them or name them.
+        // Maybe use an optional name, but allow indexed images in added order.
+        // The
+    }
+
+    private fun drawCentered(canvas: Canvas, image: DrawnImage, xPos: Float, yPos: Float) {
+        // TODO - Convenience method. Use the dimensions of the image to center it at xPOs, yPos.
+        // Move to companion class to make it static.
+    }
+
+    private fun drawAllCentered(canvas: Canvas, image: DrawnImage, xPos: Float, yPos: Float) {
+        // Convenience method - calls drawCentered for all added images in order.
+    }
+
+    /**
+     * The animation Thread needs to call this function to draw the sprite.
+     *
+     * Generally, any contained DrawnImages will be selected in drawing order and drawn at getPosition() in the canvas.
+     */
+    override fun drawCallback(canvas: Canvas) {}
+}
+
+
+
+
+
 
 // TODO - we also need a BaseSprite for when we don't use a SpriteBitmap.
 
@@ -349,19 +460,23 @@ class BitmapSprite(private val spriteBitmap: SpriteBitmap): DrawnImage {
         // TODO - extend here - with a function that takes old new Dimensions.
     }
 
-    override fun isDone(): Boolean {
+    override fun getImageDimensions() {
+        TODO("Not yet implemented")
+    }
+
+    fun isDone(): Boolean {
         return done
     }
 
-    override fun setDone() {
+    fun setDone() {
         done = true
     }
 
-    override fun isVisible(): Boolean {
+    fun isVisible(): Boolean {
         return visible
     }
 
-    override fun setVisibilityState(visibility: Boolean) {
+    fun setVisibilityState(visibility: Boolean) {
         visible = visibility
     }
 
@@ -377,11 +492,11 @@ class BitmapSprite(private val spriteBitmap: SpriteBitmap): DrawnImage {
         drawRequired = false
     }
 
-    override fun getPosition(): Position {
+    fun getPosition(): Position {
         return position
     }
 
-    override fun setPosition(newPos: Position) {
+    fun setPosition(newPos: Position) {
         position = newPos
         // TODO - allow plugin here...
     }
@@ -394,11 +509,23 @@ class BitmapSprite(private val spriteBitmap: SpriteBitmap): DrawnImage {
         TODO("Not yet implemented")
     }
 
+    override fun getScale(): Int {
+        TODO("Not yet implemented")
+    }
+
+    override fun setScale(degrees: Int) {
+        TODO("Not yet implemented")
+    }
+
     override fun drawCallback(canvas: Canvas) {
         // THIS IS USED BY THE SpriteDisplay
         // Plugin a function here ...
         // TODO - call a plugin.
         drawRequired = false
+    }
+
+    override fun drawAt(canvas: Canvas, xPos: Int, yPos: Int) {
+        TODO("Not yet implemented")
     }
 }
 
